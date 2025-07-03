@@ -43,3 +43,77 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub-cache/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+.pigeon/
+
+# Symbol files
+*.symbols
+
+# iOS and macOS
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/ServiceDefinitions.json
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+ios/Flutter/App.framework
+ios/Flutter/Generated.xcconfig
+ios/Runner.xcworkspace/
+macos/Flutter/ephemeral/
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Android
+android/.gradle/
+android/captures/
+android/.idea/
+android/local.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+**/gradle-wrapper.jar
+
+# VS Code
+.vscode/
+.history/
+
+# IntelliJ/Android Studio
+.idea/
+*.iml
+
+# Web
+web/.dart_tool/
+web/build/
+
+# Linux
+linux/flutter/ephemeral/
+
+# Windows
+windows/flutter/ephemeral/
+
+# Firebase
+*.firebaserc
+
+# Misc
+*.log
+*.tmp
+*.swp
+*.lock
+pubspec.lock
+coverage/
+
+# Generated files
+generated_plugin_registrant.dart
+
+# Environment
+.env
+.env.*
