@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../models/interest_model.dart';
 import '../data/interests_data.dart';
@@ -8,6 +7,7 @@ import '../widgets/continue_button.dart';
 import '../Theme/app_theme.dart';
 
 class InterestsScreen extends StatefulWidget {
+  static const String routeName = '/InterestsScreen';
   const InterestsScreen({super.key});
 
   @override
@@ -65,20 +65,17 @@ class _InterestsScreenState extends State<InterestsScreen>
         .toList();
     
     debugPrint('Selected interests: $selectedInterests');
-    
-    
-    // Navigator.pushNamed(context, '/next-screen', arguments: selectedInterests);
+    // Navigate to home/dashboard screen
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   void _onSkipPressed() {
-    debugPrint('Skip pressed');
-    
-    // Navigator.pushNamed(context, '/next-screen');
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   void _onBackPressed() {
-    debugPrint('Back pressed');
-    Navigator.maybePop(context);
+    Navigator.pushReplacementNamed(context, '/FourthOnboardingScreen');
+
   }
 
   @override
@@ -99,13 +96,10 @@ class _InterestsScreenState extends State<InterestsScreen>
               children: [
                 const SizedBox(height: 8),
                 
-                // Title with semantic label
-                Semantics(
-                  label: 'Choose your interests from the list below',
-                  child: const Text(
-                    'Choose Your Interests',
-                    style: AppTheme.titleStyle,
-                  ),
+                // Title
+                const Text(
+                  'Choose Your Interests',
+                  style: AppTheme.titleStyle,
                 ),
                 
                 const SizedBox(height: 30),

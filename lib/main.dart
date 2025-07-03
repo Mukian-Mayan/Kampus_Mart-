@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/interest_screen.dart';
 import 'screens/onboarding_screen1.dart';
+import 'screens/splash_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'Theme/app_theme.dart';
 
 void main() {
@@ -29,9 +31,11 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       debugShowCheckedModeBanner: false,
       routes: {
-        '/': (context) => const FourthOnboardingScreen(), // First screen (OnboardingScreen1)
-        '/OnboardingScreen': (context) => const OnboardingScreen(), // Second screen
-        '/InterestsScreen': (context) => const InterestsScreen(), // Third screen
+        '/': (context) => const SplashScreen(), // Splash screen (first)
+        '/WelcomeScreen': (context) => const WelcomeScreen(), // Welcome screen (second)
+        '/OnboardingScreen': (context) => const OnboardingScreen(), // Third screen
+        '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(), // Fourth screen
+        '/InterestsScreen': (context) => const InterestsScreen(), // Fifth screen
       },
     );
   }

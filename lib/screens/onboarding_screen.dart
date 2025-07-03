@@ -1,12 +1,10 @@
-// onboarding_screen.dart
 import 'package:flutter/material.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/Illustration_widget.dart';
-import 'interest_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  static const String routeName = '/onboarding';
+  static const String routeName = '/OnboardingScreen';
   const OnboardingScreen({super.key});
 
   @override
@@ -68,36 +66,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _onGetStarted() {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const InterestsScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(1.0, 0.0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeInOut,
-            )),
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 300),
-      ),
-    );
+    Navigator.pushReplacementNamed(context, '/FourthOnboardingScreen');
   }
 
   void _onSkipPressed() {
-    debugPrint('Skip pressed');
-    _onGetStarted(); // For now, skip goes to interests screen
+    Navigator.pushReplacementNamed(context, '/InterestsScreen');
   }
 
   void _onBackPressed() {
-    debugPrint('Back pressed');
-    Navigator.maybePop(context);
+    Navigator.pushReplacementNamed(context, '/WelcomeScreen');
   }
 
   @override
