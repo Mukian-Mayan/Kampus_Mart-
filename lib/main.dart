@@ -8,6 +8,7 @@ import 'screens/onboarding_screen1.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'Theme/app_theme.dart';
+import 'screens/login_or_register_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +38,9 @@ class MyApp extends StatelessWidget {
         '/WelcomeScreen': (context) => const WelcomeScreen(), // Welcome screen (second)
         '/OnboardingScreen': (context) => const OnboardingScreen(), // Third screen
         '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(), // Fourth screen
-        '/InterestsScreen': (context) => const InterestsScreen(), // Fifth screen
+        '/InterestsScreen': (context) => const InterestsScreen(), 
+        '/Signup': (context) => const LoginOrRegisterPage (), 
+        
       },
     );
   }

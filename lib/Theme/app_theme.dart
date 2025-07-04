@@ -14,6 +14,10 @@ class AppTheme {
   static const Color deepBlue = Color(0xFF203344);
   static const Color tertiaryOrange = Color(0xFFFFEAA9);
   static const Color paleWhite = Color(0xFFFCFCFC);
+  static const Color taleBlack = Color(0xFF0E0C0A);
+  static const Color deepOrange = Color(0xFFEEAE2A);
+  static const Color lightGreen = Color(0xFF00F710);
+  static const Color coffeeBrown = Color(0xFFC78E57);
 
   // Text Styles
   static const TextStyle titleStyle = TextStyle(

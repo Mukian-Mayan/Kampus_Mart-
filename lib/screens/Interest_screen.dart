@@ -66,11 +66,14 @@ class _InterestsScreenState extends State<InterestsScreen>
 
     debugPrint('Selected interests: $selectedInterests');
     // Navigate to home/dashboard screen
-    Navigator.pushReplacementNamed(context, '/home');
+    Navigator.pushReplacementNamed(
+      context,
+      '/Signup',
+    );
   }
 
   void _onSkipPressed() {
-    Navigator.pushReplacementNamed(context, '/home');
+    Navigator.pushReplacementNamed(context, '/Signup');
   }
 
   void _onBackPressed() {

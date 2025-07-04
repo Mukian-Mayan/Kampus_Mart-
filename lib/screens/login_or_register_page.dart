@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/screens/login_page.dart';
+import 'package:kampusmart2/widgets/my_button1.dart';
+
+class LoginOrRegisterPage extends StatelessWidget {
+  static const String routeName = '/Signup';
+  const LoginOrRegisterPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.tertiaryOrange,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Column(
+                children: [
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset("lib/images/logo.png",),
+                      Image.asset("lib/images/mart.png"),
+                    ],
+                  ),
+                  Image.asset("lib/images/image7.png"),
+                ],
+              ),
+              const SizedBox(height: 17),
+        
+              Text(
+                'Continue as',
+                style: TextStyle(
+                  color: AppTheme.taleBlack,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'TypoGraphica',
+                ),
+              ),
+        
+              //SizedBox(height: 2),
+              MyButton1(
+                pad: 8,
+                text: 'Sign In',
+                height: MediaQuery.of(context).size.height * 0.06,
+                width: MediaQuery.of(context).size.width * 0.75,
+                fontSize: 22,
+                
+                onTap: () => Navigator.push(context,MaterialPageRoute(builder: (context) => LoginPage())),
+              ),
+        
+              //SizedBox(height: 2),
+              MyButton1(
+                pad: 8,
+                text: 'Sign Up',
+                height: MediaQuery.of(context).size.height * 0.06,
+                width: MediaQuery.of(context).size.width * 0.75,
+                fontSize: 22,
+                onTap: () {},
+              ),
+        
+              //SizedBox(height: 2),
+              MyButton1(
+                pad: 8,
+                text: 'Guest',
+                height: MediaQuery.of(context).size.height * 0.06,
+                width: MediaQuery.of(context).size.width * 0.75,
+                fontSize: 22,
+                onTap: () {},
+              ),
+        
+              
+              Expanded(child: Image.asset('lib/images/image6.png',fit: BoxFit.contain,)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
