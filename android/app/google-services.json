@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "260066278496",
+    "project_id": "kampus-mart-ae6e6",
+    "storage_bucket": "kampus-mart-ae6e6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:260066278496:android:1999510a2e892e488b1705",
+        "android_client_info": {
+          "package_name": "com.example.kampus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "260066278496-h2soeooke6itaqfiflltukveomnvqhg9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATRt2yLh37E3oAYwF03eA8S12b4NmZ72Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "260066278496-h2soeooke6itaqfiflltukveomnvqhg9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "260066278496-196412lo8apouv51cdshajdl847oj1o2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.kampusmart2"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:260066278496:android:0432782fc3a9f5c18b1705",
+        "android_client_info": {
+          "package_name": "com.example.kampusmart2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "260066278496-h2soeooke6itaqfiflltukveomnvqhg9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATRt2yLh37E3oAYwF03eA8S12b4NmZ72Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "260066278496-h2soeooke6itaqfiflltukveomnvqhg9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "260066278496-196412lo8apouv51cdshajdl847oj1o2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.kampusmart2"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
