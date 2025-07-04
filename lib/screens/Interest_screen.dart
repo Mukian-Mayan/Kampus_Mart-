@@ -1,3 +1,5 @@
+// ignore_for_file: file_names
+
 import 'package:flutter/material.dart';
 import '../models/interest_model.dart';
 import '../data/interests_data.dart';

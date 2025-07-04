@@ -1,4 +1,6 @@
 // Illustration_widget.dart
+// ignore_for_file: file_names
+
 import 'package:flutter/material.dart';
 
 class IllustrationWidget extends StatelessWidget {

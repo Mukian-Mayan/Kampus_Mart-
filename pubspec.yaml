@@ -73,7 +73,35 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
+
+  fonts:
+    - family: Birdy Script
+      fonts:
+        - asset: assets/fonts/BirdyScript_DEMO.ttf
+        - asset: assets/fonts/Birdy_DEMO.ttf
+    
+    - family: KG Red Hands
+      fonts:
+        - asset: assets/fonts/KGRedHands.ttf
+        - asset: assets/fonts/KGRedHandsOutline.ttf
+        
+    - family: League Spartan
+      fonts:
+        - asset: assets/fonts/LeagueSpartan.ttf
+    
+    - family: TypoGraphica
+      fonts:
+        - asset: assets/fonts/TypoGraphica_demo.otf
+    
+    - family: TypoGraphica
+      fonts:
+        - asset: assets/fonts/TypoGraphica_demo.otf
+    
+    - family: Keania One
+      fonts:
+        - asset: assets/fonts/Keania_One.ttf
+    
+
   #   - family: Schyler
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf
