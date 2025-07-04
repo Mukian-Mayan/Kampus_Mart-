@@ -14,8 +14,11 @@ class FourthOnboardingScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.primaryOrange,
       appBar: CustomAppBar(
-        onBackPressed: () => Navigator.pushReplacementNamed(context, '/OnboardingScreen'),
-        onSkipPressed: () => Navigator.pushReplacementNamed(context, '/InterestsScreen'),
+        onBackPressed: () =>
+            Navigator.pushReplacementNamed(context, '/OnboardingScreen'),
+        onSkipPressed: () =>
+            Navigator.pushReplacementNamed(context, '/InterestsScreen'),
+        appBarColor: AppTheme.primaryOrange,
       ),
       body: SafeArea(
         child: Padding(
@@ -25,8 +28,8 @@ class FourthOnboardingScreen extends StatelessWidget {
               const Spacer(flex: 2),
               const OnboardingContent(
                 imagePath: 'lib/images/image3.png',
-                description: 
-                  'Our smart system connects you instantly to the best match — saving time and effort.',
+                description:
+                    'Our smart system connects you instantly to the best match — saving time and effort.',
               ),
               const Spacer(flex: 2),
               Padding(

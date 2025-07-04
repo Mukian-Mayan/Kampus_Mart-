@@ -21,33 +21,26 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
-    
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
+
     _startAnimations();
   }
 
@@ -84,6 +77,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       appBar: CustomAppBar(
         onBackPressed: _onBackPressed,
         onSkipPressed: _onSkipPressed,
+        appBarColor: AppTheme.primaryOrange,
       ),
       body: SafeArea(
         child: FadeTransition(
@@ -98,7 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   child: const IllustrationWidget(),
                 ),
               ),
-              
+
               // Content Section
               Expanded(
                 flex: 2,
@@ -130,20 +124,17 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title
-            Text(
-              'Declutter & Discover',
-              style: AppTheme.onboardingTitleStyle,
-            ),
+            Text('Declutter & Discover', style: AppTheme.onboardingTitleStyle),
             const SizedBox(height: 16),
-            
+
             // Subtitle
             const Text(
               'List old items in seconds. Find deals from students like you, verified and close by',
               style: AppTheme.subtitleStyle,
             ),
-            
+
             const Spacer(),
-            
+
             // Action Buttons
             Row(
               children: [
@@ -164,9 +155,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 // Arrow Button
                 Container(
                   decoration: BoxDecoration(

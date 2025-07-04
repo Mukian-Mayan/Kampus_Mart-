@@ -6,17 +6,19 @@ import '../Theme/app_theme.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onBackPressed;
   final VoidCallback onSkipPressed;
+  final Color appBarColor;
 
   const CustomAppBar({
     Key? key,
     required this.onBackPressed,
     required this.onSkipPressed,
+    required this.appBarColor,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppTheme.primaryOrange,
+      backgroundColor: appBarColor,
       elevation: 0,
       leading: Semantics(
         label: 'Go back',
@@ -45,4 +47,3 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
-

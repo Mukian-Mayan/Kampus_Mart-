@@ -11,6 +11,9 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF666666);
   static const Color borderGrey = Color(0xFFBDBDBD);
   static const Color lightGrey = Color(0xFFF5F5F5);
+  static const Color deepBlue = Color(0xFF203344);
+  static const Color tertiaryOrange = Color(0xFFFFEAA9);
+  static const Color paleWhite = Color(0xFFFCFCFC);
 
   // Text Styles
   static const TextStyle titleStyle = TextStyle(
@@ -18,6 +21,7 @@ class AppTheme {
     fontWeight: FontWeight.bold,
     color: textPrimary,
     height: 1.2,
+    fontFamily: 'League Spartan',
   );
 
   static const TextStyle onboardingTitleStyle = TextStyle(
@@ -76,4 +80,3 @@ class AppTheme {
     );
   }
 }
-
