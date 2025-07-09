@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/logo_widget.dart';
 
@@ -64,6 +65,7 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: BottomNavBar(selectedIndex: 1),
       backgroundColor: AppTheme.tertiaryOrange,
       appBar: AppBar(
         title: const LogoWidget(),

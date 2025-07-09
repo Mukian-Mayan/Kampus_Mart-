@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import '../Theme/app_theme.dart';
 
 class MessageScreen extends StatelessWidget {
@@ -14,6 +15,7 @@ class MessageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: BottomNavBar(selectedIndex: 2),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
         title: Text(userName),
