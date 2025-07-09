@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import '../screens/chats_screen.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,9 @@ import 'screens/interest_screen.dart';
 import 'screens/onboarding_screen1.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/sellers_dashboard.dart';
+import 'screens/seller_add_product.dart';
+import 'screens/seller_sales_tracking.dart';
 import 'Theme/app_theme.dart';
 import 'screens/login_or_register_page.dart';
 
@@ -29,7 +33,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Declutter & Discover',
+      title: 'Kampus mart',
       theme: AppTheme.lightTheme,
       initialRoute: '/',
       debugShowCheckedModeBanner: false,
@@ -39,8 +43,11 @@ class MyApp extends StatelessWidget {
         '/OnboardingScreen': (context) => const OnboardingScreen(), // Third screen
         '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(), // Fourth screen
         '/InterestsScreen': (context) => const InterestsScreen(), 
-        '/Signup': (context) => const LoginOrRegisterPage (), 
-        
+        '/Signup': (context) => const LoginOrRegisterPage(), 
+        '/ChatsScreen': (context) => const ChatsScreen(), // Seller dashboard
+        '/SellerDashboard': (context) => const SellerDashboardScreen (), // Seller dashboard
+        '/AddProduct': (context) => const SellerAddProductScreen(), // Add product screen
+        '/SalesTracking': (context) => const SellerSalesTrackingScreen(), // Sales tracking screen
       },
     );
   }
