@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
@@ -34,6 +35,7 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 3,),
       body: Stack(
         children: [
           SingleChildScrollView(

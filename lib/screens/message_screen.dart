@@ -14,6 +14,7 @@ class MessageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
         title: Text(userName),

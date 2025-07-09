@@ -3,10 +3,10 @@
 // ignore_for_file: avoid_print, sized_box_for_whitespace, deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/layout1.dart';
 import '../screens/message_screen.dart'; 
-import '../screens/settings_page.dart'; 
 
 class ChatsScreen extends StatefulWidget {
   static const String routeName = '/ChatsScreen';
@@ -38,7 +38,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
     ),
     ChatMessage(
       id: 3,
-      name: "Joeel",
+      name: "Joel",
       message: "Thanks for the help!",
       time: "12:00 pm",
       unreadCount: 0,
@@ -86,32 +86,13 @@ class _ChatsScreenState extends State<ChatsScreen> {
     }).toList();
   }
 
-  void _navigateToScreen(String screenName) {
-    switch (screenName) {
-      case 'settings':
-        Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SettingsPage()),
-      );
-        break;
-      case 'cart':
-        print('Navigate to Cart');
-        break;
-      case 'home':
-        print('Navigate to Home');
-        break;
-      case 'profile':
-        print('Navigate to Profile');
-        break;
-      default:
-        break;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: BottomNavBar(selectedIndex: 2),
       backgroundColor: AppTheme.deepBlue,
+      
       body: SafeArea(
         child: Column(
           children: [
@@ -335,6 +316,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
         ),
       ),
       // Bottom navigation bar
+      /*
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
@@ -358,11 +340,11 @@ class _ChatsScreenState extends State<ChatsScreen> {
             _buildNavItem(Icons.person, false, 'profile'),
           ],
         ),
-      ),
+      ),*/
     );
   }
 
-  Widget _buildNavItem(IconData icon, bool isSelected, String route) {
+  /*Widget _buildNavItem(IconData icon, bool isSelected, String route) {
     return GestureDetector(
       onTap: () {
         _navigateToScreen(route);
@@ -380,7 +362,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
         ),
       ),
     );
-  }
+  }*/
 }
 
 class ChatMessage {
