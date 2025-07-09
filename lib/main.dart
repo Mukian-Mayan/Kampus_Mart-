@@ -37,10 +37,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kampus mart',
       theme: AppTheme.lightTheme,
-      home: SettingsPage(),
+      //home: SettingsPage(),
       initialRoute: '/',
       debugShowCheckedModeBanner: false,
-      /*
+      
       routes: {
         '/': (context) => const SplashScreen(), // Splash screen (first)
         '/WelcomeScreen': (context) => const WelcomeScreen(), // Welcome screen (second)
@@ -52,7 +52,7 @@ class MyApp extends StatelessWidget {
         '/SellerDashboard': (context) => const SellerDashboardScreen (), // Seller dashboard
         '/AddProduct': (context) => const SellerAddProductScreen(), // Add product screen
         '/SalesTracking': (context) => const SellerSalesTrackingScreen(), // Sales tracking screen
-      },*/
+      },
     );
   }
 }
