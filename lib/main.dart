@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:kampusmart2/screens/settings_page.dart';
 import '../screens/chats_screen.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -14,8 +15,9 @@ import 'screens/seller_sales_tracking.dart';
 import 'Theme/app_theme.dart';
 import 'screens/login_or_register_page.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -35,8 +37,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kampus mart',
       theme: AppTheme.lightTheme,
+      home: SettingsPage(),
       initialRoute: '/',
       debugShowCheckedModeBanner: false,
+      /*
       routes: {
         '/': (context) => const SplashScreen(), // Splash screen (first)
         '/WelcomeScreen': (context) => const WelcomeScreen(), // Welcome screen (second)
@@ -48,7 +52,7 @@ class MyApp extends StatelessWidget {
         '/SellerDashboard': (context) => const SellerDashboardScreen (), // Seller dashboard
         '/AddProduct': (context) => const SellerAddProductScreen(), // Add product screen
         '/SalesTracking': (context) => const SellerSalesTrackingScreen(), // Sales tracking screen
-      },
+      },*/
     );
   }
 }

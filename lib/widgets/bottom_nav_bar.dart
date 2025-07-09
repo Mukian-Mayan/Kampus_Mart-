@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
@@ -55,7 +57,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        color: Theme.of(context).colorScheme.tertiary,
+        color: AppTheme.deepBlue,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 25.0, horizontal: 15),
           child: GNav(
@@ -63,11 +65,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
             backgroundColor: AppTheme.deepBlue,
             textStyle: TextStyle(
               fontFamily: 'TypoGraphica',
-              color: AppTheme.deepOrange,
+              color: AppTheme.paleWhite,
             ),
             gap: 7,
             padding: EdgeInsets.all(8),
-            activeColor:AppTheme.deepOrange,
+            activeColor:AppTheme.paleWhite,
             color: Theme.of(context).colorScheme.secondary,
             tabBackgroundColor: Theme.of(
               context,

@@ -23,13 +23,14 @@ class MyTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       child: Padding(
-        padding: const EdgeInsets.only(left: 25.0, right: 25, top: 10),
+        padding: const EdgeInsets.only(left: 15.0, right: 15, top: 10),
         child: TextField(
+          cursorColor: AppTheme.borderGrey,
           controller: controller,
           obscureText: obscureText,
           maxLength: maxLength,
 
-          style: TextStyle(color: Theme.of(context).colorScheme.primary, fontFamily: 'Birdy Script',),
+          style: TextStyle(color: AppTheme.paleWhite, fontFamily: 'Birdy Script',),
 
           decoration: InputDecoration(
             enabledBorder: OutlineInputBorder(
@@ -43,7 +44,7 @@ class MyTextField extends StatelessWidget {
 
             hintText: hintText,
             hintStyle: TextStyle(
-              color: AppTheme.coffeeBrown, fontFamily: 'League Spartan'
+              color: AppTheme.deepOrange, fontFamily: 'League Spartan'
             ),
             
           ),

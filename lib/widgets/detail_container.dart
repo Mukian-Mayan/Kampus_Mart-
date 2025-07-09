@@ -10,7 +10,7 @@ class DetailContainer extends StatelessWidget {
   final double containerWidth;
   final double containerHeight;
   final IconData? iconData;
-  final Function()? onTap;
+  final VoidCallback? onTap;
 
   const DetailContainer({
     super.key,

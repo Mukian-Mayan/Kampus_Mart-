@@ -18,6 +18,7 @@ class AppTheme {
   static const Color deepOrange = Color(0xFFEEAE2A);
   static const Color lightGreen = Color(0xFF00F710);
   static const Color coffeeBrown = Color(0xFFC78E57);
+  static const Color red = Color.fromARGB(255, 230, 3, 3);
 
   // Text Styles
   static const TextStyle titleStyle = TextStyle(
