@@ -47,7 +47,7 @@ class _GuestWelcomeScreenState extends State<GuestWelcomeScreen> {
   }
 
   void _navigateToHome() {
-    Navigator.pushReplacementNamed(context, '/home');
+    Navigator.pushReplacementNamed(context, '/HomePage');
   }
 
   void _navigateToSignIn() {

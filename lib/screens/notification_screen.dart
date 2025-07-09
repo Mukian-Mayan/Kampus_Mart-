@@ -1,6 +1,10 @@
 // ignore_for_file: deprecated_member_use, use_super_parameters
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/screens/cart_page.dart';
+import 'package:kampusmart2/screens/home_page.dart';
+import 'package:kampusmart2/screens/settings_page.dart';
+import 'package:kampusmart2/screens/user_profile_page.dart';
 import '../screens/Product_management.dart';
 import '../screens/order_management.dart';
 import '../Theme/app_theme.dart';
@@ -69,24 +73,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   final List<NotificationModel> _buyerNotifications = [
-    NotificationModel(
-      id: '1',
-      title: 'Order Confirmed',
-      message: 'Your order #1234 has been confirmed and is being prepared',
-      type: NotificationType.orderConfirmed,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-      orderId: '1234',
-      userRole: UserRole.buyer,
-    ),
-    NotificationModel(
-      id: '2',
-      title: 'Order Ready for Pickup',
-      message: 'Your order #1230 is ready for pickup at Downtown Branch',
-      type: NotificationType.orderReady,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      orderId: '1230',
-      userRole: UserRole.buyer,
-    ),
+    
     NotificationModel(
       id: '3',
       title: 'Items in Cart',
@@ -96,16 +83,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       isRead: true,
       userRole: UserRole.buyer,
     ),
-    NotificationModel(
-      id: '4',
-      title: 'Order Delivered',
-      message: 'Your order #1228 has been delivered successfully',
-      type: NotificationType.orderDelivered,
-      timestamp: DateTime.now().subtract(const Duration(hours: 4)),
-      orderId: '1228',
-      isRead: true,
-      userRole: UserRole.buyer,
-    ),
+    
     NotificationModel(
       id: '5',
       title: 'Payment Successful',
@@ -115,6 +93,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       orderId: '1234',
       userRole: UserRole.buyer,
     ),
+    
+  ];
+
+  final List<NotificationModel> _sellerNotifications = [
     NotificationModel(
       id: '6',
       title: 'Order Being Prepared',
@@ -124,9 +106,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       orderId: '1234',
       userRole: UserRole.buyer,
     ),
-  ];
-
-  final List<NotificationModel> _sellerNotifications = [
     NotificationModel(
       id: '7',
       title: 'New Order Received',
@@ -149,7 +128,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     NotificationModel(
       id: '9',
       title: 'Low Stock Alert',
-      message: 'Coffee beans are running low (5 items remaining)',
+      message: 'Tables are running low (5 items remaining)',
       type: NotificationType.lowStock,
       timestamp: DateTime.now().subtract(const Duration(hours: 1)),
       userRole: UserRole.seller,
@@ -179,6 +158,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       type: NotificationType.payment,
       timestamp: DateTime.now().subtract(const Duration(minutes: 25)),
       orderId: '1232',
+      userRole: UserRole.seller,
+    ),
+    NotificationModel(
+      id: '4',
+      title: 'Order Delivered',
+      message: 'Your order #1228 has been delivered successfully',
+      type: NotificationType.orderDelivered,
+      timestamp: DateTime.now().subtract(const Duration(hours: 4)),
+      orderId: '1228',
+      isRead: true,
       userRole: UserRole.seller,
     ),
   ];
@@ -423,6 +412,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case NotificationType.cartReminder:
       case NotificationType.newOrder:
       case NotificationType.lowStock:
+      case NotificationType.orderConfirmed:
         return true;
       default:
         return false;
@@ -435,7 +425,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     switch (notification.type) {
       case NotificationType.orderReady:
-        buttonText = widget.userRole == UserRole.buyer ? 'Track Order' : 'Mark Ready';
+        buttonText = widget.userRole == UserRole.seller ? 'Track order' : 'Mark Ready';
         onPressed = () => _trackOrder(notification.orderId!);
         break;
       case NotificationType.cartReminder:
@@ -449,6 +439,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case NotificationType.lowStock:
         buttonText = 'Manage Stock';
         onPressed = () => _manageStock();
+        break;
+      case NotificationType.orderConfirmed:
+        buttonText = 'Order confirmed';
+        onPressed = () => _trackOrder(notification.orderId!);
         break;
       default:
         buttonText = 'View';
@@ -533,7 +527,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _handleNotificationTap(NotificationModel notification) {
     setState(() {
       final index = notifications.indexOf(notification);
-      if (widget.userRole == UserRole.buyer) {
+      if (widget.userRole == UserRole.seller) {
         _buyerNotifications[index] = NotificationModel(
           id: notification.id,
           title: notification.title,
@@ -560,17 +554,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     // Handle navigation based on notification type
     switch (notification.type) {
-      case NotificationType.orderConfirmed:
       case NotificationType.orderPreparing:
       case NotificationType.orderReady:
       case NotificationType.orderDelivered:
-      case NotificationType.newOrder:
         _navigateToOrderDetails(notification.orderId!);
         break;
       case NotificationType.cartReminder:
         _viewCart();
         break;
-      case NotificationType.lowStock:
+
       case NotificationType.productApproved:
         _navigateToProductManagement();
         break;
@@ -604,12 +596,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _trackOrder(String orderId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SellerOrderManagementScreen(),
-      ),
-    );
+    _viewCart();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Tracking order #$orderId'),
@@ -619,6 +606,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _viewCart() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CartPage(),
+      ),
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Opening cart'),
@@ -659,6 +652,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   // Navigation methods for bottom navigation bar
   void _navigateToSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsPage(),
+      ),
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Navigating to Settings'),
@@ -668,6 +667,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _navigateToCart() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CartPage(),
+      ),
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Navigating to Cart'),
@@ -677,6 +682,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _navigateToHome() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomePage(),
+      ),
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Navigating to Home'),
@@ -695,6 +706,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _navigateToProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UserProfilePage(),
+      ),
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Navigating to Profile'),

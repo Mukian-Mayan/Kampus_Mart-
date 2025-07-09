@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 
 class HomePage extends StatelessWidget {
+  static const String routeName ='/HomePage';
   const HomePage({super.key});
 
   @override

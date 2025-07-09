@@ -1,5 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:kampusmart2/screens/settings_page.dart';
+import 'package:kampusmart2/screens/cart_page.dart';
 import '../screens/chats_screen.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
       
       routes: {
         '/': (context) => const SplashScreen(), // Splash screen (first)
-        '/WelcomeScreen': (context) => const WelcomeScreen(), // Welcome screen (second)
+        '/Cart': (context) => const CartPage(), // Welcome screen (second)
         '/OnboardingScreen': (context) => const OnboardingScreen(), // Third screen
         '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(), // Fourth screen
         '/InterestsScreen': (context) => const InterestsScreen(), 

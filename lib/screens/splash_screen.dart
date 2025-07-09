@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen>
     
     Future.delayed(const Duration(seconds: 6), () {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/WelcomeScreen');
+        Navigator.of(context).pushReplacementNamed('/Cart');
       }
     });
   }
