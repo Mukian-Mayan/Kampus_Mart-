@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
       
       routes: {
         '/': (context) => const SplashScreen(), // Splash screen (first)
-        '/Cart': (context) => const CartPage(), // Welcome screen (second)
+        '/WelcomeScreen': (context) => const WelcomeScreen(), // Welcome screen (second)
         '/OnboardingScreen': (context) => const OnboardingScreen(), // Third screen
         '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(), // Fourth screen
         '/InterestsScreen': (context) => const InterestsScreen(), 
