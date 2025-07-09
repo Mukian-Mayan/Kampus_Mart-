@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/Product_management.dart';
+import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/screens/order_management.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/profile_pic_widget.dart';
@@ -42,9 +43,13 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: AppTheme.textPrimary),
-            onPressed: () {
-              // Show notifications
-            },
+            onPressed: () =>Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NotificationsScreen(userRole: UserRole.seller),
+              ),
+            ),
+            
           ),
         ],
       ),
