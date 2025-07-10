@@ -91,7 +91,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomNavBar(selectedIndex: 2),
-      backgroundColor: AppTheme.deepBlue,
+      backgroundColor: AppTheme.tertiaryOrange,
       
       body: SafeArea(
         child: Column(
@@ -174,7 +174,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
               flex: 3,
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  //color: Colors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
@@ -204,9 +204,9 @@ class _ChatsScreenState extends State<ChatsScreen> {
                           });
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppTheme.tertiaryOrange,
+                            color: AppTheme.paleWhite.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(15),
                             border: chat.hasNewMessage
                                 ? Border.all(color: AppTheme.primaryOrange, width: 2)
