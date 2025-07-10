@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:kampusmart2/screens/chats_screen.dart';
 import 'package:kampusmart2/screens/home_page.dart';
 import 'package:kampusmart2/screens/message_screen.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
