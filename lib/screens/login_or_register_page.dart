@@ -49,7 +49,9 @@ class LoginOrRegisterPage extends StatelessWidget {
                 width: MediaQuery.of(context).size.width * 0.75,
                 fontSize: 22,
                 
-                onTap: () => Navigator.push(context,MaterialPageRoute(builder: (context) => LoginPage())),
+                onTap: () => Navigator.push(context,MaterialPageRoute(builder: (context) => LoginPage(),
+                ),
+               ),
               ),
         
               //SizedBox(height: 2),

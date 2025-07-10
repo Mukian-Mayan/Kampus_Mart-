@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/screens/cart_page.dart';
 import 'package:kampusmart2/screens/chats_screen.dart';
 import 'package:kampusmart2/screens/home_page.dart';
-import 'package:kampusmart2/screens/order_management.dart';
 import 'package:kampusmart2/screens/settings_page.dart';
 import 'package:kampusmart2/screens/user_profile_page.dart';
 
@@ -23,33 +23,31 @@ class _BottomNavBarState extends State<BottomNavBar> {
       case 0:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => HomePage(),),
         );
         break;
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => SellerOrderManagementScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => CartPage(),),
         );
         break;
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ChatsScreen()),
+          MaterialPageRoute(builder: (context) =>ChatsScreen(),),
         );
         break;
       case 3:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => SettingsPage()),
+          MaterialPageRoute(builder: (context) => SettingsPage(),),
         );
         break;
       case 4:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => UserProfilePage()),
+          MaterialPageRoute(builder: (context) => UserProfilePage(),),
         );
         break;
     }
