@@ -1,9 +1,10 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/home_page.dart';
 import 'package:kampusmart2/screens/register_page.dart';
+import 'package:kampusmart2/services/auth_services.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/my_square_tile.dart';
@@ -20,75 +21,73 @@ class LoginPage extends StatelessWidget {
 
   LoginPage({super.key});
 
-void signInUser(BuildContext context) async {
-  // Show loading indicator
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) {
-      return const Center(
-        child: CircularProgressIndicator(),
+  void signInUser(BuildContext context) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      // Attempt sign-in
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: pwController.text,
       );
-    },
-  );
 
-  try {
-    // Attempt sign-in
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: emailController.text.trim(),
-      password: pwController.text,
-    );
+      // Close the loading indicator
+      Navigator.of(context).pop();
 
-    // Close the loading indicator
-    Navigator.of(context).pop();
+      // Navigate to home page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      // Close the loading indicator FIRST
+      Navigator.of(context).pop();
 
-    // Navigate to home page
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage(),),
-    );
-  } on FirebaseAuthException catch (e) {
-    // Close the loading indicator FIRST
-    Navigator.of(context).pop();
+      String errorMessage;
 
-    String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'No user found with this email.';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Incorrect password entered.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'The email format is incorrect.';
+          break;
+        case 'user-disabled':
+          errorMessage = 'Your account has been disabled.';
+          break;
+        case 'network-request-failed':
+          errorMessage = 'Network error. Check your internet.';
+          break;
+        case 'too-many-requests':
+          errorMessage = 'Too many attempts. Try again later.';
+          break;
+        case 'invalid-credential':
+          errorMessage = 'Invalid login credentials.';
+          break;
+        default:
+          errorMessage = 'An unknown error occurred. Please try again.';
+      }
 
-switch (e.code) {
-  case 'user-not-found':
-    errorMessage = 'No user found with this email.';
-    break;
-  case 'wrong-password':
-    errorMessage = 'Incorrect password entered.';
-    break;
-  case 'invalid-email':
-    errorMessage = 'The email format is incorrect.';
-    break;
-  case 'user-disabled':
-    errorMessage = 'Your account has been disabled.';
-    break;
-  case 'network-request-failed':
-    errorMessage = 'Network error. Check your internet.';
-    break;
-  case 'too-many-requests':
-    errorMessage = 'Too many attempts. Try again later.';
-    break;
-  case 'invalid-credential':
-    errorMessage = 'Invalid login credentials.';
-    break;
-  default:
-    errorMessage = 'An unknown error occurred. Please try again.';
-}
-
-    // Show snackbar (correctly)
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(errorMessage),
-        backgroundColor: Colors.red.shade400,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+      // Show snackbar (correctly)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -119,30 +118,23 @@ switch (e.code) {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  /* Row(
-                    children: [
-                      Expanded(
-                        child: MyTextField(
-                          maxLength: null,
-                          focusedColor: AppTheme.deepOrange,
-                          enabledColor: AppTheme.taleBlack,
-                          hintText: 'enter your first name',
-                          obscureText: false,
-                          controller: firstNameController,
+                  const SizedBox(height: 19),
+                  Text(
+                    'Welcome Back, We missed you',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontFamily: 'Birdy Script',
+                      color: AppTheme.paleWhite,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(2, 2),
+                          blurRadius: 4.0,
+                          color: AppTheme.taleBlack.withOpacity(0.7),
                         ),
-                      ),
-                      Expanded(
-                        child: MyTextField(
-                          maxLength: null,
-                          focusedColor: AppTheme.deepOrange,
-                          enabledColor: AppTheme.taleBlack,
-                          hintText: 'enter Your Second Name',
-                          obscureText: false,
-                          controller: secondNameController,
-                        ),
-                      ),
-                    ],
-                  ), */
+                      ],
+                    ),
+                  ),
+
                   MyTextField(
                     maxLength: null,
                     focusedColor: AppTheme.deepOrange,
@@ -198,7 +190,7 @@ switch (e.code) {
                         ),
                       ),
                     ],
-                  ), 
+                  ),
 
                   //const SizedBox(height: 10,),
                   Padding(
@@ -235,7 +227,8 @@ switch (e.code) {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       MySquareTile(
-                        onTap: () {}, // NOT YET FILLED
+                        onTap: () =>
+                            AuthService().signInWithGoogle(), // NOT YET FILLED
                         imagePath: 'lib/images/Icon-google.png',
                       ),
                       SizedBox(width: MediaQuery.of(context).size.width * 0.1),

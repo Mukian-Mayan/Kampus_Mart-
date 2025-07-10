@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kampus mart',
       theme: AppTheme.lightTheme,
-      //home: ChatsScreen(),
+      //home: RegisterPage(),
       initialRoute: '/',
       debugShowCheckedModeBanner: false,
       
