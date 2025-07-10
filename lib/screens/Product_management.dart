@@ -3,6 +3,7 @@
 // ignore_for_file: deprecated_member_use, file_names
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/screens/seller_add_product.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/logo_widget.dart';
@@ -97,7 +98,12 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: AppTheme.textPrimary),
-            onPressed: () {},
+            onPressed: () =>Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NotificationsScreen(userRole: UserRole.seller),
+              ),
+              ),
           ),
           IconButton(
             icon: const Icon(Icons.add, color: AppTheme.textPrimary),
