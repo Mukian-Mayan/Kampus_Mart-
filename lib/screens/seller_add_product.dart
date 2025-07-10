@@ -1,6 +1,4 @@
-
-
-// ignore_for_file: prefer_final_fields, deprecated_member_use, unnecessary_nullable_for_final_variable_declarations
+// ignore_for_file: prefer_final_fields, deprecated_member_use, unnecessary_nullable_for_final_variable_declarations, unused_local_variable
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -569,159 +567,181 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       ),
       const SizedBox(height: 30),
       
-      // Image Upload Area
+      // Image Upload Area - Fixed overflow issues
       Container(
         width: double.infinity,
-        height: 200,
+        constraints: const BoxConstraints(minHeight: 200),
         decoration: BoxDecoration(
           color: AppTheme.lightGrey,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppTheme.borderGrey, style: BorderStyle.solid, width: 2),
         ),
         child: _productImages.isEmpty
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.cloud_upload,
-                    size: 60,
-                    color: AppTheme.textSecondary,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Upload Product Images',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Add up to 5 images to show your product',
-                    style: TextStyle(
-                      fontSize: 14,
+            ? Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.cloud_upload,
+                      size: 60,
                       color: AppTheme.textSecondary,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _pickImage,
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('Single Image'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.deepOrange,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton.icon(
-                        onPressed: _pickMultipleImages,
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('Multiple'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.selectedBlue,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              )
-            : GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: _productImages.length + (_productImages.length < 5 ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == _productImages.length) {
-                    return GestureDetector(
-                      onTap: _pickImage,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.chipBackground,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.borderGrey),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add,
-                              size: 24,
-                              color: AppTheme.textSecondary,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Add More',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      image: DecorationImage(
-                        image: FileImage(_productImages[index]),
-                        fit: BoxFit.cover,
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Upload Product Images',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
                       ),
                     ),
-                    child: Stack(
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Add up to 5 images to show your product',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      alignment: WrapAlignment.center,
                       children: [
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: GestureDetector(
-                            onTap: () => _removeImage(index),
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                size: 16,
-                                color: Colors.white,
-                              ),
+                        ElevatedButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.photo_library, size: 18),
+                          label: const Text('Single Image'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.deepOrange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _pickMultipleImages,
+                          icon: const Icon(Icons.photo_library_outlined, size: 18),
+                          label: const Text('Multiple'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.selectedBlue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                         ),
                       ],
                     ),
-                  );
-                },
+                  ],
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Calculate grid based on available width
+                    int crossAxisCount = constraints.maxWidth < 400 ? 2 : 3;
+                    double itemWidth = (constraints.maxWidth - (crossAxisCount - 1) * 12) / crossAxisCount;
+                    
+                    return Column(
+                      children: [
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.0,
+                          ),
+                          itemCount: _productImages.length + (_productImages.length < 5 ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == _productImages.length) {
+                              return GestureDetector(
+                                onTap: _pickImage,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.chipBackground,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: AppTheme.borderGrey),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add,
+                                        size: 24,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Add More',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: AppTheme.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+                            return Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                image: DecorationImage(
+                                  image: FileImage(_productImages[index]),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () => _removeImage(index),
+                                      child: Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          '${_productImages.length} image${_productImages.length > 1 ? 's' : ''} selected',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
       ),
-      if (_productImages.isNotEmpty) ...[
-        const SizedBox(height: 16),
-        Text(
-          '${_productImages.length} image${_productImages.length > 1 ? 's' : ''} selected',
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppTheme.textSecondary,
-          ),
-        ),
-      ],
     ];
   }
 
@@ -770,31 +790,22 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                 color: AppTheme.textPrimary,
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              'Category: ${_selectedCategory ?? 'Not selected'}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
+            const SizedBox(height: 12),
+            _buildReviewRow('Category', _selectedCategory ?? 'Not selected'),
+            const SizedBox(height: 8),
+            _buildReviewRow('Price', 'UGX ${_priceController.text.isNotEmpty ? _priceController.text : '0'}'),
+            const SizedBox(height: 8),
+            _buildReviewRow('Stock', '${_stockController.text.isNotEmpty ? _stockController.text : '0'} units'),
+            const SizedBox(height: 12),
+            const Text(
+              'Description:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              'Price: UGX ${_priceController.text.isNotEmpty ? _priceController.text : '0'}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Stock: ${_stockController.text.isNotEmpty ? _stockController.text : '0'} units',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               _descriptionController.text.isNotEmpty ? _descriptionController.text : 'No description',
               style: const TextStyle(
@@ -803,18 +814,18 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            Text(
+            const Text(
               'Images:',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textPrimary,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             _productImages.isNotEmpty
                 ? SizedBox(
-                    height: 100,
+                    height: 80,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _productImages.length,
@@ -824,8 +835,8 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                           borderRadius: BorderRadius.circular(10),
                           child: Image.file(
                             _productImages[index],
-                            width: 100,
-                            height: 100,
+                            width: 80,
+                            height: 80,
                             fit: BoxFit.cover,
                           ),
                         );
@@ -843,5 +854,33 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
         ),
       ),
     ];
+  }
+
+  Widget _buildReviewRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            '$label:',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

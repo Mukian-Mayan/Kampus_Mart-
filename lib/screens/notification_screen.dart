@@ -1,13 +1,11 @@
-// ignore_for_file: deprecated_member_use, use_super_parameters
+// ignore_for_file: deprecated_member_use, use_super_parameters, prefer_final_fields
 
 import 'package:flutter/material.dart';
-import 'package:kampusmart2/screens/cart_page.dart';
-import 'package:kampusmart2/screens/home_page.dart';
-import 'package:kampusmart2/screens/settings_page.dart';
-import 'package:kampusmart2/screens/user_profile_page.dart';
 import '../screens/Product_management.dart';
 import '../screens/order_management.dart';
 import '../Theme/app_theme.dart';
+import '../widgets/bottom_nav_bar.dart';
+import '../screens/cart_page.dart';
 
 class NotificationModel {
   final String id;
@@ -29,6 +27,28 @@ class NotificationModel {
     this.isRead = false,
     this.orderId,
   });
+
+  NotificationModel copyWith({
+    String? id,
+    String? title,
+    String? message,
+    NotificationType? type,
+    DateTime? timestamp,
+    bool? isRead,
+    String? orderId,
+    UserRole? userRole,
+  }) {
+    return NotificationModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      message: message ?? this.message,
+      type: type ?? this.type,
+      timestamp: timestamp ?? this.timestamp,
+      isRead: isRead ?? this.isRead,
+      orderId: orderId ?? this.orderId,
+      userRole: userRole ?? this.userRole,
+    );
+  }
 }
 
 enum NotificationType {
@@ -66,14 +86,20 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   List<NotificationModel> get notifications {
     if (widget.userRole == UserRole.buyer) {
-      return _buyerNotifications;
+      return _buyerNotifications.where((n) => 
+        n.type == NotificationType.payment || 
+        n.type == NotificationType.cartReminder
+      ).toList();
     } else {
-      return _sellerNotifications;
+      return _sellerNotifications.where((n) =>
+        n.type != NotificationType.payment &&
+        n.type != NotificationType.cartReminder
+      ).toList();
     }
   }
 
-  final List<NotificationModel> _buyerNotifications = [
-    
+  // BUYER NOTIFICATIONS - Only payment and cart related
+  List<NotificationModel> _buyerNotifications = [
     NotificationModel(
       id: '3',
       title: 'Items in Cart',
@@ -83,7 +109,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       isRead: true,
       userRole: UserRole.buyer,
     ),
-    
     NotificationModel(
       id: '5',
       title: 'Payment Successful',
@@ -93,18 +118,46 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       orderId: '1234',
       userRole: UserRole.buyer,
     ),
-    
   ];
 
-  final List<NotificationModel> _sellerNotifications = [
+  // SELLER NOTIFICATIONS - Business related
+  List<NotificationModel> _sellerNotifications = [
     NotificationModel(
-      id: '6',
+      id: '1',
+      title: 'Order Confirmed',
+      message: 'Order #1234 has been confirmed and is being prepared',
+      type: NotificationType.orderConfirmed,
+      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+      orderId: '1234',
+      userRole: UserRole.seller,
+    ),
+    NotificationModel(
+      id: '2',
       title: 'Order Being Prepared',
-      message: 'Your order #1234 is now being prepared by our baristas',
+      message: 'Order #1234 is now being prepared',
       type: NotificationType.orderPreparing,
       timestamp: DateTime.now().subtract(const Duration(minutes: 8)),
       orderId: '1234',
-      userRole: UserRole.buyer,
+      userRole: UserRole.seller,
+    ),
+    NotificationModel(
+      id: '4',
+      title: 'Order Ready',
+      message: 'Order #1234 is ready for pickup',
+      type: NotificationType.orderReady,
+      timestamp: DateTime.now().subtract(const Duration(minutes: 12)),
+      orderId: '1234',
+      userRole: UserRole.seller,
+    ),
+    NotificationModel(
+      id: '6',
+      title: 'Order Delivered',
+      message: 'Order #1228 has been delivered successfully',
+      type: NotificationType.orderDelivered,
+      timestamp: DateTime.now().subtract(const Duration(hours: 4)),
+      orderId: '1228',
+      isRead: true,
+      userRole: UserRole.seller,
     ),
     NotificationModel(
       id: '7',
@@ -141,34 +194,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       timestamp: DateTime.now().subtract(const Duration(hours: 3)),
       userRole: UserRole.seller,
       isRead: true,
-    ),
-    NotificationModel(
-      id: '11',
-      title: 'Order Ready',
-      message: 'Order #1234 is ready for customer pickup',
-      type: NotificationType.orderReady,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 12)),
-      orderId: '1234',
-      userRole: UserRole.seller,
-    ),
-    NotificationModel(
-      id: '12',
-      title: 'Payment Received',
-      message: 'Payment of UGX 28,000 received for order #1232',
-      type: NotificationType.payment,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 25)),
-      orderId: '1232',
-      userRole: UserRole.seller,
-    ),
-    NotificationModel(
-      id: '4',
-      title: 'Order Delivered',
-      message: 'Your order #1228 has been delivered successfully',
-      type: NotificationType.orderDelivered,
-      timestamp: DateTime.now().subtract(const Duration(hours: 4)),
-      orderId: '1228',
-      isRead: true,
-      userRole: UserRole.seller,
     ),
   ];
 
@@ -208,7 +233,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 return _buildNotificationItem(notification);
               },
             ),
-      bottomNavigationBar: _buildBottomNavigation(),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: -1, // No specific tab selected for notifications
+      ),
     );
   }
 
@@ -230,7 +257,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           const SizedBox(height: 8),
           Text(
             widget.userRole == UserRole.buyer
-                ? 'You\'ll see order updates and promotions here'
+                ? 'You\'ll see payment updates and cart reminders here'
                 : 'You\'ll see new orders and business updates here',
             style: AppTheme.subtitleStyle.copyWith(color: Colors.white70),
             textAlign: TextAlign.center,
@@ -425,7 +452,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     switch (notification.type) {
       case NotificationType.orderReady:
-        buttonText = widget.userRole == UserRole.seller ? 'Track order' : 'Mark Ready';
+        buttonText = widget.userRole == UserRole.seller ? 'View Order' : 'Track Order';
         onPressed = () => _trackOrder(notification.orderId!);
         break;
       case NotificationType.cartReminder:
@@ -441,7 +468,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         onPressed = () => _manageStock();
         break;
       case NotificationType.orderConfirmed:
-        buttonText = 'Order confirmed';
+        buttonText = 'Track Order';
         onPressed = () => _trackOrder(notification.orderId!);
         break;
       default:
@@ -466,47 +493,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildBottomNavigation() {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: AppTheme.deepBlue,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(Icons.settings, false, _navigateToSettings),
-          _buildNavItem(Icons.shopping_cart, false, _navigateToCart),
-          _buildNavItem(Icons.home, false, _navigateToHome),
-          _buildNavItem(Icons.receipt, false, _navigateToOrders),
-          _buildNavItem(Icons.person, false, _navigateToProfile),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, bool isActive, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isActive ? AppTheme.primaryOrange : Colors.transparent,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 24,
-        ),
-      ),
-    );
-  }
-
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
@@ -525,65 +511,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _handleNotificationTap(NotificationModel notification) {
+    // Mark notification as read
     setState(() {
       final index = notifications.indexOf(notification);
-      if (widget.userRole == UserRole.seller) {
-        _buyerNotifications[index] = NotificationModel(
-          id: notification.id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          timestamp: notification.timestamp,
-          isRead: true,
-          orderId: notification.orderId,
-          userRole: notification.userRole,
-        );
-      } else {
-        _sellerNotifications[index] = NotificationModel(
-          id: notification.id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          timestamp: notification.timestamp,
-          isRead: true,
-          orderId: notification.orderId,
-          userRole: notification.userRole,
-        );
+      if (index != -1) {
+        if (widget.userRole == UserRole.buyer) {
+          _buyerNotifications[index] = notification.copyWith(isRead: true);
+        } else {
+          _sellerNotifications[index] = notification.copyWith(isRead: true);
+        }
       }
     });
 
     // Handle navigation based on notification type
     switch (notification.type) {
+      case NotificationType.orderConfirmed:
       case NotificationType.orderPreparing:
       case NotificationType.orderReady:
       case NotificationType.orderDelivered:
-        _navigateToOrderDetails(notification.orderId!);
+        _trackOrder(notification.orderId!);
         break;
       case NotificationType.cartReminder:
         _viewCart();
         break;
-
+      case NotificationType.newOrder:
+        _viewOrder(notification.orderId!);
+        break;
       case NotificationType.productApproved:
         _navigateToProductManagement();
+        break;
+      case NotificationType.lowStock:
+        _manageStock();
         break;
       default:
         break;
     }
-  }
-
-  void _navigateToOrderDetails(String orderId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SellerOrderManagementScreen(),
-      ),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Navigating to order #$orderId details'),
-        backgroundColor: AppTheme.deepBlue,
-      ),
-    );
   }
 
   void _navigateToProductManagement() {
@@ -596,7 +558,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _trackOrder(String orderId) {
-    _viewCart();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SellerOrderManagementScreen(),
+      ),
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Tracking order #$orderId'),
@@ -610,12 +577,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => CartPage(),
-      ),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening cart'),
-        backgroundColor: AppTheme.deepBlue,
       ),
     );
   }
@@ -640,82 +601,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => SellerProductManagementScreen(),
-      ),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Managing stock'),
-        backgroundColor: AppTheme.deepBlue,
-      ),
-    );
-  }
-
-  // Navigation methods for bottom navigation bar
-  void _navigateToSettings() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SettingsPage(),
-      ),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Navigating to Settings'),
-        backgroundColor: AppTheme.deepBlue,
-      ),
-    );
-  }
-
-  void _navigateToCart() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CartPage(),
-      ),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Navigating to Cart'),
-        backgroundColor: AppTheme.deepBlue,
-      ),
-    );
-  }
-
-  void _navigateToHome() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HomePage(),
-      ),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Navigating to Home'),
-        backgroundColor: AppTheme.deepBlue,
-      ),
-    );
-  }
-
-  void _navigateToOrders() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Navigating to Orders'),
-        backgroundColor: AppTheme.deepBlue,
-      ),
-    );
-  }
-
-  void _navigateToProfile() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => UserProfilePage(),
-      ),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Navigating to Profile'),
-        backgroundColor: AppTheme.deepBlue,
       ),
     );
   }

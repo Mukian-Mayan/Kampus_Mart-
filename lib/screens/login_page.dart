@@ -45,7 +45,7 @@ void signInUser(BuildContext context) async {
     // Navigate to home page
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomePage()),
+      MaterialPageRoute(builder: (context) => HomePage(),),
     );
   } on FirebaseAuthException catch (e) {
     // Close the loading indicator FIRST
