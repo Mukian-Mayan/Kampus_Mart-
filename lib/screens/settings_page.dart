@@ -35,87 +35,94 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(selectedIndex: 3,),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 3),
       body: Stack(
         children: [
           SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 120),
-                Layout1(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        DetailContainer(
-                          onTap: () {},
-                          iconData: Icons.person,
-                          fontColor: AppTheme.paleWhite,
-                          fontSize: 20,
-                          text: 'User name',
-                          containerHeight:
-                              MediaQuery.of(context).size.height * 0.065,
-                          containerWidth:
-                              MediaQuery.of(context).size.height * 0.7,
-                        ),
-                        DetailContainer(
-                          onTap: () {},
-                          iconData: Icons.credit_card_rounded,
-                          fontColor: AppTheme.paleWhite,
-                          fontSize: 20,
-                          text: 'Payment Method',
-                          containerHeight:
-                              MediaQuery.of(context).size.height * 0.065,
-                          containerWidth:
-                              MediaQuery.of(context).size.height * 0.7,
-                        ),
-                        DetailContainer(
-                          onTap: () {},
-                          iconData: Icons.light_mode,
-                          fontColor: AppTheme.paleWhite,
-                          fontSize: 20,
-                          text: 'mode',
-                          containerHeight:
-                              MediaQuery.of(context).size.height * 0.065,
-                          containerWidth:
-                              MediaQuery.of(context).size.height * 0.7,
-                        ),
-                        DetailContainer(
-                          onTap: () {},
-                          iconData: Icons.support_agent,
-                          fontColor: AppTheme.paleWhite,
-                          fontSize: 20,
-                          text: 'Help And Support',
-                          containerHeight:
-                              MediaQuery.of(context).size.height * 0.065,
-                          containerWidth:
-                              MediaQuery.of(context).size.height * 0.7,
-                        ),
-                        DetailContainer(
-                          onTap: () {},
-                          iconData: Icons.logout_rounded,
-                          fontColor: AppTheme.paleWhite,
-                          fontSize: 20,
-                          text: 'Logout',
-                          containerHeight:
-                              MediaQuery.of(context).size.height * 0.065,
-                          containerWidth:
-                              MediaQuery.of(context).size.height * 0.7,
-                        ),
-                      ],
+            child: SafeArea(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center( child: ProfilePicWidget(radius: 100, height: 200, width: 200),),
+                  const SizedBox(height: 40),
+                  Layout1(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          DetailContainer(
+                            onTap: () {},
+                            iconData: Icons.person,
+                            fontColor: AppTheme.paleWhite,
+                            fontSize: 20,
+                            text: 'User name',
+                            //containerHeight: MediaQuery.of(context).size.height * 0.0001,
+                            //containerHeight: 20,MediaQuery.of(context).size.height * 0.065,
+                            containerHeight: MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.5,
+                          ),
+              
+                 
+                          DetailContainer(
+                            onTap: () {},
+                            iconData: Icons.credit_card_rounded,
+                            fontColor: AppTheme.paleWhite,
+                            fontSize: 20,
+                            text: 'Payment Method',
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
+                          ),
+                          DetailContainer(
+                            onTap: () {},
+                            iconData: Icons.light_mode,
+                            fontColor: AppTheme.paleWhite,
+                            fontSize: 20,
+                            text: 'mode',
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
+                          ),
+                          DetailContainer(
+                            onTap: () {},
+                            iconData: Icons.support_agent,
+                            fontColor: AppTheme.paleWhite,
+                            fontSize: 20,
+                            text: 'Help And Support',
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
+                          ),
+                          DetailContainer(
+                            onTap: () {},
+                            iconData: Icons.logout_rounded,
+                            fontColor: AppTheme.paleWhite,
+                            fontSize: 20,
+                            text: 'Logout',
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
+                          ),
+                          
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
-          Positioned(
+          /*Positioned(
             top: 20,
-            left: MediaQuery.of(context).size.width / 2 - 100,
+            left: MediaQuery.of(context).size.width/ 2 - 100,
             child: ProfilePicWidget(radius: 100, height: 200, width: 200),
-          ),
+          ),*/
         ],
       ),
     );

@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/screens/chats_screen.dart';
 import 'package:kampusmart2/screens/home_page.dart';
-import 'package:kampusmart2/screens/message_screen.dart';
 import 'package:kampusmart2/screens/order_management.dart';
 import 'package:kampusmart2/screens/settings_page.dart';
 import 'package:kampusmart2/screens/user_profile_page.dart';
@@ -29,13 +29,15 @@ class _BottomNavBarState extends State<BottomNavBar> {
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => SellerOrderManagementScreen()),
+          MaterialPageRoute(
+            builder: (context) => SellerOrderManagementScreen(),
+          ),
         );
         break;
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MessageScreen(userName: 'userProfile',)),
+          MaterialPageRoute(builder: (context) => ChatsScreen()),
         );
         break;
       case 3:
@@ -57,7 +59,15 @@ class _BottomNavBarState extends State<BottomNavBar> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        color: AppTheme.deepBlue,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(40),
+            topRight: Radius.circular(40),
+          ),
+          color: AppTheme.deepBlue,
+          boxShadow: [BoxShadow(color: AppTheme.taleBlack, blurRadius: 5,offset:Offset(2, 2),spreadRadius: 2,)]
+        ),
+
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 25.0, horizontal: 15),
           child: GNav(
@@ -69,7 +79,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
             ),
             gap: 7,
             padding: EdgeInsets.all(8),
-            activeColor:AppTheme.paleWhite,
+            activeColor: AppTheme.paleWhite,
             color: Theme.of(context).colorScheme.secondary,
             tabBackgroundColor: Theme.of(
               context,

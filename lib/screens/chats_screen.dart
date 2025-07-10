@@ -7,7 +7,7 @@ import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/layout1.dart';
 import '../screens/message_screen.dart'; 
-import '../screens/settings_page.dart'; 
+//import '../screens/settings_page.dart'; 
 
 class ChatsScreen extends StatefulWidget {
   static const String routeName = '/ChatsScreen';
@@ -87,7 +87,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
     }).toList();
   }
 
-  void _navigateToScreen(String screenName) {
+  /*void _navigateToScreen(String screenName) {
     switch (screenName) {
       case 'settings':
         Navigator.push(
@@ -107,13 +107,13 @@ class _ChatsScreenState extends State<ChatsScreen> {
       default:
         break;
     }
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomNavBar(selectedIndex: 2),
-      backgroundColor: AppTheme.deepBlue,
+      backgroundColor: AppTheme.tertiaryOrange,
       
       body: SafeArea(
         child: Column(
@@ -196,7 +196,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
               flex: 3,
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  //color: Colors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
@@ -226,9 +226,9 @@ class _ChatsScreenState extends State<ChatsScreen> {
                           });
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppTheme.tertiaryOrange,
+                            color: AppTheme.paleWhite.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(15),
                             border: chat.hasNewMessage
                                 ? Border.all(color: AppTheme.primaryOrange, width: 2)
