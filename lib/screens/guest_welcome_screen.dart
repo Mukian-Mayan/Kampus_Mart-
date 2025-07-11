@@ -17,6 +17,7 @@ class _GuestWelcomeScreenState extends State<GuestWelcomeScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
   DateTime? _selectedDate;
+  bool _isButtonEnabled = false;
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -43,21 +44,44 @@ class _GuestWelcomeScreenState extends State<GuestWelcomeScreen> {
       setState(() {
         _selectedDate = picked;
         _dobController.text = DateFormat('dd/MM/yyyy').format(picked);
+        _checkFields();
       });
     }
   }
 
+  void _checkFields() {
+    setState(() {
+      _isButtonEnabled = _nameController.text.isNotEmpty && _dobController.text.isNotEmpty;
+    });
+  }
+
   void _navigateToHome() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HomePage(),
-      ),
-    );
+    if (_isButtonEnabled) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(),
+        ),
+      );
+    }
   }
 
   void _navigateToSignIn() {
     Navigator.pushReplacementNamed(context, '/Signup');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_checkFields);
+    _dobController.addListener(_checkFields);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _dobController.dispose();
+    super.dispose();
   }
 
   @override
@@ -125,9 +149,11 @@ class _GuestWelcomeScreenState extends State<GuestWelcomeScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: _navigateToHome,
+                                onPressed: _isButtonEnabled ? _navigateToHome : null,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFD09B5A),
+                                  backgroundColor: _isButtonEnabled 
+                                      ? const Color(0xFFD09B5A)
+                                      : const Color(0xFFD09B5A).withOpacity(0.5),
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),

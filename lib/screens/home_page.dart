@@ -1,11 +1,14 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, unused_element
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/widgets/search_bar.dart' as custom;
 import 'package:kampusmart2/widgets/carousel.dart';
 import 'package:kampusmart2/widgets/carousel_tile_card.dart';
+// ignore: unused_import
+import 'package:kampusmart2/widgets/product_vertical_list.dart';
 import 'package:kampusmart2/models/product.dart';
 import 'package:kampusmart2/widgets/product_card.dart';
 import 'package:kampusmart2/screens/product_details_page.dart';
@@ -286,7 +289,11 @@ class _HomePageState extends State<HomePage> {
                   Icons.notifications_none_rounded,
                   color: AppTheme.textPrimary,
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder:(context)=>NotificationsScreen(userRole: UserRole.buyer),),);
+                },
               ),
             ],
           ),
