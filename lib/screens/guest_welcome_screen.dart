@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:kampusmart2/screens/home_page.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 
 class GuestWelcomeScreen extends StatefulWidget {
@@ -47,7 +48,12 @@ class _GuestWelcomeScreenState extends State<GuestWelcomeScreen> {
   }
 
   void _navigateToHome() {
-    Navigator.pushReplacementNamed(context, '/HomePage');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomePage(),
+      ),
+    );
   }
 
   void _navigateToSignIn() {
@@ -89,7 +95,7 @@ class _GuestWelcomeScreenState extends State<GuestWelcomeScreen> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Color(0xFFD09B5A), // Tertiary orange
                         ),
                       ),
                     ),

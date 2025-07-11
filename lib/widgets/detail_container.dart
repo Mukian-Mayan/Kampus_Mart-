@@ -26,29 +26,39 @@ class DetailContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
+      //padding: const EdgeInsets.all(15),
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          height: containerHeight,
-          width: containerWidth,
+          constraints: BoxConstraints(
+            minHeight: containerHeight,
+            minWidth: containerWidth,
+          ),
+          //height: containerHeight,
+          //width: containerWidth,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             color: AppTheme.borderGrey.withOpacity(0.5),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(10),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(width: 8),
-                Text(
-                  text,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: fontColor, fontSize: fontSize),
+                //const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    text,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: fontColor, fontSize: fontSize, fontWeight: FontWeight.w900, fontFamily: 'League Spartan'),
+                  ),
                 ),
                 if (iconData != null) ...[
-                  Icon(iconData, color: fontColor, size: fontSize + 2),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 10.0),
+                    child: Icon(iconData, color: fontColor, size: fontSize + 2),
+                  ),
                 ],
               ],
             ),
