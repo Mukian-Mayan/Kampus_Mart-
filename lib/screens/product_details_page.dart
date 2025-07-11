@@ -6,6 +6,9 @@ import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import '../models/product.dart';
+import '../Theme/app_theme.dart';
+import '../widgets/bottom_nav_bar.dart';
+import '../screens/message_screen.dart'; // Added import for MessageScreen
 
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
@@ -206,7 +209,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         backgroundColor: AppTheme.paleWhite,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textPrimary),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppTheme.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -216,11 +222,17 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications_none_rounded, color: AppTheme.textPrimary),
-            onPressed: () =>Navigator.push(
+            icon: Icon(
+              Icons.notifications_none_rounded,
+              color: AppTheme.textPrimary,
+            ),
+            onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context)=> const NotificationsScreen(userRole: UserRole.buyer),),),
+                builder: (context) =>
+                    const NotificationsScreen(userRole: UserRole.buyer),
+              ),
+            ),
           ),
         ],
       ),
@@ -269,9 +281,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   decoration: InputDecoration(
                     hintText: 'Search to add more to cart',
                     hintStyle: AppTheme.subtitleStyle,
-                    prefixIcon: Icon(Icons.search, color: AppTheme.textSecondary),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: AppTheme.textSecondary,
+                    ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 16,
+                    ),
                   ),
                 ),
               ),
@@ -301,7 +319,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         children: [
                           if (widget.product.bestOffer)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppTheme.red,
                                 borderRadius: BorderRadius.circular(20),
@@ -328,11 +349,16 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   icon: const Icon(Icons.remove, size: 18),
                                   onPressed: () => _updateQuantity(false),
                                   padding: const EdgeInsets.all(8),
-                                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 36,
+                                    minHeight: 36,
+                                  ),
                                   color: AppTheme.paleWhite,
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                   child: Text(
                                     quantity.toString(),
                                     style: AppTheme.chipTextStyle.copyWith(
@@ -345,7 +371,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   icon: const Icon(Icons.add, size: 18),
                                   onPressed: () => _updateQuantity(true),
                                   padding: const EdgeInsets.all(8),
-                                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 36,
+                                    minHeight: 36,
+                                  ),
                                   color: AppTheme.paleWhite,
                                 ),
                               ],
@@ -357,7 +386,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       // Product Name
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.deepBlue,
                           borderRadius: BorderRadius.circular(12),
@@ -374,7 +406,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       // Description
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.coffeeBrown,
                           borderRadius: BorderRadius.circular(12),
@@ -390,7 +425,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       // Owner ID with Profile Widget
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.deepOrange,
                           borderRadius: BorderRadius.circular(12),
@@ -398,11 +436,13 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         child: Row(
                           children: [
                             ProfilePicWidget(
-                              imageUrl: null, // Default profile image for seller
+                              imageUrl:
+                                  null, // Default profile image for seller
                               radius: 12,
                               height: 24,
                               width: 24,
-                              onAddPressed: null, // No camera icon for seller display
+                              onAddPressed:
+                                  null, // No camera icon for seller display
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -421,7 +461,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       // Price
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryOrange,
                           borderRadius: BorderRadius.circular(12),
@@ -452,7 +495,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         children: [
                           // Rating Label
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: AppTheme.tertiaryOrange,
                               borderRadius: BorderRadius.circular(8),
@@ -466,24 +512,28 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           ),
                           // Rating Stars
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: AppTheme.deepBlue,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: List.generate(5, (index) => 
-                                GestureDetector(
+                              children: List.generate(
+                                5,
+                                (index) => GestureDetector(
                                   onTap: () => _updateRating(index + 1.0),
                                   child: Icon(
                                     Icons.star,
-                                    color: index < rating 
+                                    color: index < rating
                                         ? AppTheme.primaryOrange
                                         : AppTheme.paleWhite.withOpacity(0.4),
                                     size: 20,
                                   ),
-                                )
+                                ),
                               ),
                             ),
                           ),
@@ -491,7 +541,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           GestureDetector(
                             onTap: () => _showComments(context),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppTheme.tertiaryOrange,
                                 borderRadius: BorderRadius.circular(8),
@@ -525,7 +578,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Added ${widget.product.name} to cart!'),
+                                content: Text(
+                                  'Added ${widget.product.name} to cart!',
+                                ),
                                 backgroundColor: AppTheme.lightGreen,
                                 behavior: SnackBarBehavior.floating,
                               ),

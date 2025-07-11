@@ -43,6 +43,12 @@ dependencies:
   firebase_auth: ^5.6.2
   #google_sign_in: ^7.1.0  
   google_sign_in: ^6.3.0
+<<<<<<< HEAD
+=======
+  sign_in_with_apple: ^7.0.1
+
+
+>>>>>>> 2ed3d8e4e6339efa43eee80687cdcda6cf62ca39
   
 
 
@@ -72,7 +78,10 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-   - lib/images/
+    - lib/images/
+    - lib/products/
+    
+   
    
 
   # An image asset can refer to one or more resolution-specific "variants", see
