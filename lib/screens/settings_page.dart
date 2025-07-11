@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
@@ -65,7 +66,12 @@ class SettingsPage extends StatelessWidget {
               
                  
                           DetailContainer(
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const PaymentTransactions(),),
+                              );
+                            },
                             iconData: Icons.credit_card_rounded,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,

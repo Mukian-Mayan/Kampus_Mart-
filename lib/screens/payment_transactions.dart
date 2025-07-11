@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/screens/payment_processing.dart';
 
 class PaymentTransactions extends StatefulWidget {
   const PaymentTransactions({super.key});
@@ -112,16 +113,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
                           ),
                           const SizedBox(height: 15),
                           _buildPaymentOption(
-                            'Mobile Money',
-                            selectedPaymentMethod == 'Mobile Money',
-                          ),
-                          const SizedBox(height: 15),
-                          _buildPaymentOption(
-                            'Credit Card',
-                            selectedPaymentMethod == 'Credit Card',
-                          ),
-                          const SizedBox(height: 15),
-                          _buildPaymentOption(
                             'Other',
                             selectedPaymentMethod == 'Other',
                           ),
@@ -138,7 +129,9 @@ class _PaymentScreenState extends State<PaymentTransactions> {
                       height: 55,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Handle add button press
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context)=> PaymentProcessingScreen(cartItems: [],totalAmount: 0.0,),),);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE8A317),
