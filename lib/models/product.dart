@@ -5,6 +5,9 @@ class Product {
   final String priceAndDiscount;
   final double rating;
   final String imageUrl;
+  final String originalPrice;
+  final String condition;
+  final String location;
   final bool bestOffer;
 
   Product({
@@ -12,6 +15,9 @@ class Product {
     required this.description,
     required this.ownerId,
     required this.priceAndDiscount,
+    required this.originalPrice,
+    required this.condition,
+    required this.location,
     required this.rating,
     required this.imageUrl,
     this.bestOffer = false,

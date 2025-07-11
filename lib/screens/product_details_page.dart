@@ -1,309 +1,213 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
+import '../Theme/app_theme.dart';
+import '../widgets/bottom_nav_bar.dart';
+import '../screens/message_screen.dart'; // Added import for MessageScreen
 
 class ProductDetailsPage extends StatelessWidget {
   final Product product;
-  const ProductDetailsPage({super.key, required this.product});
-
-  void _showComments(BuildContext context) {
-    final comments = [
-      'Great product! Highly recommend.',
-      'Good value for the price.',
-      'Not what I expected.',
-      'Would buy again.',
-    ];
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Comments', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-            const SizedBox(height: 12),
-            ...comments.map((c) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.person, size: 24, color: Colors.amber),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(c)),
-                ],
-              ),
-            )),
-          ],
-        ),
-      ),
-    );
-  }
+  final int stock;
+  const ProductDetailsPage({Key? key, required this.product, this.stock = 10})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.backgroundLavender,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
+        title: const Text(''), // No product name in AppBar
+        backgroundColor: AppTheme.tertiaryOrange,
+        iconTheme: const IconThemeData(color: AppTheme.textPrimary),
+        titleTextStyle: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            const CircleAvatar(
-              radius: 48,
-              backgroundColor: Colors.grey,
+      body: Container(
+        color: AppTheme.backgroundLavender,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Card(
+            color: AppTheme.paleWhite,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'search to add more to cart',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD39E6A),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Product name at the top of the card
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      product.imageUrl,
+                      width: 220,
+                      height: 180,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      product.priceAndDiscount,
+                      style: const TextStyle(fontSize: 18, color: Colors.green),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Original Price: ${product.originalPrice}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 20),
+                        const SizedBox(width: 4),
+                        Text(
+                          product.rating.toString(),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Condition: ${product.condition}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Location: ${product.location}',
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Stock: $stock',
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      product.description,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Seller: ${product.ownerId}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 160,
-                            height: 140,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(12),
-                              image: product.imageUrl.isNotEmpty
-                                  ? DecorationImage(
-                                      image: NetworkImage(product.imageUrl),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
-                            ),
+                      ElevatedButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.shopping_cart),
+                        label: const Text('Add to Cart'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.coffeeBrown,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
                           ),
-                          const Spacer(),
-                          Column(
-                            children: [
-                              if (product.bestOffer)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: const Text(
-                                    'BEST OFFER',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.remove, size: 18, color: Colors.white),
-                                    onPressed: () {},
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                                    onPressed: () {},
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD39E6A),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          product.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD39E6A),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          product.description,
-                          style: const TextStyle(
-                            color: Colors.white,
+                      ElevatedButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.phone),
+                        label: const Text('Call Seller'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD39E6A),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          product.ownerId,
-                          style: const TextStyle(
-                            color: Colors.white,
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MessageScreen(userName: 'Seller: ${product.ownerId}'),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.chat),
+                        label: const Text('Chat Seller'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.lightGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD39E6A),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          product.priceAndDiscount,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFE082),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'Rating',
-                              style: TextStyle(color: Color(0xFFD39E6A)),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Row(
-                            children: List.generate(5, (index) => Icon(
-                              Icons.star,
-                              color: index < product.rating.round() ? Colors.white : Colors.white24,
-                              size: 28,
-                            )),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFE082),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: GestureDetector(
-                              onTap: () => _showComments(context),
-                              child: const Text(
-                                'Comment',
-                                style: TextStyle(color: Color(0xFFD39E6A)),
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFFF3CD),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
           ),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.settings, color: Colors.black, size: 32),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.shopping_cart, color: Colors.black, size: 32),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.home, color: Colors.black, size: 32),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.message, color: Colors.black, size: 32),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.person, color: Colors.black, size: 32),
-              onPressed: () {},
-            ),
-          ],
-        ),
       ),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 0),
     );
   }
-} 
+}

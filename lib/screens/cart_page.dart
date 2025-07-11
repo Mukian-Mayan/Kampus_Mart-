@@ -1,6 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/chats_screen.dart';
-import 'package:kampusmart2/screens/home_page.dart';
+import 'package:kampusmart2/screens/home_page.dart' hide ProductDetailsPage;
 import 'package:kampusmart2/screens/message_screen.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/screens/settings_page.dart';
@@ -14,6 +15,9 @@ final List<Product> products = [
     description: 'Latest iPhone with A16 Bionic chip',
     ownerId: 'user123',
     priceAndDiscount: '2,999,000 UGX (10% off)',
+    originalPrice: '3,300,000 UGX',
+    condition: 'New',
+    location: 'Kampala',
     rating: 5,
     imageUrl: '',
     bestOffer: true,
@@ -23,6 +27,9 @@ final List<Product> products = [
     description: 'Flagship Android phone',
     ownerId: 'user456',
     priceAndDiscount: '2,499,000 UGX (5% off)',
+    originalPrice: '2,700,000 UGX',
+    condition: 'New',
+    location: 'Entebbe',
     rating: 4,
     imageUrl: '',
     bestOffer: false,
@@ -32,6 +39,9 @@ final List<Product> products = [
     description: 'Noise Cancelling Headphones',
     ownerId: 'user789',
     priceAndDiscount: '399,000 UGX (15% off)',
+    originalPrice: '470,000 UGX',
+    condition: 'New',
+    location: 'Wandegeya',
     rating: 5,
     imageUrl: '',
     bestOffer: true,
@@ -41,6 +51,9 @@ final List<Product> products = [
     description: 'Ultra portable laptop',
     ownerId: 'user321',
     priceAndDiscount: '1,199,000 UGX (8% off)',
+    originalPrice: '1,300,000 UGX',
+    condition: 'Used',
+    location: 'Kikoni',
     rating: 4,
     imageUrl: '',
     bestOffer: false,
@@ -48,7 +61,7 @@ final List<Product> products = [
 ];
 
 class CartPage extends StatefulWidget {
-  static const String  routeName = '/Cart';
+  static const String routeName = '/Cart';
   const CartPage({super.key});
 
   @override
@@ -62,23 +75,22 @@ class _CartPageState extends State<CartPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredProducts = products
-        .asMap()
-        .entries
-        .where((entry) {
-          final product = entry.value;
-          final query = searchQuery.toLowerCase();
-          return product.name.toLowerCase().contains(query) ||
-                 product.description.toLowerCase().contains(query);
-        })
-        .toList();
+    final filteredProducts = products.asMap().entries.where((entry) {
+      final product = entry.value;
+      final query = searchQuery.toLowerCase();
+      return product.name.toLowerCase().contains(query) ||
+          product.description.toLowerCase().contains(query);
+    }).toList();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -92,11 +104,16 @@ class _CartPageState extends State<CartPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: Colors.black),
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: Colors.black,
+            ),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const NotificationsScreen(userRole: UserRole.buyer),),
+                builder: (context) =>
+                    const NotificationsScreen(userRole: UserRole.buyer),
+              ),
             ),
           ),
         ],
@@ -116,7 +133,10 @@ class _CartPageState extends State<CartPage> {
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.grey[200],
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -160,12 +180,18 @@ class _CartPageState extends State<CartPage> {
                         ),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 0,
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFD39E6A),
                                     borderRadius: BorderRadius.circular(6),
@@ -180,16 +206,17 @@ class _CartPageState extends State<CartPage> {
                                 ),
                                 const SizedBox(height: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFD39E6A),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     product.priceAndDiscount,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                    ),
+                                    style: const TextStyle(color: Colors.white),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -203,10 +230,15 @@ class _CartPageState extends State<CartPage> {
                                       child: Row(
                                         children: [
                                           IconButton(
-                                            icon: const Icon(Icons.remove, size: 18, color: Color(0xFFD39E6A)),
+                                            icon: const Icon(
+                                              Icons.remove,
+                                              size: 18,
+                                              color: Color(0xFFD39E6A),
+                                            ),
                                             onPressed: () {
                                               setState(() {
-                                                if (quantities[index] > 1) quantities[index]--;
+                                                if (quantities[index] > 1)
+                                                  quantities[index]--;
                                               });
                                             },
                                             padding: EdgeInsets.zero,
@@ -214,10 +246,16 @@ class _CartPageState extends State<CartPage> {
                                           ),
                                           Text(
                                             quantities[index].toString(),
-                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.add, size: 18, color: Color(0xFFD39E6A)),
+                                            icon: const Icon(
+                                              Icons.add,
+                                              size: 18,
+                                              color: Color(0xFFD39E6A),
+                                            ),
                                             onPressed: () {
                                               setState(() {
                                                 quantities[index]++;
@@ -231,29 +269,40 @@ class _CartPageState extends State<CartPage> {
                                     ),
                                     const SizedBox(width: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFD39E6A),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Row(
-                                        children: List.generate(5, (star) => GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              ratings[index] = star + 1;
-                                            });
-                                          },
-                                          child: Icon(
-                                            Icons.star,
-                                            color: star < ratings[index] ? Colors.white : Colors.white24,
-                                            size: 20,
+                                        children: List.generate(
+                                          5,
+                                          (star) => GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                ratings[index] = star + 1;
+                                              });
+                                            },
+                                            child: Icon(
+                                              Icons.star,
+                                              color: star < ratings[index]
+                                                  ? Colors.white
+                                                  : Colors.white24,
+                                              size: 20,
+                                            ),
                                           ),
-                                        )),
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFD39E6A),
                                         borderRadius: BorderRadius.circular(4),
@@ -263,7 +312,10 @@ class _CartPageState extends State<CartPage> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => ProductDetailsPage(product: product),
+                                              builder: (context) =>
+                                                  ProductDetailsPage(
+                                                    product: product,
+                                                  ),
                                             ),
                                           );
                                         },
@@ -302,49 +354,50 @@ class _CartPageState extends State<CartPage> {
           children: [
             IconButton(
               icon: const Icon(Icons.settings, color: Colors.black, size: 32),
-              onPressed: ()=> Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SettingsPage(),
-                ),
-            ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              ),
             ),
             IconButton(
-              icon: const Icon(Icons.shopping_cart, color: Colors.black, size: 32),
-              onPressed: ()=> Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CartPage(),),
-            ),
+              icon: const Icon(
+                Icons.shopping_cart,
+                color: Colors.black,
+                size: 32,
+              ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartPage()),
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.home, color: Colors.black, size: 32),
               onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const HomePage(),),
-            ),
+                context,
+                MaterialPageRoute(builder: (context) => const HomePage()),
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.message, color: Colors.black, size: 32),
               onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                                builder: (context) => const MessageScreen(userName: '',),
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MessageScreen(userName: ''),
                 ),
-            ),
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.person, color: Colors.black, size: 32),
-              onPressed: ()=> Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const UserProfilePage(),),
-            ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UserProfilePage(),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
-} 
+}
