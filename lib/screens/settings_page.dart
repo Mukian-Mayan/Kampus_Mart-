@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/screens/about_us_page.dart';
+import 'package:kampusmart2/screens/help_&_support_page.dart';
+import 'package:kampusmart2/screens/login_or_register_page.dart';
+import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
@@ -50,7 +54,7 @@ class SettingsPage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          DetailContainer(
+                          /*DetailContainer(
                             onTap: () {},
                             iconData: Icons.person,
                             fontColor: AppTheme.paleWhite,
@@ -61,11 +65,11 @@ class SettingsPage extends StatelessWidget {
                             containerHeight: MediaQuery.of(context).size.height * 0.065,
                             containerWidth:
                                 MediaQuery.of(context).size.width * 0.5,
-                          ),
+                          ),*/
               
                  
                           DetailContainer(
-                            onTap: () {},
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentTransactions())),
                             iconData: Icons.credit_card_rounded,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
@@ -87,7 +91,7 @@ class SettingsPage extends StatelessWidget {
                                 MediaQuery.of(context).size.width * 0.7,
                           ),
                           DetailContainer(
-                            onTap: () {},
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HelpAndSupportPage())),
                             iconData: Icons.support_agent,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
@@ -97,10 +101,19 @@ class SettingsPage extends StatelessWidget {
                             containerWidth:
                                 MediaQuery.of(context).size.width * 0.7,
                           ),
+                           DetailContainer(
+                            fontColor: AppTheme.selectedBlue,
+                            fontSize: 20,
+                            text: 'About Us',
+                            containerHeight: 40,
+                            containerWidth: MediaQuery.of(context).size.width * 0.8,
+                            iconData: Icons.group_sharp,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AboutUsPage())),
+                          ),
                           DetailContainer(
-                            onTap: () {},
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LoginOrRegisterPage())),
                             iconData: Icons.logout_rounded,
-                            fontColor: AppTheme.paleWhite,
+                            fontColor: AppTheme.red,
                             fontSize: 20,
                             text: 'Logout',
                             containerHeight:

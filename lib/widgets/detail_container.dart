@@ -51,11 +51,14 @@ class DetailContainer extends StatelessWidget {
                   child: Text(
                     text,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: fontColor, fontSize: fontSize),
+                    style: TextStyle(color: fontColor, fontSize: fontSize, fontWeight: FontWeight.w900, fontFamily: 'League Spartan'),
                   ),
                 ),
                 if (iconData != null) ...[
-                  Icon(iconData, color: fontColor, size: fontSize + 2),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 10.0),
+                    child: Icon(iconData, color: fontColor, size: fontSize + 2),
+                  ),
                 ],
               ],
             ),

@@ -90,6 +90,7 @@ class _EditableDetailContainerState extends State<CustomDetailContainer> {
                         style: TextStyle(
                           color: widget.fontColor,
                           fontSize: widget.fontSize,
+                          fontWeight: FontWeight.w900
                         ),
                       ),
               ),

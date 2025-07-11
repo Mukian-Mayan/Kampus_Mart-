@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/guest_welcome_screen.dart';
 import 'package:kampusmart2/screens/login_page.dart';
+import 'package:kampusmart2/screens/register_page.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
 
 class LoginOrRegisterPage extends StatelessWidget {
@@ -61,7 +62,7 @@ class LoginOrRegisterPage extends StatelessWidget {
                 height: MediaQuery.of(context).size.height * 0.06,
                 width: MediaQuery.of(context).size.width * 0.75,
                 fontSize: 22,
-                onTap: () {},
+                onTap: () => Navigator.push(context,MaterialPageRoute(builder: (context) => RegisterPage(),)),
               ),
         
               //SizedBox(height: 2),

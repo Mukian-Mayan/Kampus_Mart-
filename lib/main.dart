@@ -1,6 +1,4 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:kampusmart2/screens/login_page.dart';
-import 'package:kampusmart2/screens/register_page.dart';
 import '../screens/chats_screen.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
