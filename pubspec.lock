@@ -424,8 +424,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
-<<<<<<< HEAD
-=======
   sign_in_with_apple:
     dependency: "direct main"
     description:
@@ -450,7 +448,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
->>>>>>> 2ed3d8e4e6339efa43eee80687cdcda6cf62ca39
   sky_engine:
     dependency: transitive
     description: flutter
