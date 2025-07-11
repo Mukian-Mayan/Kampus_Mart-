@@ -8,11 +8,11 @@ import 'package:kampusmart2/screens/chats_screen.dart';
 import 'package:kampusmart2/screens/home_page.dart';
 import 'package:kampusmart2/screens/settings_page.dart';
 import 'package:kampusmart2/screens/user_profile_page.dart';
-import 'package:kampusmart2/screens/chats_screen.dart';
 
 class BottomNavBar extends StatefulWidget {
+  final Color navBarColor;
   final int selectedIndex;
-  const BottomNavBar({super.key, required this.selectedIndex});
+  const BottomNavBar({super.key, required this.selectedIndex, required this.navBarColor});
 
   @override
   State<BottomNavBar> createState() => _BottomNavBarState();
@@ -63,7 +63,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
             topLeft: Radius.circular(40),
             topRight: Radius.circular(40),
           ),
-          color: AppTheme.deepBlue,
+          color: widget.navBarColor,
           boxShadow: [
             BoxShadow(
               color: AppTheme.taleBlack,
@@ -78,7 +78,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           padding: const EdgeInsets.symmetric(vertical: 25.0, horizontal: 15),
           child: GNav(
             selectedIndex: widget.selectedIndex,
-            backgroundColor: AppTheme.deepBlue,
+            backgroundColor: widget.navBarColor,
             textStyle: TextStyle(
               fontFamily: 'TypoGraphica',
               color: AppTheme.paleWhite,

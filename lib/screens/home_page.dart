@@ -6,7 +6,6 @@ import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/widgets/search_bar.dart' as custom;
 import 'package:kampusmart2/widgets/carousel.dart';
 import 'package:kampusmart2/widgets/carousel_tile_card.dart';
-import 'package:kampusmart2/widgets/product_vertical_list.dart';
 import 'package:kampusmart2/models/product.dart';
 import 'package:kampusmart2/widgets/product_card.dart';
 import 'package:kampusmart2/screens/product_details_page.dart';
@@ -133,7 +132,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      bottomNavigationBar: BottomNavBar(selectedIndex: 0),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 0,navBarColor: AppTheme.tertiaryOrange),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(

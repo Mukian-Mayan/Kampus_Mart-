@@ -5,7 +5,6 @@ import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/layout1.dart';
 import '../screens/message_screen.dart';
-import '../widgets/search_bar.dart' as custom;
 
 class ChatsScreen extends StatefulWidget {
   static const String routeName = '/ChatsScreen';
@@ -88,7 +87,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomNavBar(selectedIndex: 2),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 2,navBarColor: AppTheme.tertiaryOrange),
       backgroundColor: AppTheme.tertiaryOrange,
 
       body: SafeArea(
