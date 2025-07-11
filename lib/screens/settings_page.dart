@@ -1,12 +1,10 @@
-// ignore_for_file: unused_element
-
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/screens/help_&_support_page.dart';
 import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/mode_page.dart';
-// ignore: unused_import
-import 'package:kampusmart2/screens/user_profile_page.dart';
+import 'package:kampusmart2/screens/sellers_dashboard.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
@@ -64,22 +62,30 @@ class SettingsPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           DetailContainer(
-                            onTap: () {},
+                            onTap: () {
+                              // Navigate to profile edit page
+                              Navigator.push(
+                                 context,
+                                 MaterialPageRoute(
+                                   builder: (context) => const SellerDashboardScreen(),
+                                 ),
+                               );
+                            },
                             iconData: Icons.person,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'User name',
                             containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth:
-                                MediaQuery.of(context).size.width * 0.5,
+                            containerWidth: MediaQuery.of(context).size.width * 0.7,
                           ),
-              
-                 
+                          
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const PaymentTransactions(),),
+                                MaterialPageRoute(
+                                  builder: (context) => const PaymentTransactions(),
+                                ),
                               );
                             },
                             iconData: Icons.credit_card_rounded,
@@ -125,7 +131,14 @@ class SettingsPage extends StatelessWidget {
                           ),
                           
                           DetailContainer(
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HelpAndSupportPage(),
+                                ),
+                              );
+                            },
                             iconData: Icons.support_agent,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
@@ -133,10 +146,13 @@ class SettingsPage extends StatelessWidget {
                             containerHeight: MediaQuery.of(context).size.height * 0.065,
                             containerWidth: MediaQuery.of(context).size.width * 0.7,
                           ),
+                          
                           DetailContainer(
-                            onTap: () {},
+                            onTap: () {
+                              _showLogoutDialog(context);
+                            },
                             iconData: Icons.logout_rounded,
-                            fontColor: AppTheme.red,
+                            fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'Logout',
                             containerHeight: MediaQuery.of(context).size.height * 0.065,

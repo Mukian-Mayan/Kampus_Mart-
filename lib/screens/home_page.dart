@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use, unused_element
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/widgets/search_bar.dart' as custom;
@@ -288,7 +289,11 @@ class _HomePageState extends State<HomePage> {
                   Icons.notifications_none_rounded,
                   color: AppTheme.textPrimary,
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder:(context)=>NotificationsScreen(userRole: UserRole.buyer),),);
+                },
               ),
             ],
           ),

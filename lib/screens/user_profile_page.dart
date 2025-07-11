@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
-import 'package:kampusmart2/screens/about_us_page.dart';
+import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/help_&_support_page.dart';
 import 'package:kampusmart2/screens/history_page.dart';
 import 'package:kampusmart2/screens/login_or_register_page.dart';
@@ -82,7 +82,7 @@ class UserProfilePage extends StatelessWidget {
                   containerHeight: MediaQuery.of(context).size.height * 0.065,
                   containerWidth: MediaQuery.of(context).size.width * 0.7,
                   iconData: Icons.history_sharp,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HistoryPage())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HistoryPage(),),),
                 ),
                   DetailContainer(
                   fontColor: AppTheme.deepBlue,
@@ -91,7 +91,7 @@ class UserProfilePage extends StatelessWidget {
                   containerHeight: MediaQuery.of(context).size.height * 0.065,
                   containerWidth: MediaQuery.of(context).size.width * 0.7,
                   iconData: Icons.support_agent_outlined,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HelpAndSupportPage())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HelpAndSupportPage(),),),
                 ),
                   DetailContainer(
                   fontColor: AppTheme.selectedBlue,
@@ -100,7 +100,7 @@ class UserProfilePage extends StatelessWidget {
                   containerHeight: MediaQuery.of(context).size.height * 0.065,
                   containerWidth: MediaQuery.of(context).size.width * 0.7,
                   iconData: Icons.group_sharp,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AboutUsPage())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AboutUsPage(),),),
                 ),
                   DetailContainer(
                   fontColor: AppTheme.red,
@@ -109,7 +109,7 @@ class UserProfilePage extends StatelessWidget {
                   containerHeight: MediaQuery.of(context).size.height * 0.065,
                   containerWidth: MediaQuery.of(context).size.width * 0.7,
                   iconData: Icons.logout_outlined,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LoginOrRegisterPage())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LoginOrRegisterPage(),),),
                 ),
               ],
             ),
