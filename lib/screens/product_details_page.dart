@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import '../models/product.dart';
@@ -216,7 +217,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         actions: [
           IconButton(
             icon: Icon(Icons.notifications_none_rounded, color: AppTheme.textPrimary),
-            onPressed: () {},
+            onPressed: () =>Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context)=> const NotificationsScreen(userRole: UserRole.buyer),),),
           ),
         ],
       ),

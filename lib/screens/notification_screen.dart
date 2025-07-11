@@ -1,6 +1,7 @@
-// ignore_for_file: deprecated_member_use, use_super_parameters, prefer_final_fields
+// ignore_for_file: deprecated_member_use, use_super_parameters, prefer_final_fields, unreachable_switch_case
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/screens/payment_processing.dart';
 import '../screens/Product_management.dart';
 import '../screens/order_management.dart';
 import '../Theme/app_theme.dart';
@@ -440,6 +441,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case NotificationType.newOrder:
       case NotificationType.lowStock:
       case NotificationType.orderConfirmed:
+      case NotificationType.payment:
         return true;
       default:
         return false;
@@ -470,10 +472,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case NotificationType.orderConfirmed:
         buttonText = 'Track Order';
         onPressed = () => _trackOrder(notification.orderId!);
+      case NotificationType.orderConfirmed:
+        buttonText = 'Track Order';
+        onPressed = () =>  PaymentProcessingScreen(cartItems: [], totalAmount: 0.0,);
         break;
       default:
         buttonText = 'View';
-        onPressed = () {};
+        onPressed = () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:(context)=> const CartPage(),),);
+          
+        };
     }
 
     return ElevatedButton(

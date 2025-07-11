@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import '../models/product.dart';
@@ -322,6 +323,36 @@ class _CartPageState extends State<CartPage> {
                   ),
                 );
               },
+            ),
+          ),
+          // Proceed to Payment Button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryOrange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PaymentTransactions(),
+                  ),
+                );
+              },
+              child: Text(
+                'Proceed to Payment',
+                style: AppTheme.titleStyle.copyWith(
+                  color: AppTheme.paleWhite,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
         ],
