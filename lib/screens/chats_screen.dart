@@ -1,12 +1,11 @@
-
-
 // ignore_for_file: avoid_print, sized_box_for_whitespace, deprecated_member_use
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/layout1.dart';
-import '../screens/message_screen.dart'; 
+import '../screens/message_screen.dart';
+import '../widgets/search_bar.dart' as custom;
 
 class ChatsScreen extends StatefulWidget {
   static const String routeName = '/ChatsScreen';
@@ -82,17 +81,16 @@ class _ChatsScreenState extends State<ChatsScreen> {
     }
     return chatMessages.where((chat) {
       return chat.name.toLowerCase().contains(_searchQuery) ||
-             chat.message.toLowerCase().contains(_searchQuery);
+          chat.message.toLowerCase().contains(_searchQuery);
     }).toList();
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomNavBar(selectedIndex: 2),
       backgroundColor: AppTheme.tertiaryOrange,
-      
+
       body: SafeArea(
         child: Column(
           children: [
@@ -128,7 +126,9 @@ class _ChatsScreenState extends State<ChatsScreen> {
                             const SizedBox(height: 20),
                             // Search bar
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
@@ -192,9 +192,8 @@ class _ChatsScreenState extends State<ChatsScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => MessageScreen(
-                                userName: chat.name,
-                              ),
+                              builder: (context) =>
+                                  MessageScreen(userName: chat.name),
                             ),
                           );
                           // Mark as read when opened
@@ -209,7 +208,10 @@ class _ChatsScreenState extends State<ChatsScreen> {
                             color: AppTheme.paleWhite.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(15),
                             border: chat.hasNewMessage
-                                ? Border.all(color: AppTheme.primaryOrange, width: 2)
+                                ? Border.all(
+                                    color: AppTheme.primaryOrange,
+                                    width: 2,
+                                  )
                                 : null,
                           ),
                           child: Row(

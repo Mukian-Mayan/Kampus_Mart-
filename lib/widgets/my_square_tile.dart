@@ -13,8 +13,8 @@ class MySquareTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(15.0),
         child: Container(
-          height: MediaQuery.of(context).size.width * 0.04,
-          width: MediaQuery.of(context).size.width * 0.04,
+          height: MediaQuery.of(context).size.width * 0.09,
+          width: MediaQuery.of(context).size.width * 0.09,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(13),
             color: AppTheme.paleWhite,

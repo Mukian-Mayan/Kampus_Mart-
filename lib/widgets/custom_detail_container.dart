@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 
@@ -48,6 +50,7 @@ class _EditableDetailContainerState extends State<CustomDetailContainer> {
       if (!isEditing) {
         final savedText = _controller.text;
         // TODO: save to DB/local storage if needed
+        // ignore: avoid_print
         print("Saved: $savedText");
       }
     });
@@ -90,6 +93,7 @@ class _EditableDetailContainerState extends State<CustomDetailContainer> {
                         style: TextStyle(
                           color: widget.fontColor,
                           fontSize: widget.fontSize,
+                          fontWeight: FontWeight.w900
                         ),
                       ),
               ),

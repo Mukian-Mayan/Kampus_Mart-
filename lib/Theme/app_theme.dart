@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -19,6 +20,7 @@ class AppTheme {
   static const Color lightGreen = Color(0xFF00F710);
   static const Color coffeeBrown = Color(0xFFC78E57);
   static const Color red = Color.fromARGB(255, 230, 3, 3);
+  static const Color backgroundLavender = Color(0xFFF7F3FA); // Light lavender background
 
   // Text Styles
   static const TextStyle titleStyle = TextStyle(

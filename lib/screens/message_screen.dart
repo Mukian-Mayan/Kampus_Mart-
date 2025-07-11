@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../Theme/app_theme.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class MessageScreen extends StatelessWidget {
   final String userName;
@@ -14,47 +15,58 @@ class MessageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
+      bottomNavigationBar: BottomNavBar(selectedIndex: 3),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
-        title: Text(userName),
+        title: Text(userName, style: AppTheme.titleStyle.copyWith(fontSize: 20)),
+        elevation: 0,
       ),
+      backgroundColor: AppTheme.backgroundLavender,
       body: Column(
         children: [
-          // Message list would go here
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Example messages
                 _buildMessage('Hi there!', false),
                 _buildMessage('How are you?', true),
                 _buildMessage('I\'m good, thanks!', false),
               ],
             ),
           ),
-          // Message input
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Type a message...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
+            padding: const EdgeInsets.all(12.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppTheme.paleWhite,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        hintStyle: TextStyle(color: AppTheme.textSecondary),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                       ),
+                      style: TextStyle(color: AppTheme.textPrimary),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: () {
-                    // Send message logic
-                  },
-                ),
-              ],
+                  IconButton(
+                    icon: Icon(Icons.send, color: AppTheme.primaryOrange),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -69,10 +81,23 @@ class MessageScreen extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isMe ? AppTheme.selectedBlue : Colors.grey[300],
+          color: isMe ? AppTheme.selectedBlue : AppTheme.paleWhite,
           borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 2,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
-        child: Text(text),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isMe ? Colors.white : AppTheme.textPrimary,
+            fontSize: 16,
+          ),
+        ),
       ),
     );
   }

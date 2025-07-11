@@ -1,9 +1,11 @@
+// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
-import 'package:kampusmart2/screens/help_&_support_page.dart';
 import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/mode_page.dart';
+// ignore: unused_import
 import 'package:kampusmart2/screens/user_profile_page.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
@@ -62,30 +64,22 @@ class SettingsPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           DetailContainer(
-                            onTap: () {
-                              // Navigate to profile edit page
-                               Navigator.push(
-                                 context,
-                                 MaterialPageRoute(
-                                   builder: (context) => const UserProfilePage(),
-                                 ),
-                               );
-                            },
+                            onTap: () {},
                             iconData: Icons.person,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'User name',
                             containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.5,
                           ),
-                          
+              
+                 
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => const PaymentTransactions(),
-                                ),
+                                MaterialPageRoute(builder: (context) => const PaymentTransactions(),),
                               );
                             },
                             iconData: Icons.credit_card_rounded,
@@ -131,14 +125,7 @@ class SettingsPage extends StatelessWidget {
                           ),
                           
                           DetailContainer(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const HelpAndSupportPage(),
-                                ),
-                              );
-                            },
+                            onTap: () {},
                             iconData: Icons.support_agent,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
@@ -146,13 +133,10 @@ class SettingsPage extends StatelessWidget {
                             containerHeight: MediaQuery.of(context).size.height * 0.065,
                             containerWidth: MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
                           DetailContainer(
-                            onTap: () {
-                              _showLogoutDialog(context);
-                            },
+                            onTap: () {},
                             iconData: Icons.logout_rounded,
-                            fontColor: AppTheme.paleWhite,
+                            fontColor: AppTheme.red,
                             fontSize: 20,
                             text: 'Logout',
                             containerHeight: MediaQuery.of(context).size.height * 0.065,

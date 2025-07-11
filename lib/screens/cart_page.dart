@@ -14,6 +14,9 @@ final List<Product> products = [
     description: 'Latest iPhone with A16 Bionic chip',
     ownerId: 'user123',
     priceAndDiscount: '2,999,000 UGX (10% off)',
+    originalPrice: '3,300,000 UGX',
+    condition: 'New',
+    location: 'Kampala',
     rating: 5,
     imageUrl: '',
     bestOffer: true,
@@ -23,6 +26,9 @@ final List<Product> products = [
     description: 'Flagship Android phone',
     ownerId: 'user456',
     priceAndDiscount: '2,499,000 UGX (5% off)',
+    originalPrice: '2,700,000 UGX',
+    condition: 'New',
+    location: 'Entebbe',
     rating: 4,
     imageUrl: '',
     bestOffer: false,
@@ -32,6 +38,9 @@ final List<Product> products = [
     description: 'Noise Cancelling Headphones',
     ownerId: 'user789',
     priceAndDiscount: '399,000 UGX (15% off)',
+    originalPrice: '470,000 UGX',
+    condition: 'New',
+    location: 'Wandegeya',
     rating: 5,
     imageUrl: '',
     bestOffer: true,
@@ -41,6 +50,9 @@ final List<Product> products = [
     description: 'Ultra portable laptop',
     ownerId: 'user321',
     priceAndDiscount: '1,199,000 UGX (8% off)',
+    originalPrice: '1,300,000 UGX',
+    condition: 'Used',
+    location: 'Kikoni',
     rating: 4,
     imageUrl: '',
     bestOffer: false,
@@ -78,16 +90,12 @@ class _CartPageState extends State<CartPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredProducts = products
-        .asMap()
-        .entries
-        .where((entry) {
-          final product = entry.value;
-          final query = searchQuery.toLowerCase();
-          return product.name.toLowerCase().contains(query) ||
-                 product.description.toLowerCase().contains(query);
-        })
-        .toList();
+    final filteredProducts = products.asMap().entries.where((entry) {
+      final product = entry.value;
+      final query = searchQuery.toLowerCase();
+      return product.name.toLowerCase().contains(query) ||
+          product.description.toLowerCase().contains(query);
+    }).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.paleWhite,
@@ -95,7 +103,10 @@ class _CartPageState extends State<CartPage> {
         backgroundColor: AppTheme.paleWhite,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textPrimary),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppTheme.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -105,11 +116,15 @@ class _CartPageState extends State<CartPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications_none_rounded, color: AppTheme.textPrimary),
+            icon: Icon(
+              Icons.notifications_none_rounded,
+              color: AppTheme.textPrimary,
+            ),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const NotificationsScreen(userRole: UserRole.buyer),
+                builder: (context) =>
+                    const NotificationsScreen(userRole: UserRole.buyer),
               ),
             ),
           ),
@@ -135,7 +150,10 @@ class _CartPageState extends State<CartPage> {
                 hintStyle: AppTheme.subtitleStyle,
                 prefixIcon: Icon(Icons.search, color: AppTheme.textSecondary),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 12,
+                ),
               ),
             ),
           ),
@@ -148,7 +166,7 @@ class _CartPageState extends State<CartPage> {
                 final entry = filteredProducts[filteredIndex];
                 final index = entry.key;
                 final product = entry.value;
-                
+
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
@@ -189,7 +207,10 @@ class _CartPageState extends State<CartPage> {
                             children: [
                               // Product Name
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppTheme.secondaryOrange,
                                   borderRadius: BorderRadius.circular(8),
@@ -206,7 +227,10 @@ class _CartPageState extends State<CartPage> {
                               const SizedBox(height: 6),
                               // Price
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppTheme.coffeeBrown,
                                   borderRadius: BorderRadius.circular(8),
@@ -236,27 +260,44 @@ class _CartPageState extends State<CartPage> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           IconButton(
-                                            icon: const Icon(Icons.remove, size: 16),
-                                            onPressed: () => _updateQuantity(index, false),
+                                            icon: const Icon(
+                                              Icons.remove,
+                                              size: 16,
+                                            ),
+                                            onPressed: () =>
+                                                _updateQuantity(index, false),
                                             padding: const EdgeInsets.all(2),
-                                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 28,
+                                              minHeight: 28,
+                                            ),
                                             color: AppTheme.paleWhite,
                                           ),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                            ),
                                             child: Text(
                                               quantities[index].toString(),
-                                              style: AppTheme.chipTextStyle.copyWith(
-                                                color: AppTheme.paleWhite,
-                                                fontSize: 12,
-                                              ),
+                                              style: AppTheme.chipTextStyle
+                                                  .copyWith(
+                                                    color: AppTheme.paleWhite,
+                                                    fontSize: 12,
+                                                  ),
                                             ),
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.add, size: 16),
-                                            onPressed: () => _updateQuantity(index, true),
+                                            icon: const Icon(
+                                              Icons.add,
+                                              size: 16,
+                                            ),
+                                            onPressed: () =>
+                                                _updateQuantity(index, true),
                                             padding: const EdgeInsets.all(2),
-                                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 28,
+                                              minHeight: 28,
+                                            ),
                                             color: AppTheme.paleWhite,
                                           ),
                                         ],
@@ -265,24 +306,32 @@ class _CartPageState extends State<CartPage> {
                                     const SizedBox(width: 6),
                                     // Rating
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: AppTheme.deepOrange,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
-                                        children: List.generate(5, (star) => 
-                                          GestureDetector(
-                                            onTap: () => _updateRating(index, star + 1.0),
+                                        children: List.generate(
+                                          5,
+                                          (star) => GestureDetector(
+                                            onTap: () => _updateRating(
+                                              index,
+                                              star + 1.0,
+                                            ),
                                             child: Icon(
                                               Icons.star,
-                                              color: star < ratings[index] 
-                                                  ? AppTheme.paleWhite 
-                                                  : AppTheme.paleWhite.withOpacity(0.3),
+                                              color: star < ratings[index]
+                                                  ? AppTheme.paleWhite
+                                                  : AppTheme.paleWhite
+                                                        .withOpacity(0.3),
                                               size: 14,
                                             ),
-                                          )
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -293,22 +342,31 @@ class _CartPageState extends State<CartPage> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => ProductDetailsPage(product: product),
+                                            builder: (context) =>
+                                                ProductDetailsPage(
+                                                  product: product,
+                                                ),
                                           ),
                                         );
                                       },
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 6,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: AppTheme.deepBlue,
-                                          borderRadius: BorderRadius.circular(6),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
                                         ),
                                         child: Text(
                                           'Details',
-                                          style: AppTheme.chipTextStyle.copyWith(
-                                            color: AppTheme.paleWhite,
-                                            fontSize: 11,
-                                          ),
+                                          style: AppTheme.chipTextStyle
+                                              .copyWith(
+                                                color: AppTheme.paleWhite,
+                                                fontSize: 11,
+                                              ),
                                         ),
                                       ),
                                     ),
