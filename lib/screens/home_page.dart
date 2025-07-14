@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:kampusmart2/widgets/search_bar.dart' as custom;
 import 'package:kampusmart2/widgets/carousel.dart';
 import 'package:kampusmart2/widgets/carousel_tile_card.dart';
@@ -12,6 +13,7 @@ import 'package:kampusmart2/widgets/product_vertical_list.dart';
 import 'package:kampusmart2/models/product.dart';
 import 'package:kampusmart2/widgets/product_card.dart';
 import 'package:kampusmart2/screens/product_details_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   static const String routeName = '/HomePage';
@@ -26,6 +28,8 @@ class _HomePageState extends State<HomePage> {
   bool _showSearch = false;
   final TextEditingController _searchController = TextEditingController();
 
+  String? userRole;
+
   void _onTab(int index) {
     if (selectedIndex != index) {
       setState(() {
@@ -35,12 +39,29 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  //initial link up
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+   Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('user_role');
+    });
+  }
+
+  //till here guys
+
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
   @override
+
+  
   Widget build(BuildContext context) {
     final products = [
       Product(
@@ -135,7 +156,13 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      bottomNavigationBar: BottomNavBar(selectedIndex: 0),
+      bottomNavigationBar: (userRole == 'option1')
+      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
+      : (userRole == 'option2')
+          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
+          : null,
+
+
       body: CustomScrollView(
         slivers: [
           SliverAppBar(

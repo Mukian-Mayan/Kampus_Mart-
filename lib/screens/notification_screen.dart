@@ -235,7 +235,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               },
             ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: -1, // No specific tab selected for notifications
+        selectedIndex: -1, navBarColor: AppTheme.tertiaryOrange ,// No specific tab selected for notifications
       ),
     );
   }

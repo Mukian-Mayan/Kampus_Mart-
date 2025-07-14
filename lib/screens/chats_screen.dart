@@ -64,7 +64,7 @@ class _EnhancedChatsScreenState extends State<ChatsScreen> {
     }
 
     return Scaffold(
-      bottomNavigationBar: BottomNavBar(selectedIndex: 2),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 2,navBarColor: AppTheme.tertiaryOrange),
       backgroundColor: AppTheme.tertiaryOrange,
       body: SafeArea(
         child: Column(

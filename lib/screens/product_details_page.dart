@@ -6,9 +6,6 @@ import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import '../models/product.dart';
-import '../Theme/app_theme.dart';
-import '../widgets/bottom_nav_bar.dart';
-import '../screens/message_screen.dart'; // Added import for MessageScreen
 
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
@@ -619,7 +616,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(selectedIndex: 1),
+      bottomNavigationBar: const BottomNavBar(selectedIndex: 1,navBarColor: AppTheme.tertiaryOrange),
     );
   }
 

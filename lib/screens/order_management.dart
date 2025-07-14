@@ -66,7 +66,7 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomNavBar(selectedIndex: 1),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 1,navBarColor: AppTheme.tertiaryOrange),
       backgroundColor: AppTheme.tertiaryOrange,
       appBar: AppBar(
         title: const LogoWidget(),

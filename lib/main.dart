@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:kampusmart2/screens/settings_page.dart';
 import '../screens/chats_screen.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kampus mart',
       theme: AppTheme.lightTheme,
-      //home: HomePage(),
+      //home: LoginOrRegisterPage(),
       initialRoute: '/',
       debugShowCheckedModeBanner: false,
 

@@ -6,19 +6,20 @@ import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/cart_page.dart';
 import 'package:kampusmart2/screens/chats_screen.dart';
 import 'package:kampusmart2/screens/home_page.dart';
+import 'package:kampusmart2/screens/sellers_dashboard.dart';
 import 'package:kampusmart2/screens/settings_page.dart';
 import 'package:kampusmart2/screens/user_profile_page.dart';
 
-class BottomNavBar extends StatefulWidget {
+class BottomNavBar2 extends StatefulWidget {
   final Color navBarColor;
   final int selectedIndex;
-  const BottomNavBar({super.key, required this.selectedIndex, required this.navBarColor});
+  const BottomNavBar2({super.key, required this.selectedIndex, required this.navBarColor});
 
   @override
-  State<BottomNavBar> createState() => _BottomNavBarState();
+  State<BottomNavBar2> createState() => _BottomNavBarState();
 }
 
-class _BottomNavBarState extends State<BottomNavBar> {
+class _BottomNavBarState extends State<BottomNavBar2> {
   void _handleTabChange(BuildContext context, int index) {
     switch (index) {
       case 0:
@@ -30,7 +31,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => CartPage()),
+          MaterialPageRoute(builder: (context) => SellerDashboardScreen()),
         );
         break;
       case 2:
@@ -92,7 +93,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
             tabs: [
               const GButton(icon: Icons.home, text: 'Home'),
-              const GButton(icon: Icons.store_mall_directory, text: 'Cart'),
+              const GButton(icon: Icons.dashboard_customize, text: 'Dashboard'),
               const GButton(icon: Icons.message_outlined, text: ' \t messages'),
               const GButton(icon: Icons.settings, text: 'Settings'),
               const GButton(icon: Icons.person, text: 'Profile'),

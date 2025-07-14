@@ -415,7 +415,7 @@ class _CartPageState extends State<CartPage> {
           ),
         ],
       ),
-      bottomNavigationBar: const BottomNavBar(selectedIndex: 1),
+      bottomNavigationBar: const BottomNavBar(selectedIndex: 1,navBarColor: AppTheme.tertiaryOrange),
     );
   }
 }

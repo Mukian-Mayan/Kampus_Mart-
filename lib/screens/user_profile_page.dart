@@ -1,9 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/help_&_support_page.dart';
 import 'package:kampusmart2/screens/history_page.dart';
-import 'package:kampusmart2/screens/login_or_register_page.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/custom_detail_container.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
@@ -12,6 +12,11 @@ import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 
 class UserProfilePage extends StatelessWidget {
   const UserProfilePage({super.key});
+
+  void logoutUser() {
+    FirebaseAuth.instance.signOut();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +37,7 @@ class UserProfilePage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(selectedIndex: 4),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 4,navBarColor: AppTheme.tertiaryOrange),
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -109,7 +114,7 @@ class UserProfilePage extends StatelessWidget {
                   containerHeight: MediaQuery.of(context).size.height * 0.065,
                   containerWidth: MediaQuery.of(context).size.width * 0.7,
                   iconData: Icons.logout_outlined,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LoginOrRegisterPage(),),),
+                  onTap: logoutUser,
                 ),
               ],
             ),
