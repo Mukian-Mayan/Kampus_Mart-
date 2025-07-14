@@ -2,11 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
-<<<<<<< HEAD
-import 'package:kampusmart2/screens/cart_container.dart';
-import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
-=======
->>>>>>> d605dacf816317dea780b6f540b57b1aa8c8c8e8
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
@@ -14,14 +9,6 @@ class HistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< HEAD
-      backgroundColor: Theme.of(context).colorScheme.surface,
-
-      bottomNavigationBar: BottomNavBar(selectedIndex: 0, navBarColor: AppTheme.tertiaryOrange,),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [ CartContainer(imagePath: 'lib/images/laptop.jpg',)],
-=======
       backgroundColor: AppTheme.tertiaryOrange,
       appBar: AppBar(
         backgroundColor: AppTheme.deepBlue,
@@ -109,7 +96,6 @@ class InfoBox extends StatelessWidget {
             ),
           ),
         ],
->>>>>>> d605dacf816317dea780b6f540b57b1aa8c8c8e8
       ),
     );
   }

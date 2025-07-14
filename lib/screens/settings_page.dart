@@ -5,7 +5,7 @@ import 'package:kampusmart2/screens/help_&_support_page.dart';
 import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/mode_page.dart';
-import 'package:kampusmart2/screens/sellers_dashboard.dart';
+import 'package:kampusmart2/screens/user_profile_page.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
@@ -45,7 +45,7 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(selectedIndex: 3),
+      bottomNavigationBar: const BottomNavBar(selectedIndex: 3, navBarColor: AppTheme.tertiaryOrange),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -72,7 +72,7 @@ class SettingsPage extends StatelessWidget {
                               Navigator.push(
                                  context,
                                  MaterialPageRoute(
-                                   builder: (context) => const SellerDashboardScreen(),
+                                   builder: (context) => const UserProfilePage(),
                                  ),
                                );
                             },
