@@ -1,9 +1,11 @@
 // screens/enhanced_chats_screen.dart
-// ignore_for_file: unused_import, unused_field, prefer_final_fields, sized_box_for_whitespace, deprecated_member_use, use_build_context_synchronously
+// ignore_for_file: unused_import, unused_field, prefer_final_fields, sized_box_for_whitespace, deprecated_member_use, use_build_context_synchronously, override_on_non_overriding_member, unused_element
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/layout1.dart';
 import '../services/chats_service.dart';
@@ -15,28 +17,37 @@ class ChatsScreen extends StatefulWidget {
   const ChatsScreen({super.key});
 
   @override
-  State<ChatsScreen> createState() => _EnhancedChatsScreenState();
+  State<ChatsScreen> createState() => _ChatsScreenState();
 }
 
-class _EnhancedChatsScreenState extends State<ChatsScreen> {
+class _ChatsScreenState extends State<ChatsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ChatService _chatService = ChatService();
   String _searchQuery = '';
   List<ChatRoom> _filteredChatRooms = [];
   bool _isLoading = true;
   String? _currentUserId;
+  String? userRole;
+  int selectedIndex = 1;
 
   @override
   void initState() {
     super.initState();
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
     _searchController.addListener(_onSearchChanged);
+    _loadUserRole();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+  Future<void> _fetchUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('user_role');
+    });
   }
 
   void _onSearchChanged() {
@@ -58,13 +69,40 @@ class _EnhancedChatsScreenState extends State<ChatsScreen> {
   }
 
   @override
+
+  //link up setup 
+  void _onTab(int index, dynamic selectedIndex) {
+    if (selectedIndex != index) {
+      setState(() {
+        selectedIndex = index;
+      });
+    }
+  }
+  //initial link up
+  // REMOVED DUPLICATE initState()
+
+   Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('user_role');
+    });
+  }
+
+  //till here guys
+
+  @override
   Widget build(BuildContext context) {
     if (_currentUserId == null) {
       return _buildAuthRequired();
     }
 
     return Scaffold(
-      bottomNavigationBar: BottomNavBar(selectedIndex: 2,navBarColor: AppTheme.tertiaryOrange),
+      bottomNavigationBar: (userRole == 'option2')
+      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
+      : (userRole == 'option1')
+          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
+          : null,
+
       backgroundColor: AppTheme.tertiaryOrange,
       body: SafeArea(
         child: Column(

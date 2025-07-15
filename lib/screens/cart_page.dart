@@ -5,6 +5,8 @@ import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/product.dart';
 import "../screens/product_details_page.dart";
 
@@ -68,6 +70,10 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+
+   String? userRole;
+   int selectedIndex = 1;
+
   final List<int> quantities = List.filled(products.length, 1);
   final List<double> ratings = products.map((p) => p.rating).toList();
   String searchQuery = '';
@@ -89,6 +95,31 @@ class _CartPageState extends State<CartPage> {
   }
 
   @override
+
+  //link up setup 
+  void _onTab(int index) {
+    if (selectedIndex != index) {
+      setState(() {
+        selectedIndex = index;
+      });
+    }
+  }
+
+  //initial link up
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+   Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('user_role');
+    });
+  }
+
+  //till here guys
+
   Widget build(BuildContext context) {
     final filteredProducts = products.asMap().entries.where((entry) {
       final product = entry.value;
@@ -415,7 +446,12 @@ class _CartPageState extends State<CartPage> {
           ),
         ],
       ),
-      bottomNavigationBar: const BottomNavBar(selectedIndex: 1,navBarColor: AppTheme.tertiaryOrange),
+      bottomNavigationBar: (userRole == 'option2')
+      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
+      : (userRole == 'option1')
+          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
+          : null,
+
     );
   }
 }

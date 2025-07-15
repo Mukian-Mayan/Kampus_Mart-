@@ -1,6 +1,3 @@
-// screens/enhanced_message_screen.dart
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use, sized_box_for_whitespace
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
