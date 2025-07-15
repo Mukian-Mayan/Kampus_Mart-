@@ -339,6 +339,16 @@ class PaymentProcessingScreen extends StatelessWidget {
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.of(context).pop(); // Close dialog
       _showPaymentSuccess(context);
+      NotificationsScreen.addBuyerNotification(
+        NotificationModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: 'Payment Successful',
+          message: 'Your payment of UGX ${totalAmount.toStringAsFixed(0)} was successful.',
+          type: NotificationType.payment,
+          timestamp: DateTime.now(),
+          userRole: UserRole.buyer,
+        ),
+      );
     });
   }
 

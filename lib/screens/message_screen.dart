@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, sized_box_for_whitespace
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,7 +23,7 @@ class MessageScreen extends StatefulWidget {
     required this.otherParticipantName,
     required this.otherParticipantId,
     required this.productName,
-    this.productImageUrl,
+    this.productImageUrl, required String userName,
   });
 
   @override

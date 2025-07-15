@@ -333,7 +333,8 @@ class _ChatsScreenState extends State<ChatsScreen> {
                 otherParticipantName: otherParticipantName,
                 otherParticipantId: otherParticipantId,
                 productName: chat.productName,
-                productImageUrl: chat.productImageUrl,
+                productImageUrl: chat.productImageUrl, 
+                userName: '',
               ),
             ),
           );
