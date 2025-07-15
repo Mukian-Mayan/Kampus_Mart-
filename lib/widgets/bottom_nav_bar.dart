@@ -92,7 +92,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
             tabs: [
               const GButton(icon: Icons.home, text: 'Home'),
-              const GButton(icon: Icons.store_mall_directory, text: 'Cart'),
+              const GButton(icon: Icons.shopping_cart_outlined, text: 'Cart'),
               const GButton(icon: Icons.message_outlined, text: ' \t messages'),
               const GButton(icon: Icons.settings, text: 'Settings'),
               const GButton(icon: Icons.person, text: 'Profile'),

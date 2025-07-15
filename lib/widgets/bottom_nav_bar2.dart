@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
-import 'package:kampusmart2/screens/cart_page.dart';
 import 'package:kampusmart2/screens/chats_screen.dart';
 import 'package:kampusmart2/screens/home_page.dart';
 import 'package:kampusmart2/screens/sellers_dashboard.dart';

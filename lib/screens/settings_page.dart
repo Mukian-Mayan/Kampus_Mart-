@@ -7,18 +7,51 @@ import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/mode_page.dart';
 import 'package:kampusmart2/screens/user_profile_page.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+   String? userRole;
+   int selectedIndex = 0;
    void logoutUser() {
     FirebaseAuth.instance.signOut();
   }
 
   @override
+
+  //link up setup 
+  void _onTab(int index) {
+    if (selectedIndex != index) {
+      setState(() {
+        selectedIndex = index;
+      });
+    }
+  }
+  //initial link up
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+   Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('user_role');
+    });
+  }
+
+  //till here guys
+  
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.tertiaryOrange,
@@ -45,7 +78,12 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(selectedIndex: 3, navBarColor: AppTheme.tertiaryOrange),
+      bottomNavigationBar: (userRole == 'option2')
+      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.deepBlue)
+      : (userRole == 'option1')
+          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.deepBlue)
+          : null,
+
       body: Stack(
         children: [
           SingleChildScrollView(

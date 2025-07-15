@@ -17,7 +17,7 @@ void _handleRoleAndNavigate(BuildContext context, Widget targetPage) async {
 
   if (selected != null) {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString('user_role', selected);  // ✅ fixed variable
+    prefs.setString('user_role', selected); 
 
     print("User selected: $selected");
 

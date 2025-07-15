@@ -30,6 +30,8 @@ class _HomePageState extends State<HomePage> {
 
   String? userRole;
 
+  
+  //link up setup 
   void _onTab(int index) {
     if (selectedIndex != index) {
       setState(() {
@@ -156,9 +158,9 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      bottomNavigationBar: (userRole == 'option1')
+      bottomNavigationBar: (userRole == 'option2')
       ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
-      : (userRole == 'option2')
+      : (userRole == 'option1')
           ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
           : null,
 
