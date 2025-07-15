@@ -22,33 +22,33 @@ class _BottomNavBarState extends State<BottomNavBar2> {
   void _handleTabChange(BuildContext context, int index) {
     switch (index) {
       case 0:
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => HomePage()),
         );
         break;
       case 1:
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => SellerDashboardScreen()),
         );
         break;
       case 2:
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => ChatsScreen()),
         );
         break;
       case 3:
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => SettingsPage()),
         );
         break;
       case 4:
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => UserProfilePage()),
+          MaterialPageRoute(builder: (context) => SellerDashboardScreen()),
         );
         break;
     }
@@ -92,10 +92,10 @@ class _BottomNavBarState extends State<BottomNavBar2> {
 
             tabs: [
               const GButton(icon: Icons.home, text: 'Home'),
-              const GButton(icon: Icons.dashboard_customize, text: 'Dashboard'),
+              const GButton(icon: Icons.shopping_cart_outlined, text: 'Cart'),
               const GButton(icon: Icons.message_outlined, text: ' \t messages'),
               const GButton(icon: Icons.settings, text: 'Settings'),
-              const GButton(icon: Icons.person, text: 'Profile'),
+              const GButton(icon: Icons.dashboard_customize, text: 'Dashboard'),
             ],
           ),
         ),

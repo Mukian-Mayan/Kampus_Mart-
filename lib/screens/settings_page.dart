@@ -68,15 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ),
-        leading: Padding(
-          padding: const EdgeInsets.only(top: 22, left: 25),
-          child: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: Icon(Icons.arrow_back_ios, color: AppTheme.deepBlue),
-          ),
-        ),
+      
       ),
       bottomNavigationBar: (userRole == 'option2')
       ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.deepBlue)

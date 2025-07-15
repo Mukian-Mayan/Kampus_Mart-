@@ -61,7 +61,7 @@ void _handleRoleAndNavigate(BuildContext context, Widget targetPage) async {
                   fontFamily: 'TypoGraphica',
                 ),
               ),
-
+        
               MyButton1(
                 pad: 8,
                 text: 'Sign In',
@@ -70,7 +70,7 @@ void _handleRoleAndNavigate(BuildContext context, Widget targetPage) async {
                 fontSize: 22,
                 onTap: () => _handleRoleAndNavigate(context, LoginPage()),
               ),
-
+        
               MyButton1(
                 pad: 8,
                 text: 'Sign Up',
@@ -79,7 +79,7 @@ void _handleRoleAndNavigate(BuildContext context, Widget targetPage) async {
                 fontSize: 22,
                 onTap: () => _handleRoleAndNavigate(context, RegisterPage()),
               ),
-
+        
               MyButton1(
                 pad: 8,
                 text: 'Guest',
@@ -88,7 +88,7 @@ void _handleRoleAndNavigate(BuildContext context, Widget targetPage) async {
                 fontSize: 22,
                 onTap: () => _handleRoleAndNavigate(context, const GuestWelcomeScreen()),
               ),
-
+        
               Expanded(
                 child: Image.asset('lib/images/image6.png', fit: BoxFit.contain),
               ),
