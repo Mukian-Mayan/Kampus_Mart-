@@ -154,7 +154,7 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
     }
 
     return Scaffold(
-      bottomNavigationBar: BottomNavBar(selectedIndex: 3),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 3, navBarColor:0,),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
         title: Column(
