@@ -1,18 +1,57 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
-import 'package:kampusmart2/screens/about_us_page.dart';
 import 'package:kampusmart2/screens/help_&_support_page.dart';
-import 'package:kampusmart2/screens/login_or_register_page.dart';
 import 'package:kampusmart2/screens/payment_transactions.dart';
+import 'package:kampusmart2/screens/about_us.dart';
+import 'package:kampusmart2/screens/mode_page.dart';
+import 'package:kampusmart2/screens/user_profile_page.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+   String? userRole;
+   int selectedIndex = 3;
+   void logoutUser() {
+    FirebaseAuth.instance.signOut();
+  }
+
+  @override
+
+  //link up setup 
+  void _onTab(int index) {
+    if (selectedIndex != index) {
+      setState(() {
+        selectedIndex = index;
+      });
+    }
+  }
+  //initial link up
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+   Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('user_role');
+    });
+  }
+
+  //till here guys
+  
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.tertiaryOrange,
@@ -29,17 +68,14 @@ class SettingsPage extends StatelessWidget {
             ),
           ),
         ),
-        leading: Padding(
-          padding: EdgeInsets.only(top: 22, left: 25),
-          child: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: Icon(Icons.arrow_back_ios, color: AppTheme.deepBlue),
-          ),
-        ),
+      
       ),
-      bottomNavigationBar: BottomNavBar(selectedIndex: 3),
+      bottomNavigationBar: (userRole == 'option2')
+      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.deepBlue)
+      : (userRole == 'option1')
+          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.deepBlue)
+          : null,
+
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -47,81 +83,116 @@ class SettingsPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Center( child: ProfilePicWidget(radius: 100, height: 200, width: 200),),
+                  const Center(
+                    child: ProfilePicWidget(
+                      radius: 100,
+                      height: 200,
+                      width: 200,
+                    ),
+                  ),
                   const SizedBox(height: 40),
                   Layout1(
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          /*DetailContainer(
-                            onTap: () {},
+                          DetailContainer(
+                            onTap: () {
+                              // Navigate to profile edit page
+                              Navigator.push(
+                                 context,
+                                 MaterialPageRoute(
+                                   builder: (context) => const UserProfilePage(),
+                                 ),
+                               );
+                            },
                             iconData: Icons.person,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'User name',
-                            //containerHeight: MediaQuery.of(context).size.height * 0.0001,
-                            //containerHeight: 20,MediaQuery.of(context).size.height * 0.065,
                             containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth:
-                                MediaQuery.of(context).size.width * 0.5,
-                          ),*/
-              
-                 
+                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                          ),
+                          
                           DetailContainer(
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentTransactions())),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const PaymentTransactions(),
+                                ),
+                              );
+                            },
                             iconData: Icons.credit_card_rounded,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'Payment Method',
-                            containerHeight:
-                                MediaQuery.of(context).size.height * 0.065,
-                            containerWidth:
-                                MediaQuery.of(context).size.width * 0.7,
+                            containerHeight: MediaQuery.of(context).size.height * 0.065,
+                            containerWidth: MediaQuery.of(context).size.width * 0.7,
                           ),
+                          
                           DetailContainer(
-                            onTap: () {},
-                            iconData: Icons.light_mode,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ModeSettingsPage(),
+                                ),
+                              );
+                            },
+                            iconData: Icons.settings_applications,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
-                            text: 'mode',
-                            containerHeight:
-                                MediaQuery.of(context).size.height * 0.065,
-                            containerWidth:
-                                MediaQuery.of(context).size.width * 0.7,
+                            text: 'App Settings',
+                            containerHeight: MediaQuery.of(context).size.height * 0.065,
+                            containerWidth: MediaQuery.of(context).size.width * 0.7,
                           ),
+                          
                           DetailContainer(
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HelpAndSupportPage())),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AboutUsPage(),
+                                ),
+                              );
+                            },
+                            iconData: Icons.info_outline,
+                            fontColor: AppTheme.paleWhite,
+                            fontSize: 20,
+                            text: 'About Us',
+                            containerHeight: MediaQuery.of(context).size.height * 0.065,
+                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                          ),
+                          
+                          DetailContainer(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HelpAndSupportPage(),
+                                ),
+                              );
+                            },
                             iconData: Icons.support_agent,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'Help And Support',
-                            containerHeight:
-                                MediaQuery.of(context).size.height * 0.065,
-                            containerWidth:
-                                MediaQuery.of(context).size.width * 0.7,
-                          ),
-                           DetailContainer(
-                            fontColor: AppTheme.selectedBlue,
-                            fontSize: 20,
-                            text: 'About Us',
-                            containerHeight: 40,
-                            containerWidth: MediaQuery.of(context).size.width * 0.8,
-                            iconData: Icons.group_sharp,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AboutUsPage())),
-                          ),
-                          DetailContainer(
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LoginOrRegisterPage())),
-                            iconData: Icons.logout_rounded,
-                            fontColor: AppTheme.red,
-                            fontSize: 20,
-                            text: 'Logout',
-                            containerHeight:
-                                MediaQuery.of(context).size.height * 0.065,
-                            containerWidth:
-                                MediaQuery.of(context).size.width * 0.7,
+                            containerHeight: MediaQuery.of(context).size.height * 0.065,
+                            containerWidth: MediaQuery.of(context).size.width * 0.7,
                           ),
                           
+                          DetailContainer(
+                            onTap: () {
+                              _showLogoutDialog(context);
+                            },
+                            iconData: Icons.logout_rounded,
+                            fontColor: AppTheme.paleWhite,
+                            fontSize: 20,
+                            text: 'Logout',
+                            containerHeight: MediaQuery.of(context).size.height * 0.065,
+                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                          ),
                         ],
                       ),
                     ),
@@ -130,14 +201,72 @@ class SettingsPage extends StatelessWidget {
               ),
             ),
           ),
-
-          /*Positioned(
-            top: 20,
-            left: MediaQuery.of(context).size.width/ 2 - 100,
-            child: ProfilePicWidget(radius: 100, height: 200, width: 200),
-          ),*/
         ],
       ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Logout',
+            style: TextStyle(
+              color: AppTheme.deepBlue,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                _performLogout(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.deepBlue,
+                foregroundColor: AppTheme.paleWhite,
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _performLogout(BuildContext context) {
+    // Add your logout logic here
+    // For example:
+    // - Clear user session/tokens
+    // - Clear shared preferences
+    // - Navigate to login screen
+    
+    // Example logout implementation:
+    // SharedPreferences.getInstance().then((prefs) {
+    //   prefs.clear();
+    // });
+    
+    // Navigate to login screen and clear navigation stack
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/login', // Replace with your login route
+      (Route<dynamic> route) => false,
     );
   }
 }

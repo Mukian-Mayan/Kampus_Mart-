@@ -1,8 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:kampusmart2/screens/cart_page.dart';
-import 'package:kampusmart2/screens/home_page.dart';
-import 'package:kampusmart2/widgets/custom_app_bar.dart';
-import 'package:kampusmart2/widgets/my_square_tile.dart';
+import 'package:kampusmart2/screens/settings_page.dart';
 import '../screens/chats_screen.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -40,28 +37,28 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kampus mart',
       theme: AppTheme.lightTheme,
-      home: HomePage(),
-      //initialRoute: '/',
+      //home: LoginOrRegisterPage(),
+      initialRoute: '/',
       debugShowCheckedModeBanner: false,
 
-      // routes: {
-      //   '/': (context) => const SplashScreen(), // Splash screen (first)
-      //   '/WelcomeScreen': (context) =>
-      //       const WelcomeScreen(), // Welcome screen (second)
-      //   '/OnboardingScreen': (context) =>
-      //       const OnboardingScreen(), // Third screen
-      //   '/FourthOnboardingScreen': (context) =>
-      //       const FourthOnboardingScreen(), // Fourth screen
-      //   '/InterestsScreen': (context) => const InterestsScreen(),
-      //   '/Signup': (context) => const LoginOrRegisterPage(),
-      //   '/ChatsScreen': (context) => const ChatsScreen(), // Seller dashboard
-      //   '/SellerDashboard': (context) =>
-      //       const SellerDashboardScreen(), // Seller dashboard
-      //   '/AddProduct': (context) =>
-      //       const SellerAddProductScreen(), // Add product screen
-      //   '/SalesTracking': (context) =>
-      //       const SellerSalesTrackingScreen(), // Sales tracking screen
-      // },
+      routes: {
+        '/': (context) => const SplashScreen(), // Splash screen (first)
+        '/WelcomeScreen': (context) =>
+            const WelcomeScreen(), // Welcome screen (second)
+        '/OnboardingScreen': (context) =>
+            const OnboardingScreen(), // Third screen
+        '/FourthOnboardingScreen': (context) =>
+            const FourthOnboardingScreen(), // Fourth screen
+        '/InterestsScreen': (context) => const InterestsScreen(),
+        '/Signup': (context) => const LoginOrRegisterPage(),
+        '/ChatsScreen': (context) => const ChatsScreen(), // Seller dashboard
+        '/SellerDashboard': (context) =>
+            const SellerDashboardScreen(), // Seller dashboard
+        '/AddProduct': (context) =>
+            const SellerAddProductScreen(), // Add product screen
+        '/SalesTracking': (context) =>
+            const SellerSalesTrackingScreen(), // Sales tracking screen
+      },
     );
   }
 }

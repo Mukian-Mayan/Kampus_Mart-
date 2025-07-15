@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, unused_import, duplicate_import
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
@@ -660,7 +660,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(selectedIndex: 0),
+      bottomNavigationBar: BottomNavBar(selectedIndex: 0, navBarColor: AppTheme.tertiaryOrange),
     );
   }
 

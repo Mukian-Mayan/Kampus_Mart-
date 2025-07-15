@@ -1,11 +1,12 @@
-// ignore_for_file: avoid_print, sized_box_for_whitespace, deprecated_member_use
+// ignore_for_file: avoid_print, sized_box_for_whitespace, deprecated_member_use, unused_import
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/layout1.dart';
 import '../screens/message_screen.dart';
-import '../widgets/search_bar.dart' as custom;
 
 class ChatsScreen extends StatefulWidget {
   static const String routeName = '/ChatsScreen';
@@ -16,6 +17,10 @@ class ChatsScreen extends StatefulWidget {
 }
 
 class _ChatsScreenState extends State<ChatsScreen> {
+
+  int selectedIndex = 2;
+   String? userRole;
+
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   List<ChatMessage> chatMessages = [
@@ -86,9 +91,38 @@ class _ChatsScreenState extends State<ChatsScreen> {
   }
 
   @override
+
+  //link up setup 
+  void _onTab(int index) {
+    if (selectedIndex != index) {
+      setState(() {
+        selectedIndex = index;
+      });
+    }
+  }
+  //initial link up
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+   Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('user_role');
+    });
+  }
+
+  //till here guys
+
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomNavBar(selectedIndex: 2),
+      bottomNavigationBar: (userRole == 'option2')
+      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
+      : (userRole == 'option1')
+          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
+          : null,
+
       backgroundColor: AppTheme.tertiaryOrange,
 
       body: SafeArea(

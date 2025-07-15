@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 
@@ -290,7 +291,7 @@ class PaymentProcessingScreen extends StatelessWidget {
             ),
           ),
           // Bottom navigation
-          BottomNavBar(selectedIndex: currentNavIndex),
+          BottomNavBar(selectedIndex: currentNavIndex,navBarColor: AppTheme.tertiaryOrange),
         ],
       ),
     );

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -15,10 +17,16 @@ class MessageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomNavBar(selectedIndex: 2),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: 3,
+        navBarColor: AppTheme.tertiaryOrange,
+      ),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
-        title: Text(userName, style: AppTheme.titleStyle.copyWith(fontSize: 20)),
+        title: Text(
+          userName,
+          style: AppTheme.titleStyle.copyWith(fontSize: 20),
+        ),
         elevation: 0,
       ),
       backgroundColor: AppTheme.backgroundLavender,
@@ -56,7 +64,9 @@ class MessageScreen extends StatelessWidget {
                         hintText: 'Type a message...',
                         hintStyle: TextStyle(color: AppTheme.textSecondary),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                       ),
                       style: TextStyle(color: AppTheme.textPrimary),
                     ),
