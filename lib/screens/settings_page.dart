@@ -22,7 +22,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
    String? userRole;
-   int selectedIndex = 0;
+   int selectedIndex = 3;
    void logoutUser() {
     FirebaseAuth.instance.signOut();
   }

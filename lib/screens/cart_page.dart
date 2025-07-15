@@ -72,7 +72,7 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> {
 
    String? userRole;
-   int selectedIndex = 0;
+   int selectedIndex = 1;
 
   final List<int> quantities = List.filled(products.length, 1);
   final List<double> ratings = products.map((p) => p.rating).toList();

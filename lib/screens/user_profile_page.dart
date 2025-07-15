@@ -21,7 +21,7 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
    String? userRole;
-  int selectedIndex = 0;
+  int selectedIndex = 4;
   void logoutUser() {
     FirebaseAuth.instance.signOut();
   }

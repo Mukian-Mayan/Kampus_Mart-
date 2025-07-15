@@ -18,7 +18,7 @@ class ChatsScreen extends StatefulWidget {
 
 class _ChatsScreenState extends State<ChatsScreen> {
 
-  int selectedIndex = 0;
+  int selectedIndex = 2;
    String? userRole;
 
   final TextEditingController _searchController = TextEditingController();
