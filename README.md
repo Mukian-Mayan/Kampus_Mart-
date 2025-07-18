@@ -1,10 +1,35 @@
 # kampusmart2
 
-A new Flutter project.
+a mobile application that serves as a campus-based market place for buying and selling used and new household items and scholastic items including laptops, electronic gadgets, carpets, furniture, etc. This platform will provide secure, easy to use and student-friendly environment tailored to the needs of freshers and finalists, promoting sustainability and financial efficiency within campus. The platform will have signup and login pages for the users both students and sellers and payment options like mobile money and payment with cash with clear pictures of the items sold and space to give reviews
 
 ## Getting Started
+For a first time user, when you open the app, you are taken to welcoming screens which are in the order as shown below.
 
-This project is a starting point for a Flutter application.
+<img width="195" height="422" alt="first onboard screen" src="https://github.com/user-attachments/assets/be685445-75ca-4af1-89aa-81a9e36e06ca" />
+<img width="390" height="844" alt="second on board screen" src="https://github.com/user-attachments/assets/979bf78a-7d8d-4f9b-a095-7b5019d2654e" />
+<img width="390" height="844" alt="Third on board screen" src="https://github.com/user-attachments/assets/5cc2bba7-5625-48a2-ab25-79db85d9ad67" />
+<img width="390" height="844" alt="fourth on board screen" src="https://github.com/user-attachments/assets/62c98c4a-d9fa-4ffd-96a9-e1bdd264a822" />
+after this screen, the user is then taken to an interests page where he/she selects what they are interested in. the interests page is as shown below.
+<img width="390" height="844" alt="preference" src="https://github.com/user-attachments/assets/17794821-d9f8-46fd-9925-c147ba3b47c9" />
+After this is done, the user is taken to the start page which has sign up , sign in options or guest option.
+<img width="390" height="844" alt="start page" src="https://github.com/user-attachments/assets/1325a2ab-b126-4aac-8a5c-0e7eb9008c0f" />
+Depending on what the user wants to use the app for:
+for a buyer, there is an option of a buyer or a seller provided in the sign in options.
+when you sign in as a buyer:
+you are taken to a home page where there are various product options. in each product box is an icon for a cart that enables you to add items to a cart.The home page also contains a navigation bar which conatins icons leading you to a cart screen, home screen,user profile screen,settings screen and chat screen.
+when you add an item in the cart and move foward to click the cart icon on the app navigation bar located at the bottom of your screen, you are taken to a cart screen where you can see items in your cart, increase the quantity, add or remove items in the cart and proceed to payment with the help of the proceed to payment button.
+For each item in the cart, there is a button for details which takes you to a product details screen for each individual item. in this page , you are able to chat with the seller of that item since there is a button for chatting to a seller which takes you to the chat screen,there is also a button for commenting on the item and you can also rate the items.
+the images for the home screen, cart screen, chat screen and product details screens are as shown below;
+
+When you click the proceed to payment button in the cart screen, you are taken to a payment screen where you can view your items quantities and their prices then proceed to another screen where you can choose your payment options.
+the payment screens are as shown below;
+<img width="390" height="844" alt="payment processing" src="https://github.com/user-attachments/assets/a913de7b-ca41-4a70-88ba-4bb2b8840b49" />
+<img width="390" height="844" alt="payments and transactions" src="https://github.com/user-attachments/assets/4676fd63-1b1b-4906-9b8a-46aa62bca672" />
+The other agreements can be finalized as you talk to the seller in the chat and find out where and when your product will be delivered.
+The user can also see navigate through system settings which are encapsulated in the settings page  for example changing from light mode to dark mode as shown below:
+The buyer can aslo receive notificationa about their order in the notificationa page which is accessed in the notifications icon at the top right corner of the screens. the notifications page is as shown below:
+
+When you sign in as a seller;
 
 A few resources to get you started if this is your first Flutter project:
 
