@@ -22,7 +22,7 @@ For each item in the cart, there is a button for details which takes you to a pr
 the images for the home screen, cart screen, chat screen and product details screens are as shown below;
 ![Screenshot 2025-07-18 142857] (https://github.com/user-attachments/assets/e2fed449-cbce-4650-ac27-240709614396/)
 
-!<img width="625" height="970" alt="Screenshot 2025-07-18 151502" src="https://github.com/user-attachments/assets/8484fb28-a2a5-476c-8502-0b56aa6159b4" />
+<img width="625" height="970" alt="Screenshot 2025-07-18 151502" src="https://github.com/user-attachments/assets/8484fb28-a2a5-476c-8502-0b56aa6159b4" />
 
 <img width="626" height="969" alt="Screenshot 2025-07-18 151519" src="https://github.com/user-attachments/assets/5e3de842-d98e-411d-8674-db9e8888f622" />
 <img width="624" height="971" alt="Screenshot 2025-07-18 151537" src="https://github.com/user-attachments/assets/6f4956d2-c8a9-4b95-9d06-b00920053e3f" />
