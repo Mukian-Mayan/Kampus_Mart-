@@ -30,8 +30,14 @@ The user can also see navigate through system settings which are encapsulated in
 The buyer can aslo receive notificationa about their order in the notificationa page which is accessed in the notifications icon at the top right corner of the screens. the notifications page is as shown below:
 
 When you sign in as a seller;
+They are directly taken to a home page,the difference betwen this home page and the buyer page is that it has an icon on the navigation bar which is the right most where the seller can access his or her dashboard.
+In the seller dashboard, a seller is able to add products and their images,a seller is also able to manage and see the orders and the order progress.
+the seller is also able to see the sales analytics i.e how much the summary of their transactions in form of grapghs and other representations as shown in the image below;
+<img width="390" height="844" alt="analytics for sellers" src="https://github.com/user-attachments/assets/b9561904-be35-448c-a81d-974f96aaaa12" />
+When one is a guest, they are directly taken to guest screen where they are able to fill in a few details . the guest screen is as shown below.
+<img width="390" height="844" alt="guest page" src="https://github.com/user-attachments/assets/8faa6f8c-57a2-4c1e-bcca-ceeb0ba883e1" />
+after this is done, they are taken to the home page where they can few different  items but when they try to add an item to the cart, they are told to sign up as a buyer.
 
-A few resources to get you started if this is your first Flutter project:
 
 - [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
 - [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
