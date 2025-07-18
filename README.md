@@ -17,7 +17,8 @@ after this screen, the user is then taken to an interests page where he/she sele
 After this is done, the user is taken to the start page which has sign up , sign in options or guest option.
 
 <img width="390" height="844" alt="start page" src="https://github.com/user-attachments/assets/1325a2ab-b126-4aac-8a5c-0e7eb9008c0f" />
-## for a buyer
+
+## For the buyer navigation
 Depending on what the user wants to use the app for:
 for a buyer, there is an option of a buyer or a seller provided in the sign in options.
 
@@ -53,11 +54,25 @@ the chat screen is as seen below:
 <img width="390" height="844" alt="messages" src="https://github.com/user-attachments/assets/bd417ca0-e00c-4e0c-80f3-ab53910144f2" />
 
 The other agreements can be finalized as you talk to the seller in the chat and find out where and when your product will be delivered.
-The user can also see navigate through system settings which are encapsulated in the settings page  for example changing from light mode to dark mode as shown below:
+The user can also see navigate through system settings which are encapsulated in the settings page as shown below:
+
+![IMG-20250718-WA0031](https://github.com/user-attachments/assets/550023e6-5c63-4dbf-b250-16a3edb10145)
+
+When you click the about us page, you get a screen that basically describes what the app does and all about us as shown below:
+
+![20250714_164825](https://github.com/user-attachments/assets/2a1a7913-30df-44d6-a6d3-7dffa5a4f8cf)
+
+When you click the App Settings button, you navigate to a screen where you can adjust from light mode to dark mode and many other functionalities.
+
+![IMG-20250718-WA0037](https://github.com/user-attachments/assets/deae85c9-3f1d-41c1-b011-88bf9c90535a)
+
+The payment method helps you navigate to where you can choose a new payment option or adjust and change from one to another.
 
 The buyer can also receive notifications about their order in the notificationa page which is accessed in the notifications icon at the top right corner of the screens. the notifications page is as shown below:
 
 <img width="626" height="970" alt="Screenshot 2025-07-18 151718" src="https://github.com/user-attachments/assets/dfe06f2a-65b5-4727-86b1-78f914c652d1" />
+
+## The seller dashboards
 
 When you sign in as a seller;
 They are directly taken to a home page,the difference betwen this home page and the buyer page is that it has an icon on the navigation bar which is the right most where the seller can access his or her dashboard.
@@ -89,6 +104,8 @@ When one is a guest, they are directly taken to guest screen where they are able
 <img width="390" height="844" alt="guest page" src="https://github.com/user-attachments/assets/8faa6f8c-57a2-4c1e-bcca-ceeb0ba883e1" />
 
 After this is done, they are taken to the home page where they can few different  items but when they try to add an item to the cart, they are told to sign up as a buyer.
+
+
 
 # How to run the application
 following how the app functions in the details above, you can go to the main.dart in our project, open a terminal and write the command "flutter run". you can either use an emulator or chrome.
