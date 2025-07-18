@@ -66,7 +66,7 @@ class SupabaseStorageService {
   }
 
   /// Upload chat image
-  static Future<String> uploadChatImage(XFile image) async {
+  static Future<String> uploadChatImage(XFile image, [String? s]) async {
     return await uploadImage(
       bucketName: chatImagesBucket,
       file: image,
@@ -164,24 +164,38 @@ class SupabaseStorageService {
   }
 
   /// Create storage bucket if it doesn't exist
-  static Future<void> createBucket({
-    required String bucketName,
-    bool isPublic = true,
-  }) async {
-    try {
-      await _supabase.storage.createBucket(
-        bucketName,
-        BucketOptions(
-          public: isPublic,
-          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-          fileSizeLimit: (5 * 1024 * 1024).toString(), // 5MB
-        ),
-      );
-    } catch (e) {
-      // Bucket might already exist
-      print('Bucket creation info: $e');
-    }
+  // Update in createBucket method
+static Future<void> createBucket({
+  required String bucketName,
+  bool isPublic = true,
+}) async {
+  try {
+    await _supabase.storage.createBucket(
+      bucketName,
+      BucketOptions(
+        public: isPublic,
+        allowedMimeTypes: [
+          'image/jpeg', 
+          'image/png', 
+          'image/gif', 
+          'image/webp',
+          'audio/mpeg',
+          'audio/wav',
+          'audio/ogg',
+          'application/pdf',
+          'application/msword',
+          'application/vnd.ms-excel',
+          'application/vnd.ms-powerpoint',
+          'application/zip'
+        ],
+        fileSizeLimit: (25 * 1024 * 1024).toString(), // Increased to 25MB for audio/files
+      ),
+    );
+  } catch (e) {
+    // Bucket might already exist
+    print('Bucket creation info: $e');
   }
+}
 
   /// List files in a bucket
   static Future<List<FileObject>> listFiles({
@@ -362,26 +376,43 @@ class SupabaseStorageService {
   }
 
   /// Helper method to get content type based on file extension
-  static String _getContentType(String filePath) {
-    final String extension = path.extension(filePath).toLowerCase();
-    switch (extension) {
-      case '.jpg':
-      case '.jpeg':
-        return 'image/jpeg';
-      case '.png':
-        return 'image/png';
-      case '.gif':
-        return 'image/gif';
-      case '.webp':
-        return 'image/webp';
-      case '.bmp':
-        return 'image/bmp';
-      case '.svg':
-        return 'image/svg+xml';
-      default:
-        return 'application/octet-stream';
-    }
+  // Update in supabase_storage_service.dart
+static String _getContentType(String filePath) {
+  final String extension = path.extension(filePath).toLowerCase();
+  switch (extension) {
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.png':
+      return 'image/png';
+    case '.gif':
+      return 'image/gif';
+    case '.webp':
+      return 'image/webp';
+    case '.mp3':
+    case '.m4a':
+      return 'audio/mpeg';
+    case '.wav':
+      return 'audio/wav';
+    case '.ogg':
+      return 'audio/ogg';
+    case '.pdf':
+      return 'application/pdf';
+    case '.doc':
+    case '.docx':
+      return 'application/msword';
+    case '.xls':
+    case '.xlsx':
+      return 'application/vnd.ms-excel';
+    case '.ppt':
+    case '.pptx':
+      return 'application/vnd.ms-powerpoint';
+    case '.zip':
+      return 'application/zip';
+    default:
+      return 'application/octet-stream';
   }
+}
 
   /// Helper method to extract file path from public URL
   static String _extractFilePathFromUrl(String url, String bucketName) {
@@ -496,4 +527,76 @@ class SupabaseStorageService {
       throw Exception('Failed to cleanup old files: $e');
     }
   }
+  // Add to SupabaseStorageService class in supabase_storage_service.dart
+
+/// Upload voice message to Supabase Storage
+Future<String> uploadVoiceMessage(
+  String filePath,
+  String storagePath,
+) async {
+  try {
+    final file = File(filePath);
+    final fileName = path.basename(filePath);
+    final fullPath = '$storagePath/$fileName';
+
+    // Read file as bytes
+    final Uint8List fileBytes = await file.readAsBytes();
+
+    // Upload to Supabase Storage
+    await _supabase.storage
+        .from(chatImagesBucket) // Using same bucket as chat images
+        .uploadBinary(
+          fullPath,
+          fileBytes,
+          fileOptions: FileOptions(
+            contentType: 'audio/mpeg', // or appropriate audio type
+            upsert: false,
+          ),
+        );
+
+    // Get public URL
+    return _supabase.storage
+        .from(chatImagesBucket)
+        .getPublicUrl(fullPath);
+  } catch (e) {
+    throw Exception('Failed to upload voice message: $e');
+  }
+}
+
+/// Upload chat file to Supabase Storage
+Future<String> uploadChatFile(
+  XFile file,
+  String storagePath,
+) async {
+  try {
+    // Generate unique filename
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${path.basename(file.name)}';
+    final fullPath = '$storagePath/$fileName';
+
+    // Read file as bytes
+    final Uint8List fileBytes = await file.readAsBytes();
+
+    // Determine content type
+    String contentType = _getContentType(file.path);
+
+    // Upload to Supabase Storage
+    await _supabase.storage
+        .from(chatImagesBucket) // Using same bucket as chat images
+        .uploadBinary(
+          fullPath,
+          fileBytes,
+          fileOptions: FileOptions(
+            contentType: contentType,
+            upsert: false,
+          ),
+        );
+
+    // Get public URL
+    return _supabase.storage
+        .from(chatImagesBucket)
+        .getPublicUrl(fullPath);
+  } catch (e) {
+    throw Exception('Failed to upload chat file: $e');
+  }
+}
 }

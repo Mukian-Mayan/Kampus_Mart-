@@ -66,4 +66,24 @@ class NotificationService extends FirebaseService {
       throw Exception('Failed to mark notification as read: $e');
     }
   }
+  // Add to notificaations_service.dart
+static Future<void> sendChatNotification({
+  required String recipientId,
+  required String senderName,
+  required String message,
+  required String chatRoomId,
+  required String productName,
+}) async {
+  await sendNotification(
+    userId: recipientId,
+    title: 'New message from $senderName',
+    message: message,
+    type: 'chat_message',
+    data: {
+      'chatRoomId': chatRoomId,
+      'productName': productName,
+      'senderName': senderName,
+    },
+  );
+}
 }

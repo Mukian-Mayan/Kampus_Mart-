@@ -1,283 +1,441 @@
-// models/chat_models.dart
+// chat_models.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Enums
 enum MessageType {
   text,
   image,
+  voice,
+  file,
   system,
 }
 
-enum UserType {
-  seller,
+enum DeliveryStatus {
+  sent,
+  delivered,
+  read,
+  failed,
+}
+
+enum ChatRoomStatus {
+  active,
+  blocked,
+  archived,
+  deleted,
+}
+
+enum UserRole {
   buyer,
+  seller,
+  admin,
 }
 
-class ChatRoom {
-  final String id;
-  final String sellerId;
-  final String buyerId;
-  final String productId;
-  final String productName;
-  final String sellerName;
-  final String buyerName;
-  final String lastMessage;
-  final Timestamp lastMessageTime;
-  final int unreadCountSeller;
-  final int unreadCountBuyer;
-  final bool isActiveForSeller;
-  final bool isActiveForBuyer;
-  final Timestamp createdAt;
-  final List<String> participants;
-  final String? productImageUrl;
-
-  ChatRoom({
-    required this.id,
-    required this.sellerId,
-    required this.buyerId,
-    required this.productId,
-    required this.productName,
-    required this.sellerName,
-    required this.buyerName,
-    required this.lastMessage,
-    required this.lastMessageTime,
-    required this.unreadCountSeller,
-    required this.unreadCountBuyer,
-    required this.isActiveForSeller,
-    required this.isActiveForBuyer,
-    required this.createdAt,
-    this.productImageUrl,
-  }) : participants = [sellerId, buyerId];
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'sellerId': sellerId,
-      'buyerId': buyerId,
-      'productId': productId,
-      'productName': productName,
-      'sellerName': sellerName,
-      'buyerName': buyerName,
-      'lastMessage': lastMessage,
-      'lastMessageTime': lastMessageTime,
-      'unreadCountSeller': unreadCountSeller,
-      'unreadCountBuyer': unreadCountBuyer,
-      'isActiveForSeller': isActiveForSeller,
-      'isActiveForBuyer': isActiveForBuyer,
-      'createdAt': createdAt,
-      'participants': participants,
-      'productImageUrl': productImageUrl,
-    };
-  }
-
-  static ChatRoom fromMap(Map<String, dynamic> map) {
-    return ChatRoom(
-      id: map['id'] ?? '',
-      sellerId: map['sellerId'] ?? '',
-      buyerId: map['buyerId'] ?? '',
-      productId: map['productId'] ?? '',
-      productName: map['productName'] ?? '',
-      sellerName: map['sellerName'] ?? '',
-      buyerName: map['buyerName'] ?? '',
-      lastMessage: map['lastMessage'] ?? '',
-      lastMessageTime: map['lastMessageTime'] ?? Timestamp.now(),
-      unreadCountSeller: map['unreadCountSeller'] ?? 0,
-      unreadCountBuyer: map['unreadCountBuyer'] ?? 0,
-      isActiveForSeller: map['isActiveForSeller'] ?? true,
-      isActiveForBuyer: map['isActiveForBuyer'] ?? true,
-      createdAt: map['createdAt'] ?? Timestamp.now(),
-      productImageUrl: map['productImageUrl'],
-    );
-  }
-
-  // Get the other participant's name based on current user
-  String getOtherParticipantName(String currentUserId) {
-    return currentUserId == sellerId ? buyerName : sellerName;
-  }
-
-  // Get the other participant's ID based on current user
-  String getOtherParticipantId(String currentUserId) {
-    return currentUserId == sellerId ? buyerId : sellerId;
-  }
-
-  // Get unread count for current user
-  int getUnreadCount(String currentUserId) {
-    return currentUserId == sellerId ? unreadCountSeller : unreadCountBuyer;
-  }
-
-  // Check if current user is seller
-  bool isCurrentUserSeller(String currentUserId) {
-    return currentUserId == sellerId;
-  }
-
-  // Get formatted time string
-  String getFormattedTime() {
-    DateTime dateTime = lastMessageTime.toDate();
-    DateTime now = DateTime.now();
-    Duration difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  }
-}
-
-class Message {
+// ChatMessage model specifically for MessageScreen compatibility
+class ChatMessage {
   final String id;
   final String senderId;
-  final String receiverId;
+  final String senderName;
   final String message;
-  final String? imageUrl;
-  final Timestamp timestamp;
-  final bool isRead;
+  final DateTime timestamp;
   final MessageType messageType;
-  final String? replyToMessageId;
+  final bool isRead;
+  final String? imageUrl;
+  final String? voiceUrl;
+  final String? fileName;
+  final String? fileUrl;
 
-  Message({
+  ChatMessage({
     required this.id,
     required this.senderId,
-    required this.receiverId,
+    required this.senderName,
     required this.message,
-    this.imageUrl,
     required this.timestamp,
-    required this.isRead,
     required this.messageType,
-    this.replyToMessageId,
+    required this.isRead,
+    this.imageUrl,
+    this.voiceUrl,
+    this.fileName,
+    this.fileUrl,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'senderId': senderId,
-      'receiverId': receiverId,
+      'senderName': senderName,
       'message': message,
-      'imageUrl': imageUrl,
-      'timestamp': timestamp,
+      'timestamp': Timestamp.fromDate(timestamp),
+      'messageType': messageType.toString(),
       'isRead': isRead,
-      'messageType': messageType.toString().split('.').last,
-      'replyToMessageId': replyToMessageId,
+      'imageUrl': imageUrl,
+      'voiceUrl': voiceUrl,
+      'fileName': fileName,
+      'fileUrl': fileUrl,
     };
   }
 
-  static Message fromMap(Map<String, dynamic> map) {
-    return Message(
+  factory ChatMessage.fromMap(Map<String, dynamic> map) {
+    return ChatMessage(
       id: map['id'] ?? '',
       senderId: map['senderId'] ?? '',
-      receiverId: map['receiverId'] ?? '',
+      senderName: map['senderName'] ?? '',
       message: map['message'] ?? '',
-      imageUrl: map['imageUrl'],
-      timestamp: map['timestamp'] ?? Timestamp.now(),
+      timestamp: (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      messageType: _parseMessageType(map['messageType']),
       isRead: map['isRead'] ?? false,
-      messageType: MessageType.values.firstWhere(
-        (e) => e.toString().split('.').last == map['messageType'],
-        orElse: () => MessageType.text,
-      ),
-      replyToMessageId: map['replyToMessageId'],
+      imageUrl: map['imageUrl'],
+      voiceUrl: map['voiceUrl'],
+      fileName: map['fileName'],
+      fileUrl: map['fileUrl'],
     );
   }
 
-  // Get formatted time string
-  String getFormattedTime() {
-    DateTime dateTime = timestamp.toDate();
-    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-
-  // Get formatted date string
-  String getFormattedDate() {
-    DateTime dateTime = timestamp.toDate();
-    DateTime now = DateTime.now();
-    Duration difference = now.difference(dateTime);
-
-    if (difference.inDays == 0) {
-      return 'Today';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+  static MessageType _parseMessageType(dynamic messageType) {
+    if (messageType == null) return MessageType.text;
+    
+    if (messageType is String) {
+      switch (messageType) {
+        case 'MessageType.text':
+          return MessageType.text;
+        case 'MessageType.image':
+          return MessageType.image;
+        case 'MessageType.voice':
+          return MessageType.voice;
+        case 'MessageType.file':
+          return MessageType.file;
+        case 'MessageType.system':
+          return MessageType.system;
+        default:
+          return MessageType.text;
+      }
     }
-  }
-
-  // Check if message is from current user
-  bool isFromCurrentUser(String currentUserId) {
-    return senderId == currentUserId;
+    
+    return MessageType.text;
   }
 }
 
-class ChatUser {
+// UserProfile model
+class UserProfile {
   final String id;
   final String name;
-  final String email;
-  final String? profileImageUrl;
+  final String? imageUrl;
+  final UserRole role;
   final bool isOnline;
-  final Timestamp lastSeen;
-  final UserType userType;
-  final String? fcmToken; // For push notifications
+  final DateTime? lastSeen;
 
-  ChatUser({
+  UserProfile({
     required this.id,
     required this.name,
-    required this.email,
-    this.profileImageUrl,
-    required this.isOnline,
-    required this.lastSeen,
-    required this.userType,
-    this.fcmToken,
+    this.imageUrl,
+    required this.role,
+    this.isOnline = false,
+    this.lastSeen,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
-      'email': email,
-      'profileImageUrl': profileImageUrl,
+      'imageUrl': imageUrl,
+      'role': role.toString(),
       'isOnline': isOnline,
-      'lastSeen': lastSeen,
-      'userType': userType.toString().split('.').last,
-      'fcmToken': fcmToken,
+      'lastSeen': lastSeen != null ? Timestamp.fromDate(lastSeen!) : null,
     };
   }
 
-  static ChatUser fromMap(Map<String, dynamic> map) {
-    return ChatUser(
+  factory UserProfile.fromMap(Map<String, dynamic> map) {
+    return UserProfile(
       id: map['id'] ?? '',
       name: map['name'] ?? '',
-      email: map['email'] ?? '',
-      profileImageUrl: map['profileImageUrl'],
+      imageUrl: map['imageUrl'],
+      role: _parseUserRole(map['role']),
       isOnline: map['isOnline'] ?? false,
-      lastSeen: map['lastSeen'] ?? Timestamp.now(),
-      userType: UserType.values.firstWhere(
-        (e) => e.toString().split('.').last == map['userType'],
-        orElse: () => UserType.buyer,
-      ),
-      fcmToken: map['fcmToken'],
+      lastSeen: (map['lastSeen'] as Timestamp?)?.toDate(),
     );
   }
 
-  // Get last seen formatted string
-  String getLastSeenFormatted() {
-    if (isOnline) {
-      return 'Online';
+  static UserRole _parseUserRole(dynamic role) {
+    if (role == null) return UserRole.buyer;
+    
+    if (role is String) {
+      switch (role) {
+        case 'UserRole.buyer':
+        case 'buyer':
+          return UserRole.buyer;
+        case 'UserRole.seller':
+        case 'seller':
+          return UserRole.seller;
+        case 'UserRole.admin':
+        case 'admin':
+          return UserRole.admin;
+        default:
+          return UserRole.buyer;
+      }
     }
     
-    DateTime dateTime = lastSeen.toDate();
-    DateTime now = DateTime.now();
-    Duration difference = now.difference(dateTime);
+    return UserRole.buyer;
+  }
+}
 
-    if (difference.inMinutes < 1) {
-      return 'Last seen just now';
-    } else if (difference.inMinutes < 60) {
-      return 'Last seen ${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return 'Last seen ${difference.inHours}h ago';
-    } else {
-      return 'Last seen ${difference.inDays}d ago';
+// Message model for detailed message handling
+class Message {
+  final String id;
+  final String senderId;
+  final String senderName;
+  final String message;
+  final Timestamp timestamp;
+  final MessageType messageType;
+  final bool isRead;
+  final DeliveryStatus deliveryStatus;
+  final String? imageUrl;
+  final String? voiceUrl;
+  final String? fileName;
+  final String? fileUrl;
+  final Map<String, dynamic> metadata;
+
+  Message({
+    required this.id,
+    required this.senderId,
+    required this.senderName,
+    required this.message,
+    required this.timestamp,
+    required this.messageType,
+    required this.isRead,
+    required this.deliveryStatus,
+    this.imageUrl,
+    this.voiceUrl,
+    this.fileName,
+    this.fileUrl,
+    this.metadata = const {},
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'senderId': senderId,
+      'senderName': senderName,
+      'message': message,
+      'timestamp': timestamp,
+      'messageType': messageType.toString(),
+      'isRead': isRead,
+      'deliveryStatus': deliveryStatus.toString(),
+      'imageUrl': imageUrl,
+      'voiceUrl': voiceUrl,
+      'fileName': fileName,
+      'fileUrl': fileUrl,
+      'metadata': metadata,
+    };
+  }
+
+  factory Message.fromMap(Map<String, dynamic> map) {
+    return Message(
+      id: map['id'] ?? '',
+      senderId: map['senderId'] ?? '',
+      senderName: map['senderName'] ?? '',
+      message: map['message'] ?? '',
+      timestamp: map['timestamp'] ?? Timestamp.now(),
+      messageType: _parseMessageType(map['messageType']),
+      isRead: map['isRead'] ?? false,
+      deliveryStatus: _parseDeliveryStatus(map['deliveryStatus']),
+      imageUrl: map['imageUrl'],
+      voiceUrl: map['voiceUrl'],
+      fileName: map['fileName'],
+      fileUrl: map['fileUrl'],
+      metadata: Map<String, dynamic>.from(map['metadata'] ?? {}),
+    );
+  }
+
+  static MessageType _parseMessageType(dynamic messageType) {
+    if (messageType == null) return MessageType.text;
+    
+    if (messageType is String) {
+      switch (messageType) {
+        case 'MessageType.text':
+          return MessageType.text;
+        case 'MessageType.image':
+          return MessageType.image;
+        case 'MessageType.voice':
+          return MessageType.voice;
+        case 'MessageType.file':
+          return MessageType.file;
+        case 'MessageType.system':
+          return MessageType.system;
+        default:
+          return MessageType.text;
+      }
     }
+    
+    return MessageType.text;
+  }
+
+  static DeliveryStatus _parseDeliveryStatus(dynamic status) {
+    if (status == null) return DeliveryStatus.sent;
+    
+    if (status is String) {
+      switch (status) {
+        case 'DeliveryStatus.sent':
+          return DeliveryStatus.sent;
+        case 'DeliveryStatus.delivered':
+          return DeliveryStatus.delivered;
+        case 'DeliveryStatus.read':
+          return DeliveryStatus.read;
+        case 'DeliveryStatus.failed':
+          return DeliveryStatus.failed;
+        default:
+          return DeliveryStatus.sent;
+      }
+    }
+    
+    return DeliveryStatus.sent;
+  }
+}
+
+// ChatRoom model
+class ChatRoom {
+  final String id;
+  final String sellerId;
+  final String buyerId;
+  final String sellerName;
+  final String buyerName;
+  final String? sellerImageUrl;
+  final String? buyerImageUrl;
+  final UserRole sellerRole;
+  final UserRole buyerRole;
+  final String productId;
+  final String productName;
+  final String productImageUrl;
+  final String productPrice;
+  final String productDescription;
+  final String lastMessage;
+  final Timestamp lastMessageTime;
+  final String lastMessageSenderId;
+  final MessageType lastMessageType;
+  final int unreadCountSeller;
+  final int unreadCountBuyer;
+  final bool isActiveForSeller;
+  final bool isActiveForBuyer;
+  final ChatRoomStatus status;
+  final List<String> participants;
+  final List<String> blockedBy;
+  final bool isGroupChat;
+  final Timestamp createdAt;
+  final Map<String, dynamic> metadata;
+
+  ChatRoom({
+    required this.id,
+    required this.sellerId,
+    required this.buyerId,
+    required this.sellerName,
+    required this.buyerName,
+    this.sellerImageUrl,
+    this.buyerImageUrl,
+    required this.sellerRole,
+    required this.buyerRole,
+    required this.productId,
+    required this.productName,
+    required this.productImageUrl,
+    required this.productPrice,
+    required this.productDescription,
+    required this.lastMessage,
+    required this.lastMessageTime,
+    required this.lastMessageSenderId,
+    required this.lastMessageType,
+    required this.unreadCountSeller,
+    required this.unreadCountBuyer,
+    required this.isActiveForSeller,
+    required this.isActiveForBuyer,
+    required this.status,
+    required this.participants,
+    required this.blockedBy,
+    required this.isGroupChat,
+    required this.createdAt,
+    this.metadata = const {},
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'sellerId': sellerId,
+      'buyerId': buyerId,
+      'sellerName': sellerName,
+      'buyerName': buyerName,
+      'sellerImageUrl': sellerImageUrl,
+      'buyerImageUrl': buyerImageUrl,
+      'sellerRole': sellerRole.toString(),
+      'buyerRole': buyerRole.toString(),
+      'productId': productId,
+      'productName': productName,
+      'productImageUrl': productImageUrl,
+      'productPrice': productPrice,
+      'productDescription': productDescription,
+      'lastMessage': lastMessage,
+      'lastMessageTime': lastMessageTime,
+      'lastMessageSenderId': lastMessageSenderId,
+      'lastMessageType': lastMessageType.toString(),
+      'unreadCountSeller': unreadCountSeller,
+      'unreadCountBuyer': unreadCountBuyer,
+      'isActiveForSeller': isActiveForSeller,
+      'isActiveForBuyer': isActiveForBuyer,
+      'status': status.toString(),
+      'participants': participants,
+      'blockedBy': blockedBy,
+      'isGroupChat': isGroupChat,
+      'createdAt': createdAt,
+      'metadata': metadata,
+    };
+  }
+
+  factory ChatRoom.fromMap(Map<String, dynamic> map) {
+    return ChatRoom(
+      id: map['id'] ?? '',
+      sellerId: map['sellerId'] ?? '',
+      buyerId: map['buyerId'] ?? '',
+      sellerName: map['sellerName'] ?? '',
+      buyerName: map['buyerName'] ?? '',
+      sellerImageUrl: map['sellerImageUrl'],
+      buyerImageUrl: map['buyerImageUrl'],
+      sellerRole: UserProfile._parseUserRole(map['sellerRole']),
+      buyerRole: UserProfile._parseUserRole(map['buyerRole']),
+      productId: map['productId'] ?? '',
+      productName: map['productName'] ?? '',
+      productImageUrl: map['productImageUrl'] ?? '',
+      productPrice: map['productPrice'] ?? '',
+      productDescription: map['productDescription'] ?? '',
+      lastMessage: map['lastMessage'] ?? '',
+      lastMessageTime: map['lastMessageTime'] ?? Timestamp.now(),
+      lastMessageSenderId: map['lastMessageSenderId'] ?? '',
+      lastMessageType: Message._parseMessageType(map['lastMessageType']),
+      unreadCountSeller: map['unreadCountSeller'] ?? 0,
+      unreadCountBuyer: map['unreadCountBuyer'] ?? 0,
+      isActiveForSeller: map['isActiveForSeller'] ?? true,
+      isActiveForBuyer: map['isActiveForBuyer'] ?? true,
+      status: _parseChatRoomStatus(map['status']),
+      participants: List<String>.from(map['participants'] ?? []),
+      blockedBy: List<String>.from(map['blockedBy'] ?? []),
+      isGroupChat: map['isGroupChat'] ?? false,
+      createdAt: map['createdAt'] ?? Timestamp.now(),
+      metadata: Map<String, dynamic>.from(map['metadata'] ?? {}),
+    );
+  }
+
+  static ChatRoomStatus _parseChatRoomStatus(dynamic status) {
+    if (status == null) return ChatRoomStatus.active;
+    
+    if (status is String) {
+      switch (status) {
+        case 'ChatRoomStatus.active':
+          return ChatRoomStatus.active;
+        case 'ChatRoomStatus.blocked':
+          return ChatRoomStatus.blocked;
+        case 'ChatRoomStatus.archived':
+          return ChatRoomStatus.archived;
+        case 'ChatRoomStatus.deleted':
+          return ChatRoomStatus.deleted;
+        default:
+          return ChatRoomStatus.active;
+      }
+    }
+    
+    return ChatRoomStatus.active;
   }
 }

@@ -43,6 +43,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
     _searchController.dispose();
     super.dispose();
   }
+
   Future<void> _fetchUserRole() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -61,34 +62,28 @@ class _ChatsScreenState extends State<ChatsScreen> {
       return chatRooms;
     }
     return chatRooms.where((chat) {
-      String otherParticipantName = chat.getOtherParticipantName(_currentUserId!);
+      String otherParticipantName = 
+      _chatService.getOtherParticipantName(_currentUserId!) as String;
       return otherParticipantName.toLowerCase().contains(_searchQuery) ||
           chat.productName.toLowerCase().contains(_searchQuery) ||
           chat.lastMessage.toLowerCase().contains(_searchQuery);
     }).toList();
   }
 
-  @override
-
-  //link up setup 
-  void _onTab(int index, dynamic selectedIndex) {
+  void _onTab(int index) {
     if (selectedIndex != index) {
       setState(() {
         selectedIndex = index;
       });
     }
   }
-  //initial link up
-  // REMOVED DUPLICATE initState()
 
-   Future<void> _loadUserRole() async {
+  Future<void> _loadUserRole() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       userRole = prefs.getString('user_role');
     });
   }
-
-  //till here guys
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +133,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                                   ),
                                 ),
                                 FutureBuilder<int>(
-                                  future: _chatService.getUnreadMessageCount(),
+                                  future: _chatService.getUnreadMessagesCount(),
                                   builder: (context, snapshot) {
                                     if (snapshot.hasData && snapshot.data! > 0) {
                                       return Container(
@@ -216,7 +211,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                   ),
                 ),
                 child: StreamBuilder<List<ChatRoom>>(
-                  stream: _chatService.getChatRooms(),
+                  stream: _chatService.getChatRoomsStream(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -311,10 +306,11 @@ class _ChatsScreenState extends State<ChatsScreen> {
   }
 
   Widget _buildChatItem(ChatRoom chat) {
-    String otherParticipantName = chat.getOtherParticipantName(_currentUserId!);
-    String otherParticipantId = chat.getOtherParticipantId(_currentUserId!);
-    int unreadCount = chat.getUnreadCount(_currentUserId!);
+    String otherParticipantName = _chatService.getOtherParticipantName(_currentUserId!) as String;
+    String otherParticipantId = _chatService.getOtherParticipantDetailsById(_currentUserId!, chat as String) as String;
+    int unreadCount = _chatService.getUnreadCount(_currentUserId!) as int;
     bool hasUnread = unreadCount > 0;
+    bool isSeller = _chatService.isCurrentUserSeller(_currentUserId!) as bool;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -322,7 +318,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
         onTap: () async {
           // Mark messages as read when opening chat
           if (hasUnread) {
-            await _chatService.markMessagesAsRead(chat.id, _currentUserId!);
+            await _chatService.markMessagesAsRead(chat.id);
           }
 
           Navigator.push(
@@ -405,7 +401,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                             ),
                           ),
                         ),
-                        if (chat.isCurrentUserSeller(_currentUserId!))
+                        if (isSeller)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
@@ -454,7 +450,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    chat.getFormattedTime(),
+                    _chatService.getFormattedTime(chat.lastMessageTime),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],
@@ -500,7 +496,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
               title: const Text('Mark as Read'),
               onTap: () async {
                 Navigator.pop(context);
-                await _chatService.markMessagesAsRead(chat.id, _currentUserId!);
+                await _chatService.markMessagesAsRead(chat.id);
               },
             ),
             ListTile(
