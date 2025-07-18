@@ -46,11 +46,20 @@ When you sign in as a seller;
 They are directly taken to a home page,the difference betwen this home page and the buyer page is that it has an icon on the navigation bar which is the right most where the seller can access his or her dashboard.
 In the seller dashboard, a seller is able to add products and their images,a seller is also able to manage and see the orders and the order progress.
 the seller is also able to see the sales analytics i.e how much the summary of their transactions in form of grapghs and other representations as shown in the image below;
-<img width="390" height="844" alt="analytics for sellers" src="https://github.com/user-attachments/assets/b9561904-be35-448c-a81d-974f96aaaa12" />
+![IMG-20250715-WA0053](https://github.com/user-attachments/assets/3c761acf-ba6f-47b7-94b1-08ce6e05dfd2)
+a seller is able to manage his or her stock as seen in the image below:
+![IMG-20250715-WA0052](https://github.com/user-attachments/assets/385bda24-7cc5-4baf-baf2-9cbd0cd75956)
+A seller is able to add a product as shown in the screen below:
+![IMG-20250715-WA0054](https://github.com/user-attachments/assets/9c8a8c2d-1ece-42b6-bb66-ee770247d443)
+A seller is also able to see the progress of the order in that when a customer adds an item to cart, the order is new, when the seller accepts it, then it goes to pending, then after interacting with the customer and the customer pays for the product, then the status changes to solved.
+![IMG-20250715-WA0051](https://github.com/user-attachments/assets/b51fe4cd-d3e8-4bc7-a923-6fd4ecb383b0)
+
 When one is a guest, they are directly taken to guest screen where they are able to fill in a few details . the guest screen is as shown below.
 <img width="390" height="844" alt="guest page" src="https://github.com/user-attachments/assets/8faa6f8c-57a2-4c1e-bcca-ceeb0ba883e1" />
-after this is done, they are taken to the home page where they can few different  items but when they try to add an item to the cart, they are told to sign up as a buyer.
+After this is done, they are taken to the home page where they can few different  items but when they try to add an item to the cart, they are told to sign up as a buyer.
 
+# How to run the application
+following how the app functions in the details above, you can go to the main.dart in our project, open a terminal and write the command "flutter run". you can either use an emulator or chrome.
 
 - [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
 - [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
