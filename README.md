@@ -20,14 +20,27 @@ you are taken to a home page where there are various product options. in each pr
 when you add an item in the cart and move foward to click the cart icon on the app navigation bar located at the bottom of your screen, you are taken to a cart screen where you can see items in your cart, increase the quantity, add or remove items in the cart and proceed to payment with the help of the proceed to payment button.
 For each item in the cart, there is a button for details which takes you to a product details screen for each individual item. in this page , you are able to chat with the seller of that item since there is a button for chatting to a seller which takes you to the chat screen,there is also a button for commenting on the item and you can also rate the items.
 the images for the home screen, cart screen, chat screen and product details screens are as shown below;
+![Screenshot 2025-07-18 142857] (https://github.com/user-attachments/assets/e2fed449-cbce-4650-ac27-240709614396/)
+
+!<img width="625" height="970" alt="Screenshot 2025-07-18 151502" src="https://github.com/user-attachments/assets/8484fb28-a2a5-476c-8502-0b56aa6159b4" />
+
+<img width="626" height="969" alt="Screenshot 2025-07-18 151519" src="https://github.com/user-attachments/assets/5e3de842-d98e-411d-8674-db9e8888f622" />
+<img width="624" height="971" alt="Screenshot 2025-07-18 151537" src="https://github.com/user-attachments/assets/6f4956d2-c8a9-4b95-9d06-b00920053e3f" />
+<img width="623" height="972" alt="Screenshot 2025-07-18 151603" src="https://github.com/user-attachments/assets/1c6302c3-9b5d-49d1-a81c-f4fbb3cea718" />
+
+<img width="623" height="901" alt="Screenshot 2025-07-18 151641" src="https://github.com/user-attachments/assets/c9df1f1b-783f-4fdc-b7b7-50590c23cd45" />
 
 When you click the proceed to payment button in the cart screen, you are taken to a payment screen where you can view your items quantities and their prices then proceed to another screen where you can choose your payment options.
 the payment screens are as shown below;
 <img width="390" height="844" alt="payment processing" src="https://github.com/user-attachments/assets/a913de7b-ca41-4a70-88ba-4bb2b8840b49" />
 <img width="390" height="844" alt="payments and transactions" src="https://github.com/user-attachments/assets/4676fd63-1b1b-4906-9b8a-46aa62bca672" />
+the chat screen is as seen below:
+<img width="390" height="844" alt="messages" src="https://github.com/user-attachments/assets/bd417ca0-e00c-4e0c-80f3-ab53910144f2" />
+
 The other agreements can be finalized as you talk to the seller in the chat and find out where and when your product will be delivered.
 The user can also see navigate through system settings which are encapsulated in the settings page  for example changing from light mode to dark mode as shown below:
-The buyer can aslo receive notificationa about their order in the notificationa page which is accessed in the notifications icon at the top right corner of the screens. the notifications page is as shown below:
+The buyer can aslo receive notifications about their order in the notificationa page which is accessed in the notifications icon at the top right corner of the screens. the notifications page is as shown below:
+<img width="626" height="970" alt="Screenshot 2025-07-18 151718" src="https://github.com/user-attachments/assets/dfe06f2a-65b5-4727-86b1-78f914c652d1" />
 
 When you sign in as a seller;
 They are directly taken to a home page,the difference betwen this home page and the buyer page is that it has an icon on the navigation bar which is the right most where the seller can access his or her dashboard.
