@@ -163,4 +163,5 @@ class SellerStats {
       totalReviews: totalReviews ?? this.totalReviews,
     );
   }
+  
 }
