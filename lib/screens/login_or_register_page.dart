@@ -5,7 +5,7 @@ import 'package:kampusmart2/screens/login_page.dart';
 import 'package:kampusmart2/screens/register_page.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/radio_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // <- Make sure this is imported
+import 'package:shared_preferences/shared_preferences.dart'; 
 
 class LoginOrRegisterPage extends StatelessWidget {
   static const String routeName = '/Signup';
@@ -68,7 +68,7 @@ void _handleRoleAndNavigate(BuildContext context, Widget targetPage) async {
                 height: MediaQuery.of(context).size.height * 0.06,
                 width: MediaQuery.of(context).size.width * 0.75,
                 fontSize: 22,
-                onTap: () => _handleRoleAndNavigate(context, LoginPage()),
+                onTap: () => Navigator.push(context, MaterialPageRoute( builder: (context) => LoginPage()),),
               ),
         
               MyButton1(
@@ -86,8 +86,8 @@ void _handleRoleAndNavigate(BuildContext context, Widget targetPage) async {
                 height: MediaQuery.of(context).size.height * 0.06,
                 width: MediaQuery.of(context).size.width * 0.75,
                 fontSize: 22,
-                onTap: () => _handleRoleAndNavigate(context, const GuestWelcomeScreen()),
-              ),
+                onTap: () => Navigator.push(context, MaterialPageRoute( builder: (context) => GuestWelcomeScreen()),
+              ),),
         
               Expanded(
                 child: Image.asset('lib/images/image6.png', fit: BoxFit.contain),
