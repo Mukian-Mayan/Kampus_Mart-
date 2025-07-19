@@ -77,7 +77,7 @@ void _handleRoleAndNavigate(BuildContext context, Widget targetPage) async {
                 height: MediaQuery.of(context).size.height * 0.06,
                 width: MediaQuery.of(context).size.width * 0.75,
                 fontSize: 22,
-                onTap: () => _handleRoleAndNavigate(context, RegisterPage()),
+                onTap: () => _handleRoleAndNavigate(context, RegisterPage(userRole: UserRole.none)),
               ),
         
               MyButton1(
