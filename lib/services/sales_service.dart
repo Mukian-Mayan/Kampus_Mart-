@@ -2,8 +2,8 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/seller.dart' hide Seller;
-import '../models/sales_data.dart';
+import '../models/seller.dart';
+import '../models/sales_data.dart' hide Seller;
 
 class SaleService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -14,38 +14,53 @@ class SaleService {
     try {
       final User? currentUser = _auth.currentUser;
       if (currentUser == null) {
+        print('No authenticated user found');
         throw Exception('No authenticated user found');
       }
 
-      // Check if current user is a seller
-      final roleDoc = await _firestore
-          .collection('user_roles')
-          .doc(currentUser.uid)
-          .get();
+      print('Getting seller data for user: ${currentUser.uid}');
 
-      if (!roleDoc.exists) {
-        throw Exception('User role not found');
-      }
-
-      final roleData = roleDoc.data() as Map<String, dynamic>;
-      if (roleData['role'] != 'seller') {
-        throw Exception('Current user is not a seller');
-      }
-
-      // Get seller data
+      // First, check if the seller document exists directly
       final sellerDoc = await _firestore
           .collection('sellers')
           .doc(currentUser.uid)
           .get();
 
       if (!sellerDoc.exists) {
-        throw Exception('Seller data not found');
+        print('Seller document not found for user: ${currentUser.uid}');
+        throw Exception('Seller document not found in Firestore');
       }
 
-      return Seller.fromFirestore(sellerDoc.data() as Map<String, dynamic>);
+      final sellerData = sellerDoc.data() as Map<String, dynamic>;
+      print('Seller data found: $sellerData');
+
+      // Check if current user is a seller in user_roles (optional check)
+      try {
+        final roleDoc = await _firestore
+            .collection('user_roles')
+            .doc(currentUser.uid)
+            .get();
+
+        if (roleDoc.exists) {
+          final roleData = roleDoc.data() as Map<String, dynamic>;
+          print('User role: ${roleData['role']}');
+          
+          if (roleData['role'] != 'seller') {
+            print('User role is not seller: ${roleData['role']}');
+            throw Exception('Current user is not a seller');
+          }
+        } else {
+          print('No role document found, but seller document exists');
+        }
+      } catch (roleError) {
+        print('Role check failed: $roleError');
+        // Continue anyway if seller document exists
+      }
+
+      return Seller.fromFirestore(sellerData);
     } catch (e) {
       print('Error getting current seller: $e');
-      return null;
+      throw e; // Re-throw to let the calling code handle it
     }
   }
 
@@ -93,6 +108,8 @@ class SaleService {
   // Get seller dashboard stats
   static Future<Map<String, dynamic>> getSellerDashboardStats(String sellerId) async {
     try {
+      print('Getting dashboard stats for seller: $sellerId');
+      
       // Get seller document to get current stats
       final sellerDoc = await _firestore
           .collection('sellers')
@@ -104,37 +121,55 @@ class SaleService {
       }
 
       final sellerData = sellerDoc.data() as Map<String, dynamic>;
-      final stats = sellerData['stats'] as Map<String, dynamic>? ?? {};
+      final stats = sellerData['stats'] as Map<String, dynamic>? ?? {
+        'totalProducts': 0,
+        'totalOrders': 0,
+        'totalRevenue': 0.0,
+        'rating': 0.0,
+        'totalReviews': 0,
+      };
 
       // Get recent orders for additional stats
-      final ordersQuery = await _firestore
-          .collection('orders')
-          .where('sellerId', isEqualTo: sellerId)
-          .orderBy('createdAt', descending: true)
-          .limit(10)
-          .get();
-
       List<Map<String, dynamic>> recentOrders = [];
       int pendingOrders = 0;
       int completedOrders = 0;
 
-      for (var doc in ordersQuery.docs) {
-        final orderData = doc.data();
-        recentOrders.add(orderData);
-        
-        final status = orderData['status'] as String?;
-        if (status == 'pending') {
-          pendingOrders++;
-        } else if (status == 'completed') {
-          completedOrders++;
+      try {
+        final ordersQuery = await _firestore
+            .collection('orders')
+            .where('sellerId', isEqualTo: sellerId)
+            .orderBy('createdAt', descending: true)
+            .limit(10)
+            .get();
+
+        for (var doc in ordersQuery.docs) {
+          final orderData = doc.data();
+          orderData['id'] = doc.id; // Add document ID
+          recentOrders.add(orderData);
+          
+          final status = orderData['status'] as String?;
+          if (status == 'pending') {
+            pendingOrders++;
+          } else if (status == 'completed') {
+            completedOrders++;
+          }
         }
+      } catch (orderError) {
+        print('Error getting orders: $orderError');
+        // Continue with empty orders
       }
 
       // Get product count
-      final productsQuery = await _firestore
-          .collection('products')
-          .where('sellerId', isEqualTo: sellerId)
-          .get();
+      int totalProducts = 0;
+      try {
+        final productsQuery = await _firestore
+            .collection('products')
+            .where('sellerId', isEqualTo: sellerId)
+            .get();
+        totalProducts = productsQuery.docs.length;
+      } catch (productError) {
+        print('Error getting products: $productError');
+      }
 
       return {
         'sellerStats': stats,
@@ -142,7 +177,7 @@ class SaleService {
           'recentOrders': recentOrders,
           'pendingOrders': pendingOrders,
           'completedOrders': completedOrders,
-          'totalProducts': productsQuery.docs.length,
+          'totalProducts': totalProducts,
         },
       };
     } catch (e) {
@@ -189,6 +224,17 @@ class SaleService {
       final User? currentUser = _auth.currentUser;
       if (currentUser == null) return false;
 
+      // First check if seller document exists
+      final sellerDoc = await _firestore
+          .collection('sellers')
+          .doc(currentUser.uid)
+          .get();
+
+      if (sellerDoc.exists) {
+        return true;
+      }
+
+      // Fallback to role check
       final roleDoc = await _firestore
           .collection('user_roles')
           .doc(currentUser.uid)
@@ -223,24 +269,23 @@ class SaleService {
   }
 
   // Get all sellers (for admin purposes)
-  // Get all sellers (for admin purposes)
-static Future<List<Seller>?> getAllSellers() async {
-  try {
-    final sellersQuery = await _firestore
-        .collection('sellers')
-        .get();
+  static Future<List<Seller>?> getAllSellers() async {
+    try {
+      final sellersQuery = await _firestore
+          .collection('sellers')
+          .get();
 
-    List<Seller> sellers = [];
-    for (var doc in sellersQuery.docs) {
-      sellers.add(Seller.fromFirestore(doc.data()));
+      List<Seller> sellers = [];
+      for (var doc in sellersQuery.docs) {
+        sellers.add(Seller.fromFirestore(doc.data()));
+      }
+
+      return sellers;
+    } catch (e) {
+      print('Error getting all sellers: $e');
+      return null;
     }
-
-    return sellers;
-  } catch (e) {
-    print('Error getting all sellers: $e');
-    return null;
   }
-}
 
   // Sign out seller
   static Future<void> signOutSeller() async {

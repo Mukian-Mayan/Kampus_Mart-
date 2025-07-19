@@ -3,6 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../Theme/app_theme.dart';
 import '../widgets/continue_button.dart';
 
@@ -16,17 +19,26 @@ class SellerAddProductScreen extends StatefulWidget {
 }
 
 class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
+  // Firebase and Supabase instances
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final SupabaseClient _supabase = Supabase.instance.client;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _stockController = TextEditingController();
+  final _originalPriceController = TextEditingController();
+  final _locationController = TextEditingController();
   
   String? _selectedCategory;
+  String _selectedCondition = 'New';
   List<File> _productImages = [];
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
   int _currentStep = 0;
+  bool _bestOffer = false;
 
   // List of categories for the dropdown
   final List<String> _categories = [
@@ -41,12 +53,22 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
     'Other'
   ];
 
+  final List<String> _conditions = [
+    'New',
+    'Like New',
+    'Good',
+    'Fair',
+    'Poor',
+  ];
+
   @override
   void dispose() {
     _nameController.dispose();
     _priceController.dispose();
     _descriptionController.dispose();
     _stockController.dispose();
+    _originalPriceController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
@@ -92,15 +114,184 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
     }
   }
 
+  // Upload images to Supabase Storage
+  Future<List<String>> _uploadImagesToSupabase(String userId) async {
+    List<String> imageUrls = [];
+    
+    if (_productImages.isEmpty) {
+      return imageUrls;
+    }
+
+    print('Uploading ${_productImages.length} images to Supabase...');
+    
+    for (int i = 0; i < _productImages.length; i++) {
+      try {
+        // Create unique filename
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = 'products/$userId/${timestamp}_$i.jpg';
+        
+        // Read file as bytes
+        final bytes = await _productImages[i].readAsBytes();
+        
+        print('Uploading image $i: $fileName');
+        
+        // Upload to Supabase Storage
+        final response = await _supabase.storage
+            .from('product-images')
+            .uploadBinary(
+              fileName, 
+              bytes,
+              fileOptions: const FileOptions(
+                contentType: 'image/jpeg',
+                upsert: true, // Allow overwrite if file exists
+              ),
+            );
+        
+        print('Upload response for image $i: $response');
+        
+        // Get public URL
+        final publicUrl = _supabase.storage
+            .from('product-images')
+            .getPublicUrl(fileName);
+        
+        imageUrls.add(publicUrl);
+        print('Image $i uploaded successfully: $publicUrl');
+        
+      } catch (e) {
+        print('Error uploading image $i to Supabase: $e');
+        
+        // Handle specific Supabase errors
+        if (e.toString().contains('403') || e.toString().contains('policy')) {
+          throw Exception('Storage permission denied. Please check Supabase bucket policies.');
+        }
+        
+        // Continue with other images even if one fails
+      }
+    }
+    
+    return imageUrls;
+  }
+
+  // Main product submission method
   void _submitProduct() async {
     if (_formKey.currentState!.validate()) {
+      // Additional validation
+      if (_selectedCategory == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a category')),
+        );
+        return;
+      }
+
+      if (_locationController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a location')),
+        );
+        return;
+      }
+
       setState(() {
         _isLoading = true;
       });
       
       try {
-        // Simulate API call with product data
-        await Future.delayed(const Duration(seconds: 2));
+        print('Starting product creation process...');
+        
+        // Get current user from Firebase
+        final User? currentUser = _auth.currentUser;
+        if (currentUser == null) {
+          throw Exception('User not authenticated');
+        }
+
+        print('Current user: ${currentUser.uid}');
+
+        // Verify user is a seller
+        final roleDoc = await _firestore
+            .collection('user_roles')
+            .doc(currentUser.uid)
+            .get();
+
+        if (!roleDoc.exists) {
+          throw Exception('User role not found. Please contact support.');
+        }
+
+        final roleData = roleDoc.data();
+        final userRole = roleData?['role'] as String?;
+
+        if (userRole != 'seller') {
+          throw Exception('Only sellers can create products. Current role: $userRole');
+        }
+
+        print('User verified as seller');
+
+        // Upload images to Supabase
+        List<String> imageUrls = [];
+        try {
+          imageUrls = await _uploadImagesToSupabase(currentUser.uid);
+          print('Successfully uploaded ${imageUrls.length} images');
+        } catch (e) {
+          print('Image upload failed: $e');
+          
+          // Check if it's a permission error
+          if (e.toString().contains('policy') || e.toString().contains('403')) {
+            throw Exception('Image upload failed: Storage permission denied. Please contact support.');
+          }
+          
+          // For other errors, continue without images
+          print('Continuing product creation without images...');
+        }
+
+        // Create price and discount string
+        String priceAndDiscount = _priceController.text.trim();
+        if (_originalPriceController.text.trim().isNotEmpty) {
+          final originalPrice = double.tryParse(_originalPriceController.text.trim()) ?? 0;
+          final currentPrice = double.tryParse(_priceController.text.trim()) ?? 0;
+          
+          if (originalPrice > currentPrice && originalPrice > 0) {
+            final discountPercent = ((originalPrice - currentPrice) / originalPrice * 100).round();
+            priceAndDiscount = 'UGX ${_priceController.text} ($discountPercent% off)';
+          } else {
+            priceAndDiscount = 'UGX ${_priceController.text}';
+          }
+        } else {
+          priceAndDiscount = 'UGX ${_priceController.text}';
+        }
+
+        // Create product data matching your Product model exactly
+        final productData = {
+          'name': _nameController.text.trim(),
+          'description': _descriptionController.text.trim(),
+          'ownerId': currentUser.uid, // Your model uses ownerId
+          'priceAndDiscount': priceAndDiscount,
+          'originalPrice': _originalPriceController.text.trim().isEmpty 
+              ? 'UGX ${_priceController.text}' 
+              : 'UGX ${_originalPriceController.text}',
+          'condition': _selectedCondition,
+          'location': _locationController.text.trim(),
+          'rating': 0.0,
+          'imageUrl': imageUrls.isNotEmpty ? imageUrls.first : 'https://via.placeholder.com/300x300?text=No+Image',
+          'imageUrls': imageUrls,
+          'bestOffer': _bestOffer,
+          'category': _selectedCategory,
+          'price': double.tryParse(_priceController.text.trim()),
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          
+          // Additional fields for compatibility
+          'sellerId': currentUser.uid,
+          'sellerEmail': currentUser.email,
+          'isActive': true,
+          'stock': int.tryParse(_stockController.text.trim()) ?? 0,
+        };
+
+        print('Product data: $productData');
+
+        // Add product to Firestore
+        final docRef = await _firestore.collection('products').add(productData);
+        print('Product created with ID: ${docRef.id}');
+
+        // Update seller stats
+        await _updateSellerProductCount(currentUser.uid);
         
         if (mounted) {
           setState(() {
@@ -124,6 +315,11 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Text('${_nameController.text} is now live on Kmart'),
+                        if (imageUrls.isEmpty) 
+                          const Text(
+                            'Note: Images could not be uploaded',
+                            style: TextStyle(fontSize: 12),
+                          ),
                       ],
                     ),
                   ),
@@ -134,21 +330,89 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
+              duration: const Duration(seconds: 4),
             ),
           );
-          Navigator.pop(context);
+          Navigator.pop(context, true); // Return true to indicate success
         }
       } catch (e) {
+        print('Error in product creation: $e');
         if (mounted) {
           setState(() {
             _isLoading = false;
           });
+          
+          String errorMessage = 'Error adding product: ${e.toString()}';
+          
+          // Provide specific error messages for common issues
+          if (e.toString().contains('permission') || e.toString().contains('policy')) {
+            errorMessage = 'Storage permission error. Please contact support or try again later.';
+          } else if (e.toString().contains('network')) {
+            errorMessage = 'Network error. Please check your internet connection.';
+          } else if (e.toString().contains('authentication')) {
+            errorMessage = 'Authentication error. Please log out and log back in.';
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error adding product: $e')),
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
           );
         }
       }
+    }
+  }
+
+  // Update seller product count in Firestore
+  Future<void> _updateSellerProductCount(String sellerId) async {
+    try {
+      final sellerRef = _firestore.collection('sellers').doc(sellerId);
+      
+      await _firestore.runTransaction((transaction) async {
+        final sellerDoc = await transaction.get(sellerRef);
+        
+        if (sellerDoc.exists) {
+          final currentStats = sellerDoc.data()?['stats'] as Map<String, dynamic>? ?? {};
+          final currentCount = (currentStats['totalProducts'] as num?)?.toInt() ?? 0;
+          
+          final updatedStats = {
+            ...currentStats,
+            'totalProducts': currentCount + 1,
+          };
+          
+          transaction.update(sellerRef, {
+            'stats': updatedStats,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+      
+      print('Seller product count updated');
+    } catch (e) {
+      print('Error updating seller product count: $e');
+      // Don't rethrow - product creation should still succeed
+    }
+  }
+
+  // Enhanced validation for current step
+  bool _validateCurrentStep() {
+    switch (_currentStep) {
+      case 0:
+        return _nameController.text.isNotEmpty &&
+               _selectedCategory != null &&
+               _priceController.text.isNotEmpty &&
+               _locationController.text.isNotEmpty &&
+               _descriptionController.text.isNotEmpty &&
+               _descriptionController.text.length >= 20 &&
+               double.tryParse(_priceController.text) != null;
+      case 1:
+        return true; // Images are optional
+      case 2:
+        return true;
+      default:
+        return false;
     }
   }
 
@@ -272,7 +536,7 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                 if (_currentStep > 0)
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {
+                      onPressed: _isLoading ? null : () {
                         setState(() {
                           _currentStep--;
                         });
@@ -296,18 +560,26 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                 if (_currentStep > 0) const SizedBox(width: 16),
                 Expanded(
                   child: GenericContinueButton(
-                    onPressed: () {
-                      if (_isLoading) return;
+                    onPressed: _isLoading ? () {} : () {
                       if (_currentStep < 2) {
-                        setState(() {
-                          _currentStep++;
-                        });
+                        if (_validateCurrentStep()) {
+                          setState(() {
+                            _currentStep++;
+                          });
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please complete all required fields'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       } else {
                         _submitProduct();
                       }
                     },
                     text: _isLoading
-                        ? 'Adding...'
+                        ? 'Adding Product...'
                         : (_currentStep < 2 ? 'Next' : 'Add to Kmart'),
                   ),
                 ),
@@ -407,7 +679,7 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       child: DropdownButtonFormField<String>(
         value: _selectedCategory,
         decoration: InputDecoration(
-          labelText: 'Category',
+          labelText: 'Category*',
           prefixIcon: const Icon(Icons.category, color: AppTheme.deepOrange),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
@@ -431,6 +703,39 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
             return 'Please select a category';
           }
           return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildConditionSelector() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppTheme.borderGrey),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedCondition,
+        decoration: InputDecoration(
+          labelText: 'Condition*',
+          prefixIcon: const Icon(Icons.star_rate, color: AppTheme.deepOrange),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        items: _conditions.map((condition) {
+          return DropdownMenuItem<String>(
+            value: condition,
+            child: Text(condition),
+          );
+        }).toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedCondition = value!;
+          });
         },
       ),
     );
@@ -464,12 +769,15 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       
       _buildFloatingTextField(
         controller: _nameController,
-        label: 'Product Name',
+        label: 'Product Name*',
         icon: Icons.shopping_bag,
         hint: 'Enter a clear, descriptive name',
         validator: (value) {
           if (value == null || value.isEmpty) {
             return 'Please enter product name';
+          }
+          if (value.length < 3) {
+            return 'Product name must be at least 3 characters';
           }
           return null;
         },
@@ -481,50 +789,107 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       
       Row(
         children: [
-          Expanded(
-            child: _buildFloatingTextField(
-              controller: _priceController,
-              label: 'Price (UGX)',
-              icon: Icons.attach_money,
-              hint: 'Enter price in UGX',
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter price';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Enter valid price';
-                }
-                return null;
-              },
-            ),
-          ),
+          // Expanded(
+          //   child: _buildFloatingTextField(
+          //     controller: _priceController,
+          //     label: 'Current Price (UGX)*',
+          //     icon: Icons.attach_money,
+          //     hint: 'Enter current price',
+          //     keyboardType: TextInputType.number,
+          //     validator: (value) {
+          //       if (value == null || value.isEmpty) {
+          //         return 'Please enter price';
+          //       }
+          //       if (double.tryParse(value) == null) {
+          //         return 'Enter valid price';
+          //       }
+          //       return null;
+          //     },
+          //   ),
+          //),
           const SizedBox(width: 16),
           Expanded(
             child: _buildFloatingTextField(
-              controller: _stockController,
-              label: 'Stock Quantity',
-              icon: Icons.inventory,
-              hint: 'Available units',
+              controller: _originalPriceController,
+              label: 'PRICE (UGX)',
+              icon: Icons.money_off,
+              hint: '',
               keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter stock';
-                }
-                if (int.tryParse(value) == null) {
-                  return 'Enter valid number';
-                }
-                return null;
-              },
             ),
           ),
         ],
       ),
       const SizedBox(height: 20),
       
+      _buildConditionSelector(),
+      const SizedBox(height: 20),
+      
+      _buildFloatingTextField(
+        controller: _locationController,
+        label: 'Location*',
+        icon: Icons.location_on,
+        hint: 'Enter product location',
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter location';
+          }
+          return null;
+        },
+      ),
+      const SizedBox(height: 20),
+      
+      // Stock field (optional for this model)
+      _buildFloatingTextField(
+        controller: _stockController,
+        label: 'Stock Quantity',
+        icon: Icons.inventory,
+        hint: 'Available units (optional)',
+        keyboardType: TextInputType.number,
+      ),
+      const SizedBox(height: 20),
+      
+      // Best Offer Switch
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: AppTheme.borderGrey),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.local_offer, color: AppTheme.deepOrange),
+                const SizedBox(width: 12),
+                const Text(
+                  'Accept Best Offers',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            Switch(
+              value: _bestOffer,
+              activeColor: AppTheme.primaryOrange,
+              onChanged: (value) {
+                setState(() {
+                  _bestOffer = value;
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 20),
+      
       _buildFloatingTextField(
         controller: _descriptionController,
-        label: 'Product Description',
+        label: 'Product Description*',
         icon: Icons.description,
         hint: 'Describe your product features, condition, etc.',
         maxLines: 4,
@@ -559,7 +924,7 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       ),
       const SizedBox(height: 8),
       const Text(
-        'Add high-quality images to showcase your product',
+        'Add high-quality images to showcase your product (optional)',
         style: TextStyle(
           fontSize: 14,
           color: AppTheme.textSecondary,
@@ -567,7 +932,7 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       ),
       const SizedBox(height: 30),
       
-      // Image Upload Area - Fixed overflow issues
+      // Image Upload Area
       Container(
         width: double.infinity,
         constraints: const BoxConstraints(minHeight: 200),
@@ -648,7 +1013,6 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                   builder: (context, constraints) {
                     // Calculate grid based on available width
                     int crossAxisCount = constraints.maxWidth < 400 ? 2 : 3;
-                    double itemWidth = (constraints.maxWidth - (crossAxisCount - 1) * 12) / crossAxisCount;
                     
                     return Column(
                       children: [
@@ -793,9 +1157,19 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
             const SizedBox(height: 12),
             _buildReviewRow('Category', _selectedCategory ?? 'Not selected'),
             const SizedBox(height: 8),
-            _buildReviewRow('Price', 'UGX ${_priceController.text.isNotEmpty ? _priceController.text : '0'}'),
+            _buildReviewRow('Current Price', 'UGX ${_priceController.text.isNotEmpty ? _priceController.text : '0'}'),
             const SizedBox(height: 8),
-            _buildReviewRow('Stock', '${_stockController.text.isNotEmpty ? _stockController.text : '0'} units'),
+            if (_originalPriceController.text.isNotEmpty)
+              _buildReviewRow('Original Price', 'UGX ${_originalPriceController.text}'),
+            const SizedBox(height: 8),
+            _buildReviewRow('Condition', _selectedCondition),
+            const SizedBox(height: 8),
+            _buildReviewRow('Location', _locationController.text.isNotEmpty ? _locationController.text : 'Not specified'),
+            const SizedBox(height: 8),
+            if (_stockController.text.isNotEmpty)
+              _buildReviewRow('Stock', '${_stockController.text} units'),
+            const SizedBox(height: 8),
+            _buildReviewRow('Best Offer', _bestOffer ? 'Accepted' : 'Not accepted'),
             const SizedBox(height: 12),
             const Text(
               'Description:',
@@ -861,7 +1235,7 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 80,
+          width: 100,
           child: Text(
             '$label:',
             style: const TextStyle(

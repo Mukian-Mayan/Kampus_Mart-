@@ -119,7 +119,7 @@ class Seller {
     required this.isVerified,
     required this.stats,
     required this.createdAt,
-    required this.updatedAt,
+    required this.updatedAt, required String email,
   });
 
   // Factory constructor to create Seller from Firestore document
@@ -134,7 +134,8 @@ class Seller {
       isVerified: data['isVerified'] ?? false,
       stats: data['stats'] ?? {},
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(), 
+      email: '',
     );
   }
 

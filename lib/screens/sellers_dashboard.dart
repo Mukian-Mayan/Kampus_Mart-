@@ -1,17 +1,18 @@
-// sellers_dashboard.dart - Enhanced version with improved UI and features
-// ignore_for_file: unused_local_variable, use_build_context_synchronously, deprecated_member_use
+// sellers_dashboard.dart - Complete implementation
+// ignore_for_file: unused_local_variable, use_build_context_synchronously, deprecated_member_use, avoid_print, depend_on_referenced_packages
 
-import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/Product_management.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/screens/order_management.dart';
+import 'package:kampusmart2/screens/settings_page.dart';
 import 'package:kampusmart2/services/sales_service.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/profile_pic_widget.dart';
 import '../widgets/logo_widget.dart';
 import '../models/seller.dart';
-import '../services/seller_service.dart';
 import 'seller_add_product.dart';
 import 'seller_sales_tracking.dart';
 
@@ -34,38 +35,32 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   late Animation<double> _fadeAnimation;
 
   @override
-  @override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    _verifyAuthState();
-  });
-  _animationController = AnimationController(
-    duration: const Duration(milliseconds: 800),
-    vsync: this,
-  );
-  _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-    CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-  );
-  _loadSellerData();
-}
-
-Future<void> _verifyAuthState() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) {
-    if (mounted) {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        '/login',
-        (route) => false,
-      );
-    }
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _loadSellerData();
   }
-}
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _verifyAuthState() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null && mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/login',
+        (route) => false,
+      );
+    }
   }
 
   Future<void> _loadSellerData() async {
@@ -75,18 +70,53 @@ Future<void> _verifyAuthState() async {
         error = null;
       });
 
-      // Get current seller
-      final currentSeller = await SellerService.getCurrentSeller();
-      if (currentSeller == null) {
-        setState(() {
-          error = 'No seller found. Please login again.';
-          isLoading = false;
-        });
-        return;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('No authenticated user');
       }
 
-      // Get dashboard stats
-      final stats = await SellerService.getSellerDashboardStats(currentSeller.id);
+      // Get seller using SaleService
+      Seller? currentSeller;
+      int retries = 3;
+      
+      while (retries > 0 && currentSeller == null) {
+        try {
+          currentSeller = (await SaleService.getCurrentSeller()) as Seller?;
+          if (currentSeller != null) break;
+        } catch (e) {
+          print('Attempt failed, retries left: ${retries - 1}, error: $e');
+        }
+        retries--;
+        if (retries > 0) await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      if (currentSeller == null) {
+        // Fallback to direct Firestore query
+        final sellerDoc = await FirebaseFirestore.instance
+            .collection('sellers')
+            .doc(user.uid)
+            .get();
+        
+        if (!sellerDoc.exists) {
+          throw Exception('Seller document not found');
+        }
+
+        final data = sellerDoc.data()!;
+        currentSeller = Seller.fromFirestore(data);
+      }
+
+      // Get stats using SaleService
+      Map<String, dynamic> stats;
+      try {
+        stats = await SaleService.getSellerDashboardStats(currentSeller.id);
+      } catch (e) {
+        stats = {
+          'orderStats': {
+            'recentOrders': [],
+            'pendingOrders': 0,
+          }
+        };
+      }
 
       setState(() {
         seller = currentSeller;
@@ -94,18 +124,43 @@ Future<void> _verifyAuthState() async {
         isLoading = false;
       });
 
-      // Start animation after data loads
       _animationController.forward();
     } catch (e) {
       setState(() {
-        error = 'Failed to load seller data: ${e.toString()}';
+        error = 'Failed to load data: ${e.toString()}';
         isLoading = false;
       });
+      _verifyAuthState();
     }
   }
 
   Future<void> _refreshData() async {
     await _loadSellerData();
+  }
+
+  Widget _buildDebugButton() {
+    return IconButton(
+      icon: const Icon(Icons.bug_report, color: AppTheme.textPrimary),
+      onPressed: () async {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) return;
+        
+        print('=== DEBUG INFO ===');
+        print('User ID: ${user.uid}');
+        print('Seller Data: ${seller?.toMap()}');
+        print('Dashboard Stats: $dashboardStats');
+        
+        try {
+          final sellerDoc = await FirebaseFirestore.instance
+              .collection('sellers')
+              .doc(user.uid)
+              .get();
+          print('Firestore Seller Data: ${sellerDoc.data()}');
+        } catch (e) {
+          print('Error fetching seller doc: $e');
+        }
+      },
+    );
   }
 
   @override
@@ -121,6 +176,7 @@ Future<void> _verifyAuthState() async {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          _buildDebugButton(),
           IconButton(
             icon: Stack(
               children: [
@@ -184,6 +240,7 @@ Future<void> _verifyAuthState() async {
                     Icon(Icons.settings, color: AppTheme.textPrimary),
                     SizedBox(width: 8),
                     Text('Settings'),
+                    
                   ],
                 ),
               ),
@@ -296,21 +353,12 @@ Future<void> _verifyAuthState() async {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              // Seller Profile Section
               _buildProfileSection(),
-              
-              // Quick Stats Cards
               _buildStatsSection(),
-              
-              // Recent Activity Section
               _buildRecentActivitySection(),
-              
               const SizedBox(height: 20),
-              
-              // Main Action Section
               _buildActionSection(),
-              
-              const SizedBox(height: 100), // Space for floating action button
+              const SizedBox(height: 100),
             ],
           ),
         ),
@@ -485,6 +533,45 @@ Future<void> _verifyAuthState() async {
     );
   }
 
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.paleWhite,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRecentActivitySection() {
     final orderStats = dashboardStats?['orderStats'] ?? {};
     final recentOrders = orderStats['recentOrders'] as List<dynamic>? ?? [];
@@ -648,7 +735,6 @@ Future<void> _verifyAuthState() async {
       ),
       child: Column(
         children: [
-          // Business Info
           Container(
             width: 80,
             height: 80,
@@ -670,7 +756,6 @@ Future<void> _verifyAuthState() async {
             ),
           ),
           const SizedBox(height: 20),
-          
           Text(
             seller!.businessName,
             style: const TextStyle(
@@ -689,8 +774,6 @@ Future<void> _verifyAuthState() async {
             ),
           ),
           const SizedBox(height: 30),
-          
-          // Dashboard Actions Grid
           Row(
             children: [
               Expanded(
@@ -744,49 +827,15 @@ Future<void> _verifyAuthState() async {
                   'Settings',
                   Icons.settings,
                   AppTheme.coffeeBrown,
-                  () => _handleMenuAction('settings'),
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsPage(),
+                    ),
+                  ),
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.paleWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-            ),
           ),
         ],
       ),
@@ -833,9 +882,8 @@ Future<void> _verifyAuthState() async {
       return '${(amount / 1000000).toStringAsFixed(1)}M';
     } else if (amount >= 1000) {
       return '${(amount / 1000).toStringAsFixed(0)}K';
-    } else {
-      return amount.toStringAsFixed(0);
     }
+    return amount.toStringAsFixed(0);
   }
 
   bool _hasNotifications() {
@@ -847,15 +895,14 @@ Future<void> _verifyAuthState() async {
   void _handleMenuAction(String action) {
     switch (action) {
       case 'profile':
-        // Navigate to profile edit screen
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile editing feature coming soon')),
+          const SnackBar(content: Text('Profile editing coming soon')),
         );
         break;
       case 'settings':
-        // Navigate to settings screen
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Settings feature coming soon')),
+          const SnackBar(content: Text('Settings coming soon'),
+          ),
         );
         break;
       case 'logout':
@@ -902,11 +949,9 @@ Future<void> _verifyAuthState() async {
   }
 
   void _handleProfilePictureChange() {
-    // Implement profile picture change logic
-    // This would typically involve image picker and updating through SellerService
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Profile picture update feature coming soon'),
+        content: Text('Profile picture update coming soon'),
       ),
     );
   }

@@ -1,274 +1,265 @@
-// Product Service for Kmart E-commerce App
-
-import 'dart:io';
+// lib/services/product_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:kampusmart2/models/models.dart';
-import 'firebase_base_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/product.dart';
 
-class ProductService extends FirebaseService {
-  static const String _collection = 'products';
+class ProductService {
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Add new product
-  static Future<String> addProduct(Product product, {
+  // Create a new product (matching your Product model)
+  static Future<String> createProduct({
     required String name,
     required String description,
-    required String category,
-    required double price,
-    required int stockQuantity,
-    required List<File> imageFiles,
-    List<String> tags = const [],
-    Map<String, dynamic>? specifications,
+    required String priceAndDiscount,
+    required String originalPrice,
+    required String condition,
+    required String location,
+    required String imageUrl,
+    List<String>? imageUrls,
+    bool bestOffer = false,
+    String? category,
+    double? price,
   }) async {
     try {
-      if (!FirebaseService.isAuthenticated) {
-        throw Exception('User not authenticated');
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No authenticated user');
       }
 
-      // Upload images first
-      List<String> imageUrls = await _uploadProductImages(imageFiles);
+      print('Creating product for user: ${user.uid}');
 
-      // Create product document
-      final productId = FirebaseService.uuid.v4();
-      final now = DateTime.now();
+      // Verify user is a seller
+      final roleDoc = await _firestore
+          .collection('user_roles')
+          .doc(user.uid)
+          .get();
+
+      if (!roleDoc.exists) {
+        throw Exception('User role not found');
+      }
+
+      final roleData = roleDoc.data();
+      final userRole = roleData?['role'] as String?;
+
+      if (userRole != 'seller') {
+        throw Exception('Only sellers can create products. Current role: $userRole');
+      }
+
+      // Create product data matching your model
+      final productData = {
+        'name': name.trim(),
+        'description': description.trim(),
+        'ownerId': user.uid, // Using ownerId as per your model
+        'sellerId': user.uid, // Also adding sellerId for compatibility
+        'priceAndDiscount': priceAndDiscount.trim(),
+        'originalPrice': originalPrice.trim(),
+        'condition': condition.trim(),
+        'location': location.trim(),
+        'rating': 0.0, // Default rating
+        'imageUrl': imageUrl.trim(),
+        'imageUrls': imageUrls ?? [],
+        'bestOffer': bestOffer,
+        'category': category?.trim(),
+        'price': price,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      print('Product data to be created: $productData');
+
+      // Add product to Firestore
+      final docRef = await _firestore.collection('products').add(productData);
       
-      final product = Product(
-        id: productId,
-        sellerId: FirebaseService.currentUserId!,
-        name: name,
-        description: description,
-        category: category,
-        price: price,
-        stockQuantity: stockQuantity,
-        imageUrls: imageUrls,
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-        tags: tags,
-        specifications: specifications, stock: 0, rating: 0, reviewCount: 0,
-      );
+      print('Product created with ID: ${docRef.id}');
 
-      await FirebaseService.firestore.collection(_collection).doc(productId).set(product.toMap());
+      // Update seller stats
+      await _updateSellerProductCount(user.uid, 1);
 
-      return productId;
+      return docRef.id;
     } catch (e) {
-      throw Exception('Failed to add product: $e');
+      print('Error creating product: $e');
+      rethrow;
     }
   }
 
-  // Get seller's products
-  static Future<List<Product>> getSellerProducts({String? sellerId}) async {
+  // Update seller product count
+  static Future<void> _updateSellerProductCount(String sellerId, int increment) async {
     try {
-      final String targetSellerId = sellerId ?? FirebaseService.currentUserId!;
+      final sellerRef = _firestore.collection('sellers').doc(sellerId);
       
-      final querySnapshot = await FirebaseService.firestore
-          .collection(_collection)
-          .where('sellerId', isEqualTo: targetSellerId)
-          .where('isActive', isEqualTo: true)
+      await _firestore.runTransaction((transaction) async {
+        final sellerDoc = await transaction.get(sellerRef);
+        
+        if (sellerDoc.exists) {
+          final currentStats = sellerDoc.data()?['stats'] as Map<String, dynamic>? ?? {};
+          final currentCount = (currentStats['totalProducts'] as num?)?.toInt() ?? 0;
+          
+          final updatedStats = {
+            ...currentStats,
+            'totalProducts': currentCount + increment,
+          };
+          
+          transaction.update(sellerRef, {
+            'stats': updatedStats,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+      
+      print('Seller product count updated');
+    } catch (e) {
+      print('Error updating seller product count: $e');
+      // Don't rethrow - product creation should still succeed
+    }
+  }
+
+  // Get products by seller (using ownerId from your model)
+  static Future<List<Product>> getProductsBySeller(String sellerId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('products')
+          .where('ownerId', isEqualTo: sellerId)
           .orderBy('createdAt', descending: true)
           .get();
 
       return querySnapshot.docs
-          .map((doc) => Product.fromMap(doc.data()))
+          .map((doc) => Product.fromFirestore(doc.data(), doc.id))
           .toList();
     } catch (e) {
-      throw Exception('Failed to fetch products: $e');
-    }
-  }
-
-  // Get products by category
-  static Future<List<Product>> getProductsByCategory(String category) async {
-    try {
-      final querySnapshot = await FirebaseService.firestore
-          .collection(_collection)
-          .where('category', isEqualTo: category)
-          .where('isActive', isEqualTo: true)
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      return querySnapshot.docs
-          .map((doc) => Product.fromMap(doc.data()))
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to fetch products by category: $e');
+      print('Error getting products by seller: $e');
+      return [];
     }
   }
 
   // Get all products
   static Future<List<Product>> getAllProducts() async {
     try {
-      final querySnapshot = await FirebaseService.firestore
-          .collection(_collection)
-          .where('isActive', isEqualTo: true)
+      final querySnapshot = await _firestore
+          .collection('products')
           .orderBy('createdAt', descending: true)
           .get();
 
       return querySnapshot.docs
-          .map((doc) => Product.fromMap(doc.data()))
+          .map((doc) => Product.fromFirestore(doc.data(), doc.id))
           .toList();
     } catch (e) {
-      throw Exception('Failed to fetch all products: $e');
-    }
-  }
-
-  // Get product by ID
-  static Future<Product?> getProductById(String productId) async {
-    try {
-      final doc = await FirebaseService.firestore
-          .collection(_collection)
-          .doc(productId)
-          .get();
-
-      if (doc.exists) {
-        return Product.fromMap(doc.data()!);
-      }
-      return null;
-    } catch (e) {
-      throw Exception('Failed to fetch product: $e');
+      print('Error getting all products: $e');
+      return [];
     }
   }
 
   // Update product
   static Future<void> updateProduct(String productId, Map<String, dynamic> updates) async {
     try {
-      updates['updatedAt'] = DateTime.now();
-      await FirebaseService.firestore.collection(_collection).doc(productId).update(updates);
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No authenticated user');
+      }
+
+      // Verify ownership
+      final productDoc = await _firestore.collection('products').doc(productId).get();
+      
+      if (!productDoc.exists) {
+        throw Exception('Product not found');
+      }
+
+      final productData = productDoc.data()!;
+      final ownerId = productData['ownerId'] as String? ?? productData['sellerId'] as String?;
+
+      if (ownerId != user.uid) {
+        throw Exception('You can only update your own products');
+      }
+
+      // Update product
+      await _firestore.collection('products').doc(productId).update({
+        ...updates,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('Product updated successfully');
     } catch (e) {
-      throw Exception('Failed to update product: $e');
+      print('Error updating product: $e');
+      rethrow;
     }
   }
 
-  // Delete product (soft delete)
+  // Delete product
   static Future<void> deleteProduct(String productId) async {
     try {
-      await FirebaseService.firestore.collection(_collection).doc(productId).update({
-        'isActive': false,
-        'updatedAt': DateTime.now(),
-      });
-    } catch (e) {
-      throw Exception('Failed to delete product: $e');
-    }
-  }
-
-  // Update product stock
-  static Future<void> updateStock(String productId, int newStock) async {
-    try {
-      await updateProduct(productId, {'stockQuantity': newStock});
-    } catch (e) {
-      throw Exception('Failed to update stock: $e');
-    }
-  }
-
-  // Increment product views
-  static Future<void> incrementViews(String productId) async {
-    try {
-      await FirebaseService.firestore.collection(_collection).doc(productId).update({
-        'views': FieldValue.increment(1),
-      });
-    } catch (e) {
-      throw Exception('Failed to increment views: $e');
-    }
-  }
-
-  // Toggle product like
-  static Future<void> toggleLike(String productId) async {
-    try {
-      await FirebaseService.firestore.collection(_collection).doc(productId).update({
-        'likes': FieldValue.increment(1),
-      });
-    } catch (e) {
-      throw Exception('Failed to toggle like: $e');
-    }
-  }
-
-  // Upload product images
-  static Future<List<String>> _uploadProductImages(List<File> imageFiles) async {
-    List<String> imageUrls = [];
-    
-    for (File imageFile in imageFiles) {
-      try {
-        final fileName = '${FirebaseService.uuid.v4()}.jpg';
-        final ref = FirebaseService.storage.ref().child('products').child(fileName);
-        
-        final uploadTask = ref.putFile(imageFile);
-        final snapshot = await uploadTask;
-        final downloadUrl = await snapshot.ref.getDownloadURL();
-        
-        imageUrls.add(downloadUrl);
-      } catch (e) {
-        throw Exception('Failed to upload image: $e');
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No authenticated user');
       }
+
+      // Verify ownership
+      final productDoc = await _firestore.collection('products').doc(productId).get();
+      
+      if (!productDoc.exists) {
+        throw Exception('Product not found');
+      }
+
+      final productData = productDoc.data()!;
+      final ownerId = productData['ownerId'] as String? ?? productData['sellerId'] as String?;
+
+      if (ownerId != user.uid) {
+        throw Exception('You can only delete your own products');
+      }
+
+      // Delete product
+      await _firestore.collection('products').doc(productId).delete();
+
+      // Update seller stats
+      await _updateSellerProductCount(user.uid, -1);
+
+      print('Product deleted successfully');
+    } catch (e) {
+      print('Error deleting product: $e');
+      rethrow;
     }
-    
-    return imageUrls;
   }
 
   // Search products
   static Future<List<Product>> searchProducts(String query) async {
     try {
-      final querySnapshot = await FirebaseService.firestore
-          .collection(_collection)
-          .where('isActive', isEqualTo: true)
+      if (query.trim().isEmpty) {
+        return getAllProducts();
+      }
+
+      final querySnapshot = await _firestore
+          .collection('products')
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Product.fromMap(doc.data()))
-          .where((product) => 
-              product.name.toLowerCase().contains(query.toLowerCase()) ||
-              product.description.toLowerCase().contains(query.toLowerCase()) ||
-              product.category.toLowerCase().contains(query.toLowerCase()) ||
-              product.tags.any((tag) => tag.toLowerCase().contains(query.toLowerCase())))
+      final allProducts = querySnapshot.docs
+          .map((doc) => Product.fromFirestore(doc.data(), doc.id))
           .toList();
+
+      // Filter products by name or description containing the query
+      return allProducts.where((product) {
+        final searchQuery = query.toLowerCase();
+        return product.name.toLowerCase().contains(searchQuery) ||
+               product.description.toLowerCase().contains(searchQuery) ||
+               (product.category?.toLowerCase().contains(searchQuery) ?? false);
+      }).toList();
     } catch (e) {
-      throw Exception('Failed to search products: $e');
+      print('Error searching products: $e');
+      return [];
     }
   }
 
-  // Get featured products (most viewed/liked)
-  static Future<List<Product>> getFeaturedProducts({int limit = 10}) async {
+  // Get product by ID
+  static Future<Product?> getProductById(String productId) async {
     try {
-      final querySnapshot = await FirebaseService.firestore
-          .collection(_collection)
-          .where('isActive', isEqualTo: true)
-          .orderBy('views', descending: true)
-          .limit(limit)
-          .get();
-
-      return querySnapshot.docs
-          .map((doc) => Product.fromMap(doc.data()))
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to fetch featured products: $e');
-    }
-  }
-
-  // Get products with pagination
-  static Future<List<Product>> getProductsWithPagination({
-    DocumentSnapshot? lastDocument,
-    int limit = 20,
-    String? category,
-  }) async {
-    try {
-      Query query = FirebaseService.firestore
-          .collection(_collection)
-          .where('isActive', isEqualTo: true);
-
-      if (category != null) {
-        query = query.where('category', isEqualTo: category);
+      final doc = await _firestore.collection('products').doc(productId).get();
+      
+      if (!doc.exists) {
+        return null;
       }
 
-      query = query.orderBy('createdAt', descending: true).limit(limit);
-
-      if (lastDocument != null) {
-        query = query.startAfterDocument(lastDocument);
-      }
-
-      final querySnapshot = await query.get();
-
-      return querySnapshot.docs
-          .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
+      return Product.fromFirestore(doc.data()!, doc.id);
     } catch (e) {
-      throw Exception('Failed to fetch products with pagination: $e');
+      print('Error getting product by ID: $e');
+      return null;
     }
   }
 }
