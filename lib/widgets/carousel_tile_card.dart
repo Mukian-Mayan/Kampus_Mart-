@@ -1,15 +1,19 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 
 class CarouselTileCard extends StatelessWidget {
   final String leftImage;
   final String centerImage;
   final String rightImage;
+  final void Function(String imagePath)? onImageTap;
 
   const CarouselTileCard({
     Key? key,
     required this.leftImage,
     required this.centerImage,
     required this.rightImage,
+    this.onImageTap,
   }) : super(key: key);
 
   @override
@@ -34,17 +38,17 @@ class CarouselTileCard extends StatelessWidget {
             // Left tile
             Expanded(
               flex: 2,
-              child: Container(
-                height: 70,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.asset(
-                    leftImage,
-                    fit: BoxFit.cover,
+              child: GestureDetector(
+                onTap: onImageTap != null ? () => onImageTap!(leftImage) : null,
+                child: Container(
+                  height: 170, // Increased from 140
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(leftImage, fit: BoxFit.cover),
                   ),
                 ),
               ),
@@ -53,17 +57,17 @@ class CarouselTileCard extends StatelessWidget {
             // Center tile
             Expanded(
               flex: 4,
-              child: Container(
-                height: 90,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    centerImage,
-                    fit: BoxFit.cover,
+              child: GestureDetector(
+                onTap: onImageTap != null ? () => onImageTap!(centerImage) : null,
+                child: Container(
+                  height: 230, // Increased from 200
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(centerImage, fit: BoxFit.cover),
                   ),
                 ),
               ),
@@ -72,17 +76,17 @@ class CarouselTileCard extends StatelessWidget {
             // Right tile
             Expanded(
               flex: 2,
-              child: Container(
-                height: 70,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.asset(
-                    rightImage,
-                    fit: BoxFit.cover,
+              child: GestureDetector(
+                onTap: onImageTap != null ? () => onImageTap!(rightImage) : null,
+                child: Container(
+                  height: 170, // Increased from 140
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(rightImage, fit: BoxFit.cover),
                   ),
                 ),
               ),
@@ -92,4 +96,4 @@ class CarouselTileCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

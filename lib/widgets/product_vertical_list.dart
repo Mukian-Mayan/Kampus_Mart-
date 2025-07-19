@@ -16,7 +16,7 @@ class ProductVerticalList extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.7,
+        childAspectRatio: 0.7,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) {

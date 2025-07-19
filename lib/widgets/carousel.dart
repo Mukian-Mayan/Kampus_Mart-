@@ -10,8 +10,8 @@ class Carousel extends StatefulWidget {
   const Carousel({
     Key? key,
     required this.items,
-    this.height = 160,
-    this.borderRadius = 18,
+    this.height = 150, // Increased from 200
+    this.borderRadius = 30, // Increased from 16
     this.autoScrollDuration = const Duration(seconds: 3),
   }) : super(key: key);
 
@@ -92,4 +92,4 @@ class _CarouselState extends State<Carousel> {
       ],
     );
   }
-} 
+}

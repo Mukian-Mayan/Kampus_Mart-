@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 
@@ -290,7 +291,7 @@ class PaymentProcessingScreen extends StatelessWidget {
             ),
           ),
           // Bottom navigation
-          BottomNavBar(selectedIndex: currentNavIndex),
+          BottomNavBar(selectedIndex: currentNavIndex,navBarColor: AppTheme.tertiaryOrange),
         ],
       ),
     );
@@ -338,6 +339,16 @@ class PaymentProcessingScreen extends StatelessWidget {
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.of(context).pop(); // Close dialog
       _showPaymentSuccess(context);
+      NotificationsScreen.addBuyerNotification(
+        NotificationModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: 'Payment Successful',
+          message: 'Your payment of UGX ${totalAmount.toStringAsFixed(0)} was successful.',
+          type: NotificationType.payment,
+          timestamp: DateTime.now(),
+          userRole: UserRole.buyer,
+        ),
+      );
     });
   }
 

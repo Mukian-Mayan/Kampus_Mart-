@@ -1,8 +1,9 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously, non_constant_identifier_names
 
 import 'package:flutter/material.dart';
+import '../widgets/theme_provider.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
-
+import 'package:provider/provider.dart';
 class ModeSettingsPage extends StatefulWidget {
   const ModeSettingsPage({super.key});
 
@@ -11,35 +12,43 @@ class ModeSettingsPage extends StatefulWidget {
 }
 
 class _ModeSettingsPageState extends State<ModeSettingsPage> {
-  bool isDarkMode = false;
-  bool isNotificationsEnabled = true;
-  bool isLocationEnabled = true;
-  bool isPushNotificationsEnabled = true;
-
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
-      backgroundColor: AppTheme.tertiaryOrange,
+      backgroundColor: themeProvider.isDarkMode 
+          ? AppTheme.deepBlue 
+          : AppTheme.tertiaryOrange,
       appBar: AppBar(
-        backgroundColor: AppTheme.tertiaryOrange,
+        backgroundColor: themeProvider.isDarkMode 
+            ? AppTheme.deepBlue 
+            : AppTheme.tertiaryOrange,
         centerTitle: true,
         title: Padding(
           padding: const EdgeInsets.only(top: 25, left: 25),
           child: Text(
             'App Settings',
             style: TextStyle(
-              color: AppTheme.deepBlue,
+              color: themeProvider.isDarkMode 
+                  ? AppTheme.paleWhite 
+                  : AppTheme.deepBlue,
               fontWeight: FontWeight.w900,
             ),
           ),
         ),
         leading: Padding(
-          padding: EdgeInsets.only(top: 22, left: 25),
+          padding: const EdgeInsets.only(top: 22, left: 25),
           child: IconButton(
             onPressed: () {
               Navigator.pop(context);
             },
-            icon: Icon(Icons.arrow_back_ios, color: AppTheme.deepBlue),
+            icon: Icon(
+              Icons.arrow_back_ios, 
+              color: themeProvider.isDarkMode 
+                  ? AppTheme.paleWhite 
+                  : AppTheme.deepBlue,
+            ),
           ),
         ),
       ),
@@ -55,13 +64,15 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.paleWhite,
+                    color: themeProvider.isDarkMode 
+                        ? AppTheme.paleWhite.withOpacity(0.1)
+                        : AppTheme.paleWhite,
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
                         color: AppTheme.taleBlack.withOpacity(0.1),
                         blurRadius: 10,
-                        offset: Offset(0, 5),
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
@@ -72,7 +83,9 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                         children: [
                           Icon(
                             Icons.display_settings,
-                            color: AppTheme.deepBlue,
+                            color: themeProvider.isDarkMode 
+                                ? AppTheme.paleWhite 
+                                : AppTheme.deepBlue,
                             size: 24,
                           ),
                           const SizedBox(width: 12),
@@ -81,7 +94,9 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.deepBlue,
+                              color: themeProvider.isDarkMode 
+                                  ? AppTheme.paleWhite 
+                                  : AppTheme.deepBlue,
                             ),
                           ),
                         ],
@@ -90,16 +105,15 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                       
                       // Dark Mode Toggle
                       _buildToggleItem(
-                        icon: isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                        context,
+                        themeProvider,
+                        icon: themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
                         title: 'Dark Mode',
-                        subtitle: isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
-                        value: isDarkMode,
-                        onChanged: (value) {
-                          setState(() {
-                            isDarkMode = value;
-                          });
-                          // Here you would typically save to shared preferences
-                          _showSnackBar('${value ? 'Dark' : 'Light'} mode ${value ? 'enabled' : 'disabled'}');
+                        subtitle: themeProvider.isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
+                        value: themeProvider.isDarkMode,
+                        onChanged: (value) async {
+                          await themeProvider.toggleDarkMode();
+                          _showSnackBar(context, '${value ? 'Dark' : 'Light'} mode ${value ? 'enabled' : 'disabled'}');
                         },
                       ),
                     ],
@@ -112,13 +126,15 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.paleWhite,
+                    color: themeProvider.isDarkMode 
+                        ? AppTheme.paleWhite.withOpacity(0.1)
+                        : AppTheme.paleWhite,
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
                         color: AppTheme.taleBlack.withOpacity(0.1),
                         blurRadius: 10,
-                        offset: Offset(0, 5),
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
@@ -129,7 +145,9 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                         children: [
                           Icon(
                             Icons.notifications,
-                            color: AppTheme.deepBlue,
+                            color: themeProvider.isDarkMode 
+                                ? AppTheme.paleWhite 
+                                : AppTheme.deepBlue,
                             size: 24,
                           ),
                           const SizedBox(width: 12),
@@ -138,7 +156,9 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.deepBlue,
+                              color: themeProvider.isDarkMode 
+                                  ? AppTheme.paleWhite 
+                                  : AppTheme.deepBlue,
                             ),
                           ),
                         ],
@@ -147,15 +167,15 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                       
                       // Push Notifications Toggle
                       _buildToggleItem(
+                        context,
+                        themeProvider,
                         icon: Icons.notifications_active,
                         title: 'Push Notifications',
                         subtitle: 'Receive notifications for orders and updates',
-                        value: isPushNotificationsEnabled,
-                        onChanged: (value) {
-                          setState(() {
-                            isPushNotificationsEnabled = value;
-                          });
-                          _showSnackBar('Push notifications ${value ? 'enabled' : 'disabled'}');
+                        value: themeProvider.pushNotificationsEnabled,
+                        onChanged: (value) async {
+                          await themeProvider.togglePushNotifications();
+                          _showSnackBar(context, 'Push notifications ${value ? 'enabled' : 'disabled'}');
                         },
                       ),
                       
@@ -163,15 +183,15 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                       
                       // General Notifications Toggle
                       _buildToggleItem(
+                        context,
+                        themeProvider,
                         icon: Icons.notification_important,
                         title: 'General Notifications',
                         subtitle: 'App updates and promotional notifications',
-                        value: isNotificationsEnabled,
-                        onChanged: (value) {
-                          setState(() {
-                            isNotificationsEnabled = value;
-                          });
-                          _showSnackBar('General notifications ${value ? 'enabled' : 'disabled'}');
+                        value: themeProvider.notificationsEnabled,
+                        onChanged: (value) async {
+                          await themeProvider.toggleNotifications();
+                          _showSnackBar(context, 'General notifications ${value ? 'enabled' : 'disabled'}');
                         },
                       ),
                     ],
@@ -184,13 +204,15 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.paleWhite,
+                    color: themeProvider.isDarkMode 
+                        ? AppTheme.paleWhite.withOpacity(0.1)
+                        : AppTheme.paleWhite,
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
                         color: AppTheme.taleBlack.withOpacity(0.1),
                         blurRadius: 10,
-                        offset: Offset(0, 5),
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
@@ -201,7 +223,9 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                         children: [
                           Icon(
                             Icons.privacy_tip,
-                            color: AppTheme.deepBlue,
+                            color: themeProvider.isDarkMode 
+                                ? AppTheme.paleWhite 
+                                : AppTheme.deepBlue,
                             size: 24,
                           ),
                           const SizedBox(width: 12),
@@ -210,7 +234,9 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.deepBlue,
+                              color: themeProvider.isDarkMode 
+                                  ? AppTheme.paleWhite 
+                                  : AppTheme.deepBlue,
                             ),
                           ),
                         ],
@@ -219,15 +245,15 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                       
                       // Location Services Toggle
                       _buildToggleItem(
+                        context,
+                        themeProvider,
                         icon: Icons.location_on,
                         title: 'Location Services',
                         subtitle: 'Allow app to access your location for delivery',
-                        value: isLocationEnabled,
-                        onChanged: (value) {
-                          setState(() {
-                            isLocationEnabled = value;
-                          });
-                          _showSnackBar('Location services ${value ? 'enabled' : 'disabled'}');
+                        value: themeProvider.locationEnabled,
+                        onChanged: (value) async {
+                          await themeProvider.toggleLocation();
+                          _showSnackBar(context, 'Location services ${value ? 'enabled' : 'disabled'}');
                         },
                       ),
                     ],
@@ -240,13 +266,15 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.deepBlue,
+                    color: themeProvider.isDarkMode 
+                        ? AppTheme.paleWhite.withOpacity(0.2)
+                        : AppTheme.deepBlue,
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
                         color: AppTheme.taleBlack.withOpacity(0.1),
                         blurRadius: 10,
-                        offset: Offset(0, 5),
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
@@ -265,11 +293,13 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                       
                       // Reset Settings Button
                       _buildActionButton(
+                        context,
+                        themeProvider,
                         icon: Icons.refresh,
                         title: 'Reset All Settings',
                         subtitle: 'Restore default app settings',
                         onTap: () {
-                          _showResetDialog();
+                          _showResetDialog(context, themeProvider);
                         },
                       ),
                       
@@ -277,11 +307,13 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                       
                       // Clear Cache Button
                       _buildActionButton(
+                        context,
+                        themeProvider,
                         icon: Icons.cleaning_services,
                         title: 'Clear Cache',
                         subtitle: 'Free up storage space',
                         onTap: () {
-                          _showSnackBar('Cache cleared successfully');
+                          _showSnackBar(context, 'Cache cleared successfully');
                         },
                       ),
                     ],
@@ -296,7 +328,9 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
     );
   }
 
-  Widget _buildToggleItem({
+  Widget _buildToggleItem(
+    BuildContext context,
+    ThemeProvider themeProvider, {
     required IconData icon,
     required String title,
     required String subtitle,
@@ -307,7 +341,9 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
       children: [
         Icon(
           icon,
-          color: AppTheme.deepBlue,
+          color: themeProvider.isDarkMode 
+              ? AppTheme.paleWhite 
+              : AppTheme.deepBlue,
           size: 20,
         ),
         const SizedBox(width: 12),
@@ -320,14 +356,18 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: themeProvider.isDarkMode 
+                      ? AppTheme.paleWhite 
+                      : AppTheme.textPrimary,
                 ),
               ),
               Text(
                 subtitle,
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.textSecondary,
+                  color: themeProvider.isDarkMode 
+                      ? AppTheme.paleWhite.withOpacity(0.7) 
+                      : AppTheme.textSecondary,
                 ),
               ),
             ],
@@ -336,14 +376,20 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppTheme.deepBlue,
-          activeTrackColor: AppTheme.tertiaryOrange,
+          activeColor: themeProvider.isDarkMode 
+              ? AppTheme.tertiaryOrange 
+              : AppTheme.deepBlue,
+          activeTrackColor: themeProvider.isDarkMode 
+              ? AppTheme.tertiaryOrange.withOpacity(0.5) 
+              : AppTheme.tertiaryOrange,
         ),
       ],
     );
   }
 
-  Widget _buildActionButton({
+  Widget _buildActionButton(
+    BuildContext context,
+    ThemeProvider themeProvider, {
     required IconData icon,
     required String title,
     required String subtitle,
@@ -399,7 +445,7 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
     );
   }
 
-  void _showSnackBar(String message) {
+  void _showSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -412,7 +458,7 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
     );
   }
 
-  void _showResetDialog() {
+  void _showResetDialog(BuildContext context, ThemeProvider themeProvider) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -441,15 +487,10 @@ class _ModeSettingsPageState extends State<ModeSettingsPage> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  isDarkMode = false;
-                  isNotificationsEnabled = true;
-                  isLocationEnabled = true;
-                  isPushNotificationsEnabled = true;
-                });
+              onPressed: () async {
+                await themeProvider.resetSettings();
                 Navigator.of(context).pop();
-                _showSnackBar('Settings reset to default');
+                _showSnackBar(context, 'Settings reset to default');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.deepBlue,

@@ -75,32 +75,8 @@ class NotificationsScreen extends StatefulWidget {
   static const String routeName = '/notifications';
   final UserRole userRole;
   
-  const NotificationsScreen({
-    Key? key,
-    required this.userRole,
-  }) : super(key: key);
-
-  @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
-}
-
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  List<NotificationModel> get notifications {
-    if (widget.userRole == UserRole.buyer) {
-      return _buyerNotifications.where((n) => 
-        n.type == NotificationType.payment || 
-        n.type == NotificationType.cartReminder
-      ).toList();
-    } else {
-      return _sellerNotifications.where((n) =>
-        n.type != NotificationType.payment &&
-        n.type != NotificationType.cartReminder
-      ).toList();
-    }
-  }
-
   // BUYER NOTIFICATIONS - Only payment and cart related
-  List<NotificationModel> _buyerNotifications = [
+  static List<NotificationModel> buyerNotifications = [
     NotificationModel(
       id: '3',
       title: 'Items in Cart',
@@ -120,6 +96,35 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       userRole: UserRole.buyer,
     ),
   ];
+
+  const NotificationsScreen({
+    Key? key,
+    required this.userRole,
+  }) : super(key: key);
+
+  // Static method to add a notification to the buyer notifications list
+  static void addBuyerNotification(NotificationModel notification) {
+    NotificationsScreen.buyerNotifications.insert(0, notification);
+  }
+
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  List<NotificationModel> get notifications {
+    if (widget.userRole == UserRole.buyer) {
+      return NotificationsScreen.buyerNotifications.where((n) => 
+        n.type == NotificationType.payment || 
+        n.type == NotificationType.cartReminder
+      ).toList();
+    } else {
+      return _sellerNotifications.where((n) =>
+        n.type != NotificationType.payment &&
+        n.type != NotificationType.cartReminder
+      ).toList();
+    }
+  }
 
   // SELLER NOTIFICATIONS - Business related
   List<NotificationModel> _sellerNotifications = [
@@ -201,25 +206,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.secondaryOrange,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppTheme.secondaryOrange,
+        backgroundColor: AppTheme.tertiaryOrange,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          '${widget.userRole == UserRole.buyer ? 'Buyer' : 'Seller'} Notifications',
-          style: const TextStyle(
-            color: Colors.white,
+        title: const Text(
+          'Notification',
+          style: TextStyle(
+            color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
+            icon: const Icon(Icons.notifications, color: Colors.black),
             onPressed: () {},
           ),
         ],
@@ -235,7 +240,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               },
             ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: -1, // No specific tab selected for notifications
+        selectedIndex: -1, navBarColor: AppTheme.tertiaryOrange ,// No specific tab selected for notifications
       ),
     );
   }
@@ -527,7 +532,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final index = notifications.indexOf(notification);
       if (index != -1) {
         if (widget.userRole == UserRole.buyer) {
-          _buyerNotifications[index] = notification.copyWith(isRead: true);
+          NotificationsScreen.buyerNotifications[index] = notification.copyWith(isRead: true);
         } else {
           _sellerNotifications[index] = notification.copyWith(isRead: true);
         }
@@ -615,4 +620,5 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
     );
   }
+  
 }

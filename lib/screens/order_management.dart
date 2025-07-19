@@ -1,10 +1,14 @@
-// ignore_for_file: deprecated_member_use
+// order_management.dart - Updated with services integration
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/logo_widget.dart';
+import '../models/order.dart';
+import '../services/order_service.dart';
+import '../services/seller_service.dart';
 
 class SellerOrderManagementScreen extends StatefulWidget {
   static const String routeName = '/SellerOrderManagement';
@@ -16,57 +20,104 @@ class SellerOrderManagementScreen extends StatefulWidget {
 }
 
 class _SellerOrderManagementScreenState extends State<SellerOrderManagementScreen> {
-  int _selectedTab = 0; // 0: New, 1: Pending, 2: Solved
+  int _selectedTab = 0; // 0: Pending, 1: Processing, 2: Completed
+  List<Order> _orders = [];
+  bool _isLoading = true;
+  String? _error;
+  String? _sellerId;
 
-  // Mock order data
-  final List<Map<String, dynamic>> newOrders = [
-    {
-      'id': '#KM-1001',
-      'customer': 'Eron Nambirige',
-      'items': 3,
-      'amount': 45000,
-      'time': '10 mins ago',
-    },
-    {
-      'id': '#KM-1002',
-      'customer': 'Malual Martin',
-      'items': 5,
-      'amount': 78000,
-      'time': '25 mins ago',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _initializeAndLoadOrders();
+  }
 
-  final List<Map<String, dynamic>> pendingOrders = [
-    {
-      'id': '#KM-0998',
-      'customer': 'Moen',
-      'items': 2,
-      'amount': 32000,
-      'time': '2 hours ago',
-    },
-  ];
+  Future<void> _initializeAndLoadOrders() async {
+    try {
+      // Get current seller ID
+      _sellerId = SellerService.getCurrentUserId();
+      if (_sellerId == null) {
+        setState(() {
+          _error = 'No seller found. Please login again.';
+          _isLoading = false;
+        });
+        return;
+      }
 
-  final List<Map<String, dynamic>> solvedOrders = [
-    {
-      'id': '#KM-0995',
-      'customer': 'Jollyne Flavia',
-      'items': 4,
-      'amount': 65000,
-      'time': 'Yesterday',
-    },
-    {
-      'id': '#KM-0996',
-      'customer': 'Michael Francis',
-      'items': 1,
-      'amount': 15000,
-      'time': 'Yesterday',
-    },
-  ];
+      await _loadOrders();
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to initialize: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadOrders() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final orders = await OrderService.getOrdersBySellerId(_sellerId!);
+      
+      setState(() {
+        _orders = orders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load orders: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<Order> _getFilteredOrders() {
+    switch (_selectedTab) {
+      case 0:
+        return _orders.where((order) => order.status == OrderStatus.pending).toList();
+      case 1:
+        return _orders.where((order) => order.status == OrderStatus.processing).toList();
+      case 2:
+        return _orders.where((order) => order.status == OrderStatus.completed).toList();
+      default:
+        return [];
+    }
+  }
+
+  Future<void> _updateOrderStatus(Order order, OrderStatus newStatus) async {
+    try {
+      await OrderService.updateOrderStatus(order.id, newStatus);
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Order ${order.id} updated successfully'),
+          backgroundColor: AppTheme.lightGreen,
+        ),
+      );
+      
+      // Reload orders to reflect changes
+      await _loadOrders();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update order: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomNavBar(selectedIndex: 1),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: 1,
+        navBarColor: AppTheme.tertiaryOrange,
+      ),
       backgroundColor: AppTheme.tertiaryOrange,
       appBar: AppBar(
         title: const LogoWidget(),
@@ -79,11 +130,16 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: AppTheme.textPrimary),
-            onPressed: () =>Navigator.push(
+            onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => NotificationsScreen(userRole: UserRole.seller),
-              ),),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: AppTheme.textPrimary),
+            onPressed: _loadOrders,
           ),
         ],
       ),
@@ -98,9 +154,9 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
             ),
             child: Row(
               children: [
-                _buildOrderTab('New', 0),
-                _buildOrderTab('Pending', 1),
-                _buildOrderTab('Solved', 2),
+                _buildOrderTab('Pending', 0),
+                _buildOrderTab('Processing', 1),
+                _buildOrderTab('Completed', 2),
               ],
             ),
           ),
@@ -123,6 +179,14 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
   }
 
   Widget _buildOrderTab(String title, int index) {
+    final filteredOrders = _getFilteredOrders();
+    final count = index == _selectedTab ? filteredOrders.length : 
+                  _orders.where((order) => {
+                    0: OrderStatus.pending,
+                    1: OrderStatus.processing,
+                    2: OrderStatus.completed,
+                  }[index] == order.status).length;
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -137,13 +201,26 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: _selectedTab == index ? Colors.white : AppTheme.textSecondary,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _selectedTab == index ? Colors.white : AppTheme.textSecondary,
+                  ),
+                ),
+                if (!_isLoading)
+                  Text(
+                    '($count)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _selectedTab == index ? Colors.white70 : AppTheme.textSecondary,
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -152,133 +229,203 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
   }
 
   Widget _buildOrderList() {
-    List<Map<String, dynamic>> currentOrders = [];
-    
-    if (_selectedTab == 0) {
-      currentOrders = newOrders;
-    } else if (_selectedTab == 1) {
-      currentOrders = pendingOrders;
-    } else {
-      currentOrders = solvedOrders;
-    }
-
-    if (currentOrders.isEmpty) {
-      return Center(
-        child: Text(
-          'No ${_getOrderStatusText()} orders',
-          style: const TextStyle(
-            fontSize: 18,
-            color: AppTheme.textSecondary,
-          ),
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryOrange),
         ),
       );
     }
 
-    return ListView.builder(
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red.shade400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadOrders,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final filteredOrders = _getFilteredOrders();
+
+    if (filteredOrders.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.inbox_outlined,
+              size: 64,
+              color: AppTheme.textSecondary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No ${_getOrderStatusText()} orders',
+              style: const TextStyle(
+                fontSize: 18,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadOrders,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: filteredOrders.length,
+        itemBuilder: (context, index) {
+          final order = filteredOrders[index];
+          return _buildOrderCard(order);
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrderCard(Order order) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      itemCount: currentOrders.length,
-      itemBuilder: (context, index) {
-        final order = currentOrders[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    order['id'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    order['time'],
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
               Text(
-                'Customer: ${order['customer']}',
+                '#${order.id.substring(0, 8)}',
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${order['items']} item${order['items'] > 1 ? 's' : ''}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    'UGX ${order['amount']}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ],
+              Text(
+                _formatTime(order.createdAt),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary,
+                ),
               ),
-              if (_selectedTab != 2) const SizedBox(height: 12),
-              if (_selectedTab != 2)
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Customer: ${order.name}',
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Phone: ${order.phone}',
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${order.items.length} item${order.items.length > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+              Text(
+                'UGX ${order.totalAmount.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          if (order.notes != null && order.notes!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Notes: ${order.notes}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppTheme.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getStatusColor(order.status).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _getStatusText(order.status),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _getStatusColor(order.status),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (_canUpdateStatus(order.status))
                 SizedBox(
-                  width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Handle order action
-                      if (_selectedTab == 0) {
-                        // Accept new order
-                        setState(() {
-                          newOrders.removeAt(index);
-                          pendingOrders.add(order);
-                        });
-                      } else {
-                        // Mark as solved
-                        setState(() {
-                          pendingOrders.removeAt(index);
-                          solvedOrders.add(order);
-                        });
-                      }
-                    },
+                    onPressed: () => _handleOrderAction(order),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedTab == 0 ? AppTheme.lightGreen : AppTheme.selectedBlue,
+                      backgroundColor: _getActionButtonColor(order.status),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
                     child: Text(
-                      _selectedTab == 0 ? 'Accept Order' : 'Mark as Solved',
+                      _getActionButtonText(order.status),
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -286,19 +433,108 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
                 ),
             ],
           ),
-        );
-      },
+        ],
+      ),
     );
+  }
+
+  bool _canUpdateStatus(OrderStatus status) {
+    return status == OrderStatus.pending || status == OrderStatus.processing;
+  }
+
+  Color _getStatusColor(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return AppTheme.primaryOrange;
+      case OrderStatus.processing:
+        return AppTheme.selectedBlue;
+      case OrderStatus.completed:
+        return AppTheme.lightGreen;
+      case OrderStatus.cancelled:
+        return Colors.red;
+      default:
+        return AppTheme.textSecondary;
+    }
+  }
+
+  String _getStatusText(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return 'Pending';
+      case OrderStatus.processing:
+        return 'Processing';
+      case OrderStatus.completed:
+        return 'Completed';
+      case OrderStatus.cancelled:
+        return 'Cancelled';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  Color _getActionButtonColor(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return AppTheme.lightGreen;
+      case OrderStatus.processing:
+        return AppTheme.selectedBlue;
+      default:
+        return AppTheme.textSecondary;
+    }
+  }
+
+  String _getActionButtonText(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return 'Accept Order';
+      case OrderStatus.processing:
+        return 'Mark Complete';
+      default:
+        return 'Update';
+    }
+  }
+
+  void _handleOrderAction(Order order) {
+    OrderStatus newStatus;
+    switch (order.status) {
+      case OrderStatus.pending:
+        newStatus = OrderStatus.processing;
+        break;
+      case OrderStatus.processing:
+        newStatus = OrderStatus.completed;
+        break;
+      default:
+        return;
+    }
+
+    _updateOrderStatus(order, newStatus);
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} min${difference.inMinutes > 1 ? 's' : ''} ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+    } else {
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    }
   }
 
   String _getOrderStatusText() {
     switch (_selectedTab) {
       case 0:
-        return 'new';
-      case 1:
         return 'pending';
+      case 1:
+        return 'processing';
       case 2:
-        return 'solved';
+        return 'completed';
       default:
         return '';
     }
