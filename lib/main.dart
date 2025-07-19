@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -17,9 +18,17 @@ import 'screens/login_or_register_page.dart';
 import 'package:kampusmart2/widgets/theme_provider.dart';
 import 'Theme/app_theme.dart';
 
+
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: 'https://oydcifonjmzfnuaihrln.supabase.co', // Replace with your Supabase project URL
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95ZGNpZm9uam16Zm51YWlocmxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1ODk1MzMsImV4cCI6MjA2ODE2NTUzM30.ufJqhFhkMoRoJRIbwZ9rpoMSyUHCOKthG427rk1SoWk', // Replace with your Supabase anon key
+  );
 
   final themeProvider = ThemeProvider();
   await themeProvider.initializeTheme();
@@ -37,6 +46,16 @@ Future<void> main() async {
       child: const MyApp(),
     ),
   );
+}
+
+// Add this class somewhere in your project (separate file or at the bottom)
+class SupabaseAdmin {
+  static final SupabaseClient _adminClient = SupabaseClient(
+    'https://oydcifonjmzfnuaihrln.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95ZGNpZm9uam16Zm51YWlocmxuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjU4OTUzMywiZXhwIjoyMDY4MTY1NTMzfQ.x5Aiz-KigL2H2Lc5ZRp8gJZiFqp4yk4BMGDSCHTC-wk', // Replace with your actual service role key
+  );
+
+  static SupabaseClient get client => _adminClient;
 }
 
 class MyApp extends StatelessWidget {
