@@ -16,7 +16,7 @@ import 'package:kampusmart2/widgets/my_textfield.dart';
 
 class RegisterPage extends StatefulWidget {
   final UserRole userRole; // Add this parameter
-  
+
   const RegisterPage({super.key, required this.userRole});
 
   @override
@@ -32,7 +32,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController secondNameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController businessNameController = TextEditingController();
-  final TextEditingController businessDescriptionController = TextEditingController();
+  final TextEditingController businessDescriptionController =
+      TextEditingController();
+  bool obscureText = true;
 
   void signUpUser(BuildContext context) async {
     // Validate inputs first
@@ -60,13 +62,13 @@ class _RegisterPageState extends State<RegisterPage> {
       print('Email: ${emailController.text.trim()}');
       print('User role: ${widget.userRole}');
       print('Role string representation: ${widget.userRole.toString()}');
-      
+
       // Create user account
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: pwController.text,
-      );
+            email: emailController.text.trim(),
+            password: pwController.text,
+          );
 
       print('Firebase Auth user created with UID: ${userCredential.user!.uid}');
 
@@ -88,7 +90,7 @@ class _RegisterPageState extends State<RegisterPage> {
       if (widget.userRole == UserRole.seller) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) =>  SellerDashboardScreen()),
+          MaterialPageRoute(builder: (context) => SellerDashboardScreen()),
           (route) => false,
         );
       } else {
@@ -98,7 +100,6 @@ class _RegisterPageState extends State<RegisterPage> {
           (route) => false,
         );
       }
-
     } on FirebaseAuthException catch (e) {
       if (Navigator.canPop(context)) {
         Navigator.of(context).pop();
@@ -156,7 +157,7 @@ class _RegisterPageState extends State<RegisterPage> {
       _showErrorSnackBar("Please enter your email address");
       return;
     }
-    
+
     if (pwController.text.isEmpty) {
       _showErrorSnackBar("Please enter your password");
       return;
@@ -173,20 +174,21 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       print('Attempting to sign in user: ${emailController.text.trim()}');
-      
+
       // Attempt sign-in
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: pwController.text,
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: pwController.text,
+          );
 
       print('Sign-in successful, getting user role...');
 
       // Get user role and navigate accordingly
       UserRole? detectedRole = await _getUserRole(userCredential.user!.uid);
-      
+
       print('Detected user role: $detectedRole'); // Debug log
-      
+
       // Close the loading indicator
       if (Navigator.canPop(context)) {
         Navigator.of(context).pop();
@@ -197,7 +199,9 @@ class _RegisterPageState extends State<RegisterPage> {
         print('Navigating to seller dashboard'); // Debug log
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const SellerDashboardScreen()),
+          MaterialPageRoute(
+            builder: (context) => const SellerDashboardScreen(),
+          ),
           (route) => false, // Clear all previous routes
         );
       } else {
@@ -266,28 +270,30 @@ class _RegisterPageState extends State<RegisterPage> {
       _showErrorSnackBar("Please enter your first name");
       return false;
     }
-    
+
     if (secondNameController.text.trim().isEmpty) {
       _showErrorSnackBar("Please enter your last name");
       return false;
     }
-    
+
     if (emailController.text.trim().isEmpty) {
       _showErrorSnackBar("Please enter your email address");
       return false;
     }
 
     // Basic email validation
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailController.text.trim())) {
+    if (!RegExp(
+      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+    ).hasMatch(emailController.text.trim())) {
       _showErrorSnackBar("Please enter a valid email address");
       return false;
     }
-    
+
     if (pwController.text.isEmpty) {
       _showErrorSnackBar("Please enter a password");
       return false;
     }
-    
+
     if (pwController.text.length < 6) {
       _showErrorSnackBar("Password must be at least 6 characters long");
       return false;
@@ -299,12 +305,12 @@ class _RegisterPageState extends State<RegisterPage> {
         _showErrorSnackBar("Please enter your business name");
         return false;
       }
-      
+
       if (businessDescriptionController.text.trim().isEmpty) {
         _showErrorSnackBar("Please enter your business description");
         return false;
       }
-      
+
       if (phoneController.text.trim().isEmpty) {
         _showErrorSnackBar("Please enter your phone number");
         return false;
@@ -376,18 +382,19 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       print('Starting to store user data for UID: ${user.uid}');
-      
+
       // Use batch writes for atomic operations
       final batch = firestore.batch();
 
       if (widget.userRole == UserRole.seller) {
         print('Storing seller data...');
-        
+
         // Store seller data
         final sellerRef = firestore.collection('sellers').doc(user.uid);
         final sellerData = {
           'id': user.uid,
-          'name': '${firstNameController.text.trim()} ${secondNameController.text.trim()}',
+          'name':
+              '${firstNameController.text.trim()} ${secondNameController.text.trim()}',
           'email': emailController.text.trim(),
           'businessName': businessNameController.text.trim(),
           'businessDescription': businessDescriptionController.text.trim(),
@@ -405,13 +412,12 @@ class _RegisterPageState extends State<RegisterPage> {
             'totalReviews': 0,
           },
         };
-        
+
         batch.set(sellerRef, sellerData);
         print('Seller data prepared: $sellerData');
-        
       } else {
         print('Storing buyer data...');
-        
+
         // Store regular user data
         final userRef = firestore.collection('users').doc(user.uid);
         final userData = {
@@ -424,7 +430,7 @@ class _RegisterPageState extends State<RegisterPage> {
           'updatedAt': timestamp,
           'role': 'buyer',
         };
-        
+
         batch.set(userRef, userData);
         print('User data prepared: $userData');
       }
@@ -439,13 +445,13 @@ class _RegisterPageState extends State<RegisterPage> {
       } else {
         roleString = 'buyer'; // Default to buyer if none specified
       }
-      
+
       final roleData = {
         'userId': user.uid,
         'role': roleString,
         'createdAt': timestamp,
       };
-      
+
       batch.set(roleRef, roleData);
       print('Role data prepared: $roleData');
       print('Confirmed role being stored: $roleString');
@@ -456,10 +462,15 @@ class _RegisterPageState extends State<RegisterPage> {
       print('Batch write completed successfully for user: ${user.uid}');
 
       // Verify data was stored correctly
-      await Future.delayed(const Duration(milliseconds: 200)); // Brief delay for consistency
-      
+      await Future.delayed(
+        const Duration(milliseconds: 200),
+      ); // Brief delay for consistency
+
       if (widget.userRole == UserRole.seller) {
-        final sellerDoc = await firestore.collection('sellers').doc(user.uid).get();
+        final sellerDoc = await firestore
+            .collection('sellers')
+            .doc(user.uid)
+            .get();
         if (!sellerDoc.exists) {
           throw Exception('Seller document was not created properly');
         }
@@ -473,12 +484,14 @@ class _RegisterPageState extends State<RegisterPage> {
       }
 
       // Verify role document
-      final roleDoc = await firestore.collection('user_roles').doc(user.uid).get();
+      final roleDoc = await firestore
+          .collection('user_roles')
+          .doc(user.uid)
+          .get();
       if (!roleDoc.exists) {
         throw Exception('Role document was not created properly');
       }
       print('Role document verified: ${roleDoc.data()}');
-
     } catch (e) {
       print('Error storing user data: $e');
       throw Exception('Failed to store user data: $e');
@@ -510,7 +523,9 @@ class _RegisterPageState extends State<RegisterPage> {
           icon: const Icon(Icons.arrow_back_ios),
         ),
         title: Text(
-          widget.userRole == UserRole.seller ? 'Seller Registration' : 'Customer Registration',
+          widget.userRole == UserRole.seller
+              ? 'Seller Registration'
+              : 'Customer Registration',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
       ),
@@ -531,7 +546,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   const SizedBox(height: 19),
                   Text(
-                    widget.userRole == UserRole.seller 
+                    widget.userRole == UserRole.seller
                         ? 'Start Selling Today!'
                         : 'Register Today, Save Every Day!',
                     style: TextStyle(
@@ -547,7 +562,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       color: AppTheme.paleWhite,
                     ),
                   ),
-                  
+
                   // Name fields
                   Row(
                     children: [
@@ -573,7 +588,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ],
                   ),
-                  
+
                   // Email field
                   MyTextField(
                     maxLength: null,
@@ -583,7 +598,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     hintText: 'Email address',
                     obscureText: false,
                   ),
-                  
+
                   // Seller-specific fields
                   if (widget.userRole == UserRole.seller) ...[
                     MyTextField(
@@ -611,9 +626,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       obscureText: false,
                     ),
                   ],
-                  
+
                   const SizedBox(height: 10),
-                  
+
                   // Password fields
                   MyTextField(
                     maxLength: 16,
@@ -621,7 +636,18 @@ class _RegisterPageState extends State<RegisterPage> {
                     enabledColor: AppTheme.taleBlack,
                     controller: pwController,
                     hintText: 'Create password',
-                    obscureText: true,
+                    obscureText: obscureText,
+                    prefix: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          obscureText = !obscureText;
+                        });
+                      },
+                      icon: Icon(
+                        obscureText ? Icons.visibility : Icons.visibility_off,
+                        color:  AppTheme.borderGrey,
+                      ),
+                    ),
                   ),
                   MyTextField(
                     maxLength: 16,
@@ -629,9 +655,20 @@ class _RegisterPageState extends State<RegisterPage> {
                     enabledColor: AppTheme.taleBlack,
                     controller: confirmPwController,
                     hintText: 'Confirm password',
-                    obscureText: true,
+                    obscureText: obscureText,
+                    prefix: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          obscureText = !obscureText;
+                        });
+                      },
+                      icon: Icon(
+                        obscureText ? Icons.visibility : Icons.visibility_off,
+                        color: AppTheme.borderGrey,
+                      ),
+                    ),
                   ),
-                  
+
                   // Register button
                   MyButton1(
                     height: MediaQuery.of(context).size.height * 0.07,
@@ -641,7 +678,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     onTap: () => signUpUser(context),
                     pad: 15,
                   ),
-                  
+
                   // Login link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -659,7 +696,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         onTap: () => Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => LoginPage(userRole: widget.userRole),
+                            builder: (context) =>
+                                LoginPage(userRole: widget.userRole),
                           ),
                         ),
                         child: const Text(
