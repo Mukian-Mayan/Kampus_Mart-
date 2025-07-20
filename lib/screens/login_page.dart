@@ -201,13 +201,10 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 19),
-                  Text(
-                    widget.userRole == UserRole.seller
-                        ? 'Welcome Back, Seller!'
-                        : 'Welcome Back, We missed you',
+                  Text('Welcome Back, We missed you',
                     style: TextStyle(
                       fontSize: 16,
-                      fontFamily: 'Birdy Script',
+                      fontFamily: 'KG Red Hands',
                       color: AppTheme.paleWhite,
                       shadows: [
                         Shadow(

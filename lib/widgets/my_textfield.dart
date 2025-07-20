@@ -32,7 +32,7 @@ class MyTextField extends StatelessWidget {
           obscureText: obscureText,
           maxLength: maxLength,
 
-          style: TextStyle(color: AppTheme.paleWhite, fontFamily: 'Birdy Script',),
+          style: TextStyle(color: AppTheme.paleWhite, fontFamily: 'KG Penmanship',),
 
           decoration: InputDecoration(
             prefixIcon: prefix,

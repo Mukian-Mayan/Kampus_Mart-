@@ -126,6 +126,14 @@ flutter:
       fonts:
         - asset: assets/fonts/Keania_One.ttf
     
+    - family: KG Penmanship
+      fonts:
+        - asset: assets/fonts/KGPerfectPenmanship.ttf
+    
+    - family: DreamOrphans-Bold
+      fonts:
+        - asset: assets/fonts/DreamOrphansItalicBold.otf
+    
 
   #   - family: Schyler
   #     fonts:
