@@ -20,8 +20,6 @@ import 'package:kampusmart2/widgets/theme_provider.dart';
 import 'Theme/app_theme.dart';
 import 'screens/notification_screen.dart';
 
-
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -47,7 +45,6 @@ Future<void> main() async {
   );
 }
 
-// Add this class somewhere in your project (separate file or at the bottom)
 class SupabaseAdmin {
   static final SupabaseClient _adminClient = SupabaseClient(
     'https://oydcifonjmzfnuaihrln.supabase.co',
@@ -68,10 +65,18 @@ class MyApp extends StatelessWidget {
       title: 'Kampus mart',
       theme: themeProvider.currentTheme,
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+     //ome: HomePage(),
       routes: {
-        NotificationsScreen.routeName: (context) => NotificationsScreen(userRole: UserRole.buyer),
-        // Add other routes as needed
+        '/': (context) => const SplashScreen(),
+        '/WelcomeScreen': (context) => const WelcomeScreen(),
+        '/OnboardingScreen': (context) => const OnboardingScreen(),
+        '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(),
+        '/InterestsScreen': (context) => const InterestsScreen(),
+        '/Signup': (context) => const LoginOrRegisterPage(),
+        '/ChatsScreen': (context) => const ChatsScreen(),
+        '/SellerDashboard': (context) => const SellerDashboardScreen(),
+        '/AddProduct': (context) => const SellerAddProductScreen(),
+        '/SalesTracking': (context) => const SellerSalesTrackingScreen(),
       },
     );
   }

@@ -391,9 +391,9 @@ class _HomePageState extends State<HomePage> {
                         height: 30,
                         child: MyButton1(
                           height: 30,
-                          width: 70,
+                          width: 120,
                           fontSize: 13,
-                          text: 'More',
+                          text: isSuggestedSelected ? 'More suggested' : 'More trending',
                           pad: 0,
                           onTap: () {
                             final allGroups = isSuggestedSelected
@@ -550,32 +550,49 @@ class _HomePageState extends State<HomePage> {
                               ),
                               builder: (context) => FractionallySizedBox(
                                 heightFactor: 0.5,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: GridView.builder(
-                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      mainAxisSpacing: 12,
-                                      crossAxisSpacing: 12,
-                                      childAspectRatio: 0.85,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                                      child: Text(
+                                        isSuggestedSelected ? 'More suggested products' : 'More trending products',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
-                                    itemCount: allProducts.length,
-                                    itemBuilder: (context, index) {
-                                      final product = allProducts[index];
-                                      return ProductCard(
-                                        product: product,
-                                        onTap: () {
-                                          Navigator.pop(context);
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ProductDetailsPage(product: product),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: GridView.builder(
+                                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            mainAxisSpacing: 12,
+                                            crossAxisSpacing: 12,
+                                            childAspectRatio: 0.85,
+                                          ),
+                                          itemCount: allProducts.length,
+                                          itemBuilder: (context, index) {
+                                            final product = allProducts[index];
+                                            return ProductCard(
+                                              product: product,
+                                              onTap: () {
+                                                Navigator.pop(context);
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => ProductDetailsPage(product: product),
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
