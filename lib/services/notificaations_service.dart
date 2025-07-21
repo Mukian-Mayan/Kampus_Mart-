@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use, use_super_parameters, prefer_final_fields, unreachable_switch_case
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/payment_processing.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -35,40 +36,41 @@ class NotificationService {
 
   // Send notification to Firebase
   static Future<bool> sendNotification({
-    required String userId,
-    required String title,
-    required String message,
-    required NotificationType type,
-    required UserRole userRole,
-    String? orderId,
-    Map<String, dynamic>? additionalData,
-  }) async {
-    try {
-      final notificationId = _uuid.v4();
-      final notificationData = {
-        'id': notificationId,
-        'userId': userId,
-        'title': title,
-        'message': message,
-        'type': _getTypeString(type),
-        'userRole': userRole.toString().split('.').last,
-        'isRead': false,
-        'createdAt': FieldValue.serverTimestamp(),
-        'orderId': orderId,
-        'additionalData': additionalData ?? {},
-      };
+  required String userId,
+  required String title,
+  required String message,
+  required NotificationType type,
+  required UserRole userRole,
+  String? orderId,
+  Map<String, dynamic>? additionalData,
+}) async {
+  try {
+    final notificationId = _uuid.v4();
+    final notificationData = {
+      'id': notificationId,
+      'userId': userId,
+      'title': title,
+      'message': message,
+      'type': _getTypeString(type),
+      'userRole': userRole.toString().split('.').last,
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
+      'orderId': orderId ?? '', // Handle null orderId
+      'additionalData': additionalData ?? {}, // Handle null additionalData
+    };
 
-      await FirebaseFirestore.instance
-          .collection(_collection)
-          .doc(notificationId)
-          .set(notificationData);
-      
-      return true;
-    } catch (e) {
-      debugPrint('Error sending notification: $e');
-      return false;
-    }
+    await FirebaseFirestore.instance
+        .collection(_collection)
+        .doc(notificationId)
+        .set(notificationData, SetOptions(merge: true)); // Use merge option
+    
+    return true;
+  } catch (e, stackTrace) {
+    debugPrint('Error sending notification: $e');
+    debugPrint('Stack trace: $stackTrace');
+    return false;
   }
+}
 
   // Get user notifications stream from Firebase
   static Stream<List<NotificationModel>> getUserNotificationsStream({
@@ -113,6 +115,7 @@ class NotificationService {
       return [];
     }
   }
+  
 
   // Mark notification as read
   static Future<void> markAsRead(String notificationId) async {
@@ -121,8 +124,9 @@ class NotificationService {
           .collection(_collection)
           .doc(notificationId)
           .update({'isRead': true});
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error marking notification as read: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
   
@@ -143,8 +147,9 @@ class NotificationService {
       }
 
       await batch.commit();
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error marking all notifications as read: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
@@ -155,8 +160,9 @@ class NotificationService {
           .collection(_collection)
           .doc(notificationId)
           .delete();
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error deleting notification: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
@@ -171,8 +177,9 @@ class NotificationService {
           .get();
 
       return querySnapshot.docs.length;
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error getting unread count: $e');
+      debugPrint('Stack trace: $stackTrace');
       return 0;
     }
   }
@@ -605,11 +612,36 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(
-                    onPressed: () => setState(() {
-                      _initializeNotificationsStream();
-                    }),
-                    child: const Text('Retry'),
-                  ),
+  onPressed: () async {
+    try {
+      // Force refresh by recreating the stream
+      setState(() {
+        _notificationsStream = NotificationService.getUserNotificationsStream(
+          userId: widget.userId,
+          userRole: widget.userRole,
+        );
+      });
+      if (FirebaseAuth.instance.currentUser == null) {
+  // Handle unauthenticated user
+  
+  return;
+}
+      
+      // Also try a one-time fetch to verify connectivity
+      final test = await NotificationService.getUserNotifications(
+        userId: widget.userId,
+        userRole: widget.userRole,
+      );
+      debugPrint('Test fetch successful, got ${test.length} notifications');
+    } catch (e) {
+      debugPrint('Retry failed: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Retry failed: ${e.toString()}')),
+      );
+    }
+  },
+  child: const Text('Retry'),
+),
                 ],
               ),
             );
@@ -1054,7 +1086,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CartPage(),
+        builder: (context) => CartPage(userRole: UserRole.buyer),
       ),
     );
   }

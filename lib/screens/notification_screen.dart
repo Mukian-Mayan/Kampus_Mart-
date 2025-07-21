@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/payment_processing.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import '../screens/Product_management.dart';
 import '../screens/order_management.dart';
 import '../Theme/app_theme.dart';
@@ -31,7 +32,7 @@ class NotificationBackendService {
     'chat_message': NotificationType.general,
   };
 
-  // Send notification to Firebase
+  // Send notification to Firebase - Added null safety and error handling
   static Future<bool> sendNotification({
     required String userId,
     required String title,
@@ -42,6 +43,12 @@ class NotificationBackendService {
     Map<String, dynamic>? additionalData,
   }) async {
     try {
+      // Validate required parameters
+      if (userId.isEmpty || title.isEmpty || message.isEmpty) {
+        debugPrint('Error: Missing required notification parameters');
+        return false;
+      }
+
       final notificationData = {
         'userId': userId,
         'title': title,
@@ -65,28 +72,46 @@ class NotificationBackendService {
     }
   }
 
-  // Get user notifications from Firebase
+  // Get user notifications from Firebase - Fixed query structure
   static Stream<List<NotificationModel>> getUserNotificationsStream({
     required String userId,
     required UserRole userRole,
   }) {
-    return FirebaseFirestore.instance
-        .collection(_collection)
-        .where('userId', isEqualTo: userId)
-        .where('userRole', isEqualTo: userRole.toString().split('.').last)
-        .orderBy('createdAt', descending: true)
-        .limit(50)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => _convertToNotificationModel(doc))
-            .where((notification) => notification != null)
-            .cast<NotificationModel>()
-            .toList());
+    try {
+      return FirebaseFirestore.instance
+          .collection(_collection)
+          .where('userId', isEqualTo: userId)
+          .where('userRole', isEqualTo: userRole.toString().split('.').last)
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .snapshots()
+          .handleError((error) {
+            debugPrint('Error in notifications stream: $error');
+            return Stream.empty();
+          })
+          .map((snapshot) {
+            try {
+              return snapshot.docs
+                  .map((doc) => _convertToNotificationModel(doc))
+                  .where((notification) => notification != null)
+                  .cast<NotificationModel>()
+                  .toList();
+            } catch (e) {
+              debugPrint('Error mapping notifications: $e');
+              return <NotificationModel>[];
+            }
+          });
+    } catch (e) {
+      debugPrint('Error creating notifications stream: $e');
+      return Stream.value(<NotificationModel>[]);
+    }
   }
 
-  // Mark notification as read
+  // Mark notification as read - Added error handling
   static Future<void> markAsRead(String notificationId) async {
     try {
+      if (notificationId.isEmpty) return;
+      
       await FirebaseFirestore.instance
           .collection(_collection)
           .doc(notificationId)
@@ -96,14 +121,17 @@ class NotificationBackendService {
     }
   }
 
-  // Mark all notifications as read for a user
+  // Mark all notifications as read for a user - Improved batch processing
   static Future<void> markAllAsRead(String userId) async {
     try {
+      if (userId.isEmpty) return;
+      
       final batch = FirebaseFirestore.instance.batch();
       final notifications = await FirebaseFirestore.instance
           .collection(_collection)
           .where('userId', isEqualTo: userId)
           .where('isRead', isEqualTo: false)
+          .limit(500) // Add limit to prevent oversized batches
           .get();
 
       for (var doc in notifications.docs) {
@@ -116,9 +144,11 @@ class NotificationBackendService {
     }
   }
 
-  // Delete notification
+  // Delete notification - Added validation
   static Future<void> deleteNotification(String notificationId) async {
     try {
+      if (notificationId.isEmpty) return;
+      
       await FirebaseFirestore.instance
           .collection(_collection)
           .doc(notificationId)
@@ -128,30 +158,53 @@ class NotificationBackendService {
     }
   }
 
-  // Helper methods
+  // Helper methods - Improved error handling
   static String _getTypeString(NotificationType type) {
-    return type.toString().split('.').last.replaceAllMapped(
-      RegExp(r'[A-Z]'),
-      (match) => '_${match.group(0)!.toLowerCase()}',
-    ).substring(1);
+    try {
+      return type.toString().split('.').last.replaceAllMapped(
+        RegExp(r'[A-Z]'),
+        (match) => '_${match.group(0)!.toLowerCase()}',
+      ).substring(1);
+    } catch (e) {
+      debugPrint('Error converting type to string: $e');
+      return 'general';
+    }
   }
 
   static NotificationModel? _convertToNotificationModel(DocumentSnapshot doc) {
     try {
-      final data = doc.data() as Map<String, dynamic>;
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data == null) return null;
+
       final typeString = data['type'] as String?;
       final userRoleString = data['userRole'] as String?;
       final timestamp = data['createdAt'] as Timestamp?;
 
-      if (typeString == null || userRoleString == null) return null;
+      if (typeString == null || userRoleString == null) {
+        debugPrint('Missing required fields in notification: ${doc.id}');
+        return null;
+      }
 
       final type = _typeMapping[typeString] ?? NotificationType.general;
-      final userRole = userRoleString == 'buyer' ? UserRole.buyer : UserRole.seller;
+      UserRole userRole;
+      
+      // Improved user role parsing
+      switch (userRoleString.toLowerCase()) {
+        case 'buyer':
+          userRole = UserRole.buyer;
+          break;
+        case 'seller':
+          userRole = UserRole.seller;
+          break;
+        default:
+          debugPrint('Unknown user role: $userRoleString');
+          return null;
+      }
 
       return NotificationModel(
         id: doc.id,
-        title: data['title'] ?? '',
-        message: data['message'] ?? '',
+        title: data['title'] ?? 'No Title',
+        message: data['message'] ?? 'No Message',
         type: type,
         timestamp: timestamp?.toDate() ?? DateTime.now(),
         isRead: data['isRead'] ?? false,
@@ -159,17 +212,22 @@ class NotificationBackendService {
         userRole: userRole,
       );
     } catch (e) {
-      debugPrint('Error converting notification: $e');
+      debugPrint('Error converting notification ${doc.id}: $e');
       return null;
     }
   }
 
-  // Predefined notification templates
+  // Predefined notification templates with validation
   static Future<void> sendOrderConfirmation({
     required String userId,
     required String orderId,
     required double amount,
   }) async {
+    if (userId.isEmpty || orderId.isEmpty || amount < 0) {
+      debugPrint('Invalid parameters for order confirmation');
+      return;
+    }
+    
     await sendNotification(
       userId: userId,
       title: 'Order Confirmed',
@@ -185,6 +243,11 @@ class NotificationBackendService {
     required String orderId,
     required double amount,
   }) async {
+    if (userId.isEmpty || orderId.isEmpty || amount < 0) {
+      debugPrint('Invalid parameters for payment success');
+      return;
+    }
+    
     await sendNotification(
       userId: userId,
       title: 'Payment Successful',
@@ -199,6 +262,11 @@ class NotificationBackendService {
     required String userId,
     required int itemCount,
   }) async {
+    if (userId.isEmpty || itemCount <= 0) {
+      debugPrint('Invalid parameters for cart reminder');
+      return;
+    }
+    
     await sendNotification(
       userId: userId,
       title: 'Items in Cart',
@@ -213,6 +281,11 @@ class NotificationBackendService {
     required String orderId,
     required double amount,
   }) async {
+    if (sellerId.isEmpty || orderId.isEmpty || amount < 0) {
+      debugPrint('Invalid parameters for new order to seller');
+      return;
+    }
+    
     await sendNotification(
       userId: sellerId,
       title: 'New Order Received',
@@ -228,6 +301,11 @@ class NotificationBackendService {
     required String productName,
     required int remainingStock,
   }) async {
+    if (sellerId.isEmpty || productName.isEmpty || remainingStock < 0) {
+      debugPrint('Invalid parameters for low stock alert');
+      return;
+    }
+    
     await sendNotification(
       userId: sellerId,
       title: 'Low Stock Alert',
@@ -297,11 +375,10 @@ enum NotificationType {
   productApproved, // For sellers
 }
 
-
 class NotificationsScreen extends StatefulWidget {
   static const String routeName = '/notifications';
   final UserRole userRole;
-  final String userId; // Add userId parameter
+  final String userId;
   
   const NotificationsScreen({
     Key? key,
@@ -316,6 +393,8 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   late Stream<List<NotificationModel>> _notificationsStream;
   int _unreadCount = 0;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -324,25 +403,70 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _initializeNotificationsStream() {
-    _notificationsStream = NotificationBackendService.getUserNotificationsStream(
-      userId: widget.userId,
-      userRole: widget.userRole,
-    );
-
-    // Listen to stream to update unread count
-    _notificationsStream.listen((notifications) {
-      if (mounted) {
-        setState(() {
-          _unreadCount = notifications.where((n) => !n.isRead).length;
-        });
-      }
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      // Validate required parameters
+      if (widget.userId.isEmpty) {
+        setState(() {
+          _errorMessage = 'User ID is required';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      _notificationsStream = NotificationBackendService.getUserNotificationsStream(
+        userId: widget.userId,
+        userRole: widget.userRole,
+      );
+
+      // Listen to stream to update unread count and handle errors
+      _notificationsStream.listen(
+        (notifications) {
+          if (mounted) {
+            setState(() {
+              _unreadCount = notifications.where((n) => !n.isRead).length;
+              _isLoading = false;
+              _errorMessage = null;
+            });
+          }
+        },
+        onError: (error) {
+          debugPrint('Stream error: $error');
+          if (mounted) {
+            setState(() {
+              _errorMessage = 'Failed to load notifications';
+              _isLoading = false;
+            });
+          }
+        },
+      );
+    } catch (e) {
+      debugPrint('Error initializing stream: $e');
+      setState(() {
+        _errorMessage = 'Failed to initialize notifications';
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      // Update the bottomNavigationBar section to match home_page.dart
+bottomNavigationBar: widget.userRole != UserRole.seller
+    ? BottomNavBar(
+        selectedIndex: -1, // Keep this if you want to highlight no tab
+        navBarColor: AppTheme.tertiaryOrange,
+      )
+    : BottomNavBar2(
+        selectedIndex: -1, // Keep this if you want to highlight no tab
+        navBarColor: AppTheme.tertiaryOrange,
+      ),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
         elevation: 0,
@@ -393,71 +517,98 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: StreamBuilder<List<NotificationModel>>(
-        stream: _notificationsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: AppTheme.primaryOrange,
-              ),
-            );
-          }
+      body: _buildBody(),
+      
+    );
+  }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error loading notifications',
-                    style: AppTheme.titleStyle,
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => setState(() {
-                      _initializeNotificationsStream();
-                    }),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: AppTheme.primaryOrange,
+        ),
+      );
+    }
 
-          final notifications = snapshot.data ?? [];
-          
-          if (notifications.isEmpty) {
-            return _buildEmptyState();
-          }
+    if (_errorMessage != null) {
+      return _buildErrorState(_errorMessage!);
+    }
 
-          return RefreshIndicator(
-            color: AppTheme.primaryOrange,
-            onRefresh: () async {
-              setState(() {
-                _initializeNotificationsStream();
-              });
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: notifications.length,
-              itemBuilder: (context, index) {
-                final notification = notifications[index];
-                return _buildNotificationItem(notification);
-              },
+    return StreamBuilder<List<NotificationModel>>(
+      stream: _notificationsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: AppTheme.primaryOrange,
             ),
           );
-        },
-      ),
-      bottomNavigationBar: BottomNavBar(
-        selectedIndex: -1,
-        navBarColor: AppTheme.tertiaryOrange,
+        }
+
+        if (snapshot.hasError) {
+          return _buildErrorState('Error loading notifications: ${snapshot.error}');
+        }
+
+        final notifications = snapshot.data ?? [];
+        
+        if (notifications.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return RefreshIndicator(
+          color: AppTheme.primaryOrange,
+          onRefresh: () async {
+            _initializeNotificationsStream();
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: notifications.length,
+            itemBuilder: (context, index) {
+              final notification = notifications[index];
+              return _buildNotificationItem(notification);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Error Loading Notifications',
+              style: AppTheme.titleStyle,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: AppTheme.subtitleStyle.copyWith(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _initializeNotificationsStream(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryOrange,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -482,9 +633,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               leading: const Icon(Icons.refresh),
               title: const Text('Refresh'),
               onTap: () {
-                setState(() {
-                  _initializeNotificationsStream();
-                });
+                _initializeNotificationsStream();
                 Navigator.pop(context);
               },
             ),
@@ -797,105 +946,187 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _handleNotificationTap(NotificationModel notification) {
-    // Mark notification as read in Firebase
-    if (!notification.isRead) {
-      NotificationBackendService.markAsRead(notification.id);
+    try {
+      // Mark notification as read in Firebase
+      if (!notification.isRead) {
+        NotificationBackendService.markAsRead(notification.id);
+      }
+
+      // Handle navigation based on notification type
+      switch (notification.type) {
+        case NotificationType.orderConfirmed:
+        case NotificationType.orderPreparing:
+        case NotificationType.orderReady:
+        case NotificationType.orderDelivered:
+          if (notification.orderId != null) {
+            _trackOrder(notification.orderId!);
+          }
+          break;
+        case NotificationType.cartReminder:
+          _viewCart();
+          break;
+        case NotificationType.newOrder:
+          if (notification.orderId != null) {
+            _viewOrder(notification.orderId!);
+          }
+          break;
+        case NotificationType.productApproved:
+          _navigateToProductManagement();
+          break;
+        case NotificationType.lowStock:
+          _manageStock();
+          break;
+        case NotificationType.payment:
+          _viewReceipt(notification.orderId);
+          break;
+        default:
+          break;
+      }
+    } catch (e) {
+      debugPrint('Error handling notification tap: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open notification'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-
-    // Handle navigation based on notification type
-    switch (notification.type) {
-      case NotificationType.orderConfirmed:
-      case NotificationType.orderPreparing:
-      case NotificationType.orderReady:
-      case NotificationType.orderDelivered:
-        _trackOrder(notification.orderId!);
-        break;
-      case NotificationType.cartReminder:
-        _viewCart();
-        break;
-      case NotificationType.newOrder:
-        _viewOrder(notification.orderId!);
-        break;
-      case NotificationType.productApproved:
-        _navigateToProductManagement();
-        break;
-      case NotificationType.lowStock:
-        _manageStock();
-        break;
-      case NotificationType.payment:
-        _viewReceipt(notification.orderId);
-        break;
-      default:
-        break;
-    }
   }
 
-  void _navigateToProductManagement() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SellerProductManagementScreen(),
-      ),
-    );
-  }
-
-  void _trackOrder(String orderId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SellerOrderManagementScreen(),
-      ),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Tracking order #$orderId'),
-        backgroundColor: AppTheme.deepBlue,
-      ),
-    );
-  }
-
-  void _viewCart() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CartPage(),
-      ),
-    );
-  }
-
-  void _viewOrder(String orderId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SellerOrderManagementScreen(),
-      ),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Viewing order #$orderId'),
-        backgroundColor: AppTheme.deepBlue,
-      ),
-    );
-  }
-
-  void _manageStock() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SellerProductManagementScreen(),
-      ),
-    );
-  }
-
-  void _viewReceipt(String? orderId) {
-    if (orderId != null) {
+  // Complete navigation methods with proper error handling
+    void _navigateToProductManagement() {
+    try {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => PaymentProcessingScreen(
-            cartItems: [], 
-            totalAmount: 0.0,
+          builder: (context) => SellerProductManagementScreen(),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error navigating to product management: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to open product management'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _trackOrder(String orderId) {
+    try {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SellerOrderManagementScreen(),
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tracking order #$orderId'),
+          backgroundColor: AppTheme.deepBlue,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error tracking order: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to track order'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _viewCart() {
+    try {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CartPage(userRole: UserRole.buyer),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error navigating to cart: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to open cart'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _viewOrder(String orderId) {
+    try {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SellerOrderManagementScreen(),
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Viewing order #$orderId'),
+          backgroundColor: AppTheme.deepBlue,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error viewing order: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to view order'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _manageStock() {
+    try {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SellerProductManagementScreen(),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error navigating to stock management: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to open stock management'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _viewReceipt(String? orderId) {
+    try {
+      if (orderId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentProcessingScreen(
+              cartItems: [], 
+              totalAmount: 0.0,
+            ),
           ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No order ID associated with this notification'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error viewing receipt: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to open receipt'),
+          backgroundColor: Colors.red,
         ),
       );
     }

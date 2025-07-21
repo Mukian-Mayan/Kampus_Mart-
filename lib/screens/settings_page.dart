@@ -3,6 +3,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/help_&_support_page.dart';
 import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/screens/about_us.dart';
@@ -16,7 +17,8 @@ import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  final UserRole userRole;
+  const SettingsPage({super.key, required this.userRole});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -57,6 +59,16 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.tertiaryOrange,
+      // Update the bottomNavigationBar section to match home_page.dart
+bottomNavigationBar: widget.userRole == UserRole.seller
+    ? BottomNavBar2(
+        selectedIndex: selectedIndex,
+        navBarColor: AppTheme.deepBlue,
+      )
+    : BottomNavBar(
+        selectedIndex: selectedIndex,
+        navBarColor: AppTheme.deepBlue,
+      ),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
         centerTitle: true,
@@ -72,12 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       
       ),
-      bottomNavigationBar: (userRole == 'option2')
-      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.deepBlue)
-      : (userRole == 'option1')
-          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.deepBlue)
-          : null,
-
+     
       body: Stack(
         children: [
           SingleChildScrollView(

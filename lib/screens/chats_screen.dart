@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,7 +15,8 @@ import '../screens/message_screen.dart';
 
 class ChatsScreen extends StatefulWidget {
   static const String routeName = '/ChatsScreen';
-  const ChatsScreen({super.key});
+  final UserRole userRole;
+  const ChatsScreen({super.key, required this.userRole});
 
   @override
   State<ChatsScreen> createState() => _ChatsScreenState();
@@ -92,12 +94,16 @@ class _ChatsScreenState extends State<ChatsScreen> {
     }
 
     return Scaffold(
-      bottomNavigationBar: (userRole == 'option2')
-      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
-      : (userRole == 'option1')
-          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
-          : null,
-
+      // Update the bottomNavigationBar section to match home_page.dart
+bottomNavigationBar: widget.userRole == UserRole.seller
+    ? BottomNavBar2(
+        selectedIndex: selectedIndex,
+        navBarColor: AppTheme.tertiaryOrange,
+      )
+    : BottomNavBar(
+        selectedIndex: selectedIndex,
+        navBarColor: AppTheme.tertiaryOrange,
+      ),
       backgroundColor: AppTheme.tertiaryOrange,
       body: SafeArea(
         child: Column(
@@ -305,184 +311,187 @@ class _ChatsScreenState extends State<ChatsScreen> {
     );
   }
 
-  Widget _buildChatItem(ChatRoom chat) {
-    String otherParticipantName = _chatService.getOtherParticipantName(_currentUserId!) as String;
-    String otherParticipantId = _chatService.getOtherParticipantDetailsById(_currentUserId!, chat as String) as String;
-    int unreadCount = _chatService.getUnreadCount(_currentUserId!) as int;
-    bool hasUnread = unreadCount > 0;
-    bool isSeller = _chatService.isCurrentUserSeller(_currentUserId!) as bool;
+  // Update the _buildChatItem method in _ChatsScreenState
+Widget _buildChatItem(ChatRoom chat) {
+  // Get the other participant's details
+  bool isCurrentUserSeller = chat.sellerId == _currentUserId;
+  String otherParticipantName = isCurrentUserSeller ? chat.buyerName : chat.sellerName;
+  String otherParticipantId = isCurrentUserSeller ? chat.buyerId : chat.sellerId;
+  
+  // Get unread count for current user
+  int unreadCount = isCurrentUserSeller ? chat.unreadCountSeller : chat.unreadCountBuyer;
+  bool hasUnread = unreadCount > 0;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () async {
-          // Mark messages as read when opening chat
-          if (hasUnread) {
-            await _chatService.markMessagesAsRead(chat.id);
-          }
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: InkWell(
+      onTap: () async {
+        // Mark messages as read when opening chat
+        if (hasUnread) {
+          await _chatService.markMessagesAsRead(chat.id);
+        }
 
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MessageScreen(
-                chatRoomId: chat.id,
-                otherParticipantName: otherParticipantName,
-                otherParticipantId: otherParticipantId,
-                productName: chat.productName,
-                productImageUrl: chat.productImageUrl, 
-                userName: '',
-              ),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MessageScreen(
+              chatRoomId: chat.id,
+              otherParticipantName: otherParticipantName,
+              otherParticipantId: otherParticipantId,
+              productName: chat.productName,
+              productImageUrl: chat.productImageUrl,
+              userName: isCurrentUserSeller ? chat.sellerName : chat.buyerName,
             ),
-          );
-        },
-        onLongPress: () {
-          _showChatOptions(chat);
-        },
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppTheme.paleWhite.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(15),
-            border: hasUnread
-                ? Border.all(
-                    color: AppTheme.primaryOrange,
-                    width: 2,
-                  )
-                : null,
           ),
-          child: Row(
-            children: [
-              // Profile avatar with indicator
-              Stack(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.person,
-                      color: Colors.grey[600],
-                      size: 30,
+        );
+      },
+      onLongPress: () {
+        _showChatOptions(chat);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.paleWhite.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(15),
+          border: hasUnread
+              ? Border.all(
+                  color: AppTheme.primaryOrange,
+                  width: 2,
+                )
+              : null,
+        ),
+        child: Row(
+          children: [
+            // Profile avatar with indicator
+            Stack(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.person,
+                    color: Colors.grey[600],
+                    size: 30,
+                  ),
+                ),
+                if (hasUnread)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.lightGreen,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                  if (hasUnread)
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.lightGreen,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              // Message content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            otherParticipantName,
-                            style: TextStyle(
-                              fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
-                              fontSize: 16,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (isSeller)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.lightGreen,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Text(
-                              'Seller',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      chat.productName,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.primaryOrange,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      chat.lastMessage.isNotEmpty ? chat.lastMessage : 'No messages yet',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Time and notification
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              ],
+            ),
+            const SizedBox(width: 12),
+            // Message content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          otherParticipantName,
+                          style: TextStyle(
+                            fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
+                            fontSize: 16,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                      if (!isCurrentUserSeller)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.lightGreen,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'Seller',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
                   Text(
-                    _chatService.getFormattedTime(chat.lastMessageTime),
+                    chat.productName,
                     style: TextStyle(
                       fontSize: 12,
+                      color: AppTheme.primaryOrange,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    chat.lastMessage.isNotEmpty ? chat.lastMessage : 'No messages yet',
+                    style: TextStyle(
+                      fontSize: 14,
                       color: Colors.grey[600],
                       fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
-                  if (unreadCount > 0)
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.primaryOrange,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '$unreadCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 12),
+            // Time and notification
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  _chatService.getFormattedTime(chat.lastMessageTime),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (unreadCount > 0)
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.primaryOrange,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
-    );
-  }
-
+    ),
+  );
+}
   void _showChatOptions(ChatRoom chat) {
     showModalBottomSheet(
       context: context,

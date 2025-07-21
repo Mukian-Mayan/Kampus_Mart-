@@ -65,7 +65,8 @@ import 'product_details_page.dart';
 
 class CartPage extends StatefulWidget {
   static const String routeName = '/Cart';
-  const CartPage({super.key});
+   final UserRole userRole;
+  const CartPage({super.key, required this.userRole});
 
   @override
   State<CartPage> createState() => _CartPageState();
@@ -124,9 +125,21 @@ class _CartPageState extends State<CartPage> {
       return product.name.toLowerCase().contains(query) ||
           product.description.toLowerCase().contains(query);
     }).toList();
+    
 
     return Scaffold(
       backgroundColor: AppTheme.paleWhite,
+      // In cart_page.dart, update the build method's bottomNavigationBar section:
+      // Update the bottomNavigationBar section to match home_page.dart
+bottomNavigationBar: widget.userRole == UserRole.seller
+    ? BottomNavBar2(
+        selectedIndex: selectedIndex,
+        navBarColor: AppTheme.tertiaryOrange,
+      )
+    : BottomNavBar(
+        selectedIndex: selectedIndex,
+        navBarColor: AppTheme.tertiaryOrange,
+      ),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
         elevation: 0,
@@ -522,17 +535,7 @@ class _CartPageState extends State<CartPage> {
           ),
         ],
       ),
-      bottomNavigationBar: (userRole == 'option2')
-          ? BottomNavBar(
-              selectedIndex: selectedIndex,
-              navBarColor: AppTheme.tertiaryOrange,
-            )
-          : (userRole == 'option1')
-          ? BottomNavBar2(
-              selectedIndex: selectedIndex,
-              navBarColor: AppTheme.tertiaryOrange,
-            )
-          : null,
+      
     );
   }
 }

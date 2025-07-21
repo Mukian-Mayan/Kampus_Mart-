@@ -10,6 +10,7 @@ import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/screens/order_management.dart';
 import 'package:kampusmart2/screens/settings_page.dart';
 import 'package:kampusmart2/services/sales_service.dart';
+import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/profile_pic_widget.dart';
 import '../widgets/logo_widget.dart';
@@ -34,6 +35,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   String? error;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  int selectedIndex =4;
 
   @override
   void initState() {
@@ -168,6 +170,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.tertiaryOrange,
+      bottomNavigationBar: BottomNavBar2(
+    selectedIndex: selectedIndex,
+    navBarColor: AppTheme.tertiaryOrange,
+  ),
       appBar: AppBar(
         title: const LogoWidget(),
         backgroundColor: AppTheme.tertiaryOrange,
@@ -813,7 +819,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SettingsPage(),
+                      builder: (context) => const SettingsPage(userRole: UserRole.seller,),
                     ),
                   ),
                 ),

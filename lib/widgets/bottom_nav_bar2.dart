@@ -27,25 +27,25 @@ class _BottomNavBarState extends State<BottomNavBar2> {
       case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(userRole:UserRole.buyer,)),
+          MaterialPageRoute(builder: (context) => HomePage(userRole:UserRole.seller,)),
         );
         break;
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) =>CartPage()),
+          MaterialPageRoute(builder: (context) =>CartPage(userRole:UserRole.seller)),
         );
         break;
       case 2:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ChatsScreen()),
+          MaterialPageRoute(builder: (context) => ChatsScreen(userRole: UserRole.seller)),
         );
         break;
       case 3:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => SettingsPage()),
+          MaterialPageRoute(builder: (context) => SettingsPage(userRole: UserRole.seller)),
         );
         break;
       case 4:

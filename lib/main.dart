@@ -73,7 +73,6 @@ class MyApp extends StatelessWidget {
         '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(),
         '/InterestsScreen': (context) => const InterestsScreen(),
         '/Signup': (context) => const LoginOrRegisterPage(),
-        '/ChatsScreen': (context) => const ChatsScreen(),
         '/SellerDashboard': (context) => const SellerDashboardScreen(),
         '/AddProduct': (context) => const SellerAddProductScreen(),
         '/SalesTracking': (context) => const SellerSalesTrackingScreen(),
