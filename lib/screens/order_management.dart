@@ -2,6 +2,7 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import '../Theme/app_theme.dart';
@@ -133,7 +134,7 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NotificationsScreen(userRole: UserRole.seller),
+                builder: (context) => NotificationsScreen(userRole: UserRole.seller, userId: '',),
               ),
             ),
           ),

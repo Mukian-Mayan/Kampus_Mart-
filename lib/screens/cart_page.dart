@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
@@ -148,7 +149,7 @@ class _CartPageState extends State<CartPage> {
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    const NotificationsScreen(userRole: UserRole.buyer),
+                    const NotificationsScreen(userRole: UserRole.buyer, userId: '',),
               ),
             ),
           ),

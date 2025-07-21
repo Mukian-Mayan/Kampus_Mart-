@@ -1,10 +1,13 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, unused_element, no_leading_underscores_for_local_identifiers
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
+import 'package:kampusmart2/services/notificaations_service.dart' hide NotificationsScreen, UserRole;
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
+
 
 // Cart item model
 class CartItem {
@@ -61,7 +64,7 @@ class PaymentProcessingScreen extends StatelessWidget {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const NotificationsScreen(userRole: UserRole.buyer),
+                builder: (context) => const NotificationsScreen(userRole: UserRole.buyer, userId: '',),
               ),
             ),
           ),
@@ -336,22 +339,11 @@ class PaymentProcessingScreen extends StatelessWidget {
     );
 
     // Simulate payment processing
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.of(context).pop(); // Close dialog
-      _showPaymentSuccess(context);
-      NotificationsScreen.addBuyerNotification(
-        NotificationModel(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: 'Payment Successful',
-          message: 'Your payment of UGX ${totalAmount.toStringAsFixed(0)} was successful.',
-          type: NotificationType.payment,
-          timestamp: DateTime.now(),
-          userRole: UserRole.buyer,
-        ),
-      );
-    });
-  }
-
+    NotificationService.sendPaymentSuccess(
+  userId: 'current_user_id', // You need to pass the actual user ID here
+  orderId: 'order_id', // Pass the actual order ID if available
+  amount: totalAmount,
+);
   void _showPaymentSuccess(BuildContext context) {
     showDialog(
       context: context,
@@ -426,3 +418,4 @@ Navigator.push(
   ),
 );
 */
+}

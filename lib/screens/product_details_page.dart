@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
+import 'package:kampusmart2/services/notificaations_service.dart' show NotificationService;
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import '../models/product.dart';
@@ -231,7 +233,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    const NotificationsScreen(userRole: UserRole.buyer),
+                    const NotificationsScreen(userRole: UserRole.buyer, userId: '',),
               ),
             ),
           ),
@@ -463,18 +465,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 )) {
                                   ProductDetailsPage.cart.add(widget.product);
                                   // Send notification
-                                  NotificationsScreen.addBuyerNotification(
-                                    NotificationModel(
-                                      id: DateTime.now().millisecondsSinceEpoch
-                                          .toString(),
-                                      title: 'Item Added to Cart',
-                                      message:
-                                          'You added ${widget.product.name} to your cart.',
-                                      type: NotificationType.cartReminder,
-                                      timestamp: DateTime.now(),
-                                      userRole: UserRole.buyer,
-                                    ),
-                                  );
+                                  NotificationService.sendCartReminder(
+                                      userId: 'current_user_id', // Pass the actual user ID
+                                      itemCount: ProductDetailsPage.cart.length,
+          );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(

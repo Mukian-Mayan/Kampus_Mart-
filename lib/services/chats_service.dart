@@ -1,12 +1,13 @@
 // services/chats_service.dart
-// ignore_for_file: avoid_print, unnecessary_brace_in_string_interps
+// ignore_for_file: avoid_print, unnecessary_brace_in_string_interps, unused_field
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/chat_models.dart';
+import '../models/chat_models.dart' ;
 import '../services/supabase_storage_service.dart';
-import '../services/notificaations_service.dart'; // Fixed typo: notificaations -> notifications
+import '../services/notificaations_service.dart'  hide UserRole; 
+import '../models/user_role.dart';// Only hide what you need// Fixed typo: notificaations -> notifications
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -285,35 +286,42 @@ class ChatService {
   }
 
   // Send notification to participant
-  Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) async {
-    try {
-      // Get chat room info
-      DocumentSnapshot chatRoomDoc = await _firestore
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .get();
+  // Send notification to participant
+Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) async {
+  try {
+    // Get chat room info
+    DocumentSnapshot chatRoomDoc = await _firestore
+        .collection('chatRooms')
+        .doc(chatRoomId)
+        .get();
 
-      if (chatRoomDoc.exists) {
-        Map<String, dynamic> chatRoomData = chatRoomDoc.data() as Map<String, dynamic>;
-        
-        // Determine recipient
-        String recipientId = message.senderId == chatRoomData['sellerId'] 
-            ? chatRoomData['buyerId'] 
-            : chatRoomData['sellerId'];
+    if (chatRoomDoc.exists) {
+      Map<String, dynamic> chatRoomData = chatRoomDoc.data() as Map<String, dynamic>;
+      
+      // Determine recipient
+      String recipientId = message.senderId == chatRoomData['sellerId'] 
+          ? chatRoomData['buyerId'] 
+          : chatRoomData['sellerId'];
 
-        // Send notification
-        await NotificationService.sendChatNotification(
-          recipientId: recipientId,
-          senderName: message.senderName,
-          message: message.message,
-          chatRoomId: chatRoomId,
-          productName: chatRoomData['productName'],
-        );
-      }
-    } catch (e) {
-      print('Error sending notification: $e');
+      // Determine recipient role
+      UserRole recipientRole = recipientId == chatRoomData['sellerId']
+          ? UserRole.seller
+          : UserRole.buyer;
+
+      // Send notification
+      await NotificationService.sendChatNotification(
+        recipientId: recipientId,
+        senderName: message.senderName,
+        message: message.message,
+        chatRoomId: chatRoomId,
+        productName: chatRoomData['productName'],
+        recipientRole: recipientRole,
+      );
     }
+  } catch (e) {
+    print('Error sending notification: $e');
   }
+}
 
   // Update message delivery status
   Future<void> _updateMessageDeliveryStatus(String chatRoomId, String messageId, DeliveryStatus status) async {

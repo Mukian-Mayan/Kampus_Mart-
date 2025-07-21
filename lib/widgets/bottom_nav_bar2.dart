@@ -3,9 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/cart_page.dart';
 import 'package:kampusmart2/screens/chats_screen.dart';
 import 'package:kampusmart2/screens/home_page.dart';
+import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/screens/sellers_dashboard.dart';
 import 'package:kampusmart2/screens/settings_page.dart';
 import 'package:kampusmart2/screens/user_profile_page.dart';
@@ -25,7 +27,7 @@ class _BottomNavBarState extends State<BottomNavBar2> {
       case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => HomePage(userRole:UserRole.buyer,)),
         );
         break;
       case 1:

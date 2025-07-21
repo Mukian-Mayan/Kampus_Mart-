@@ -13,6 +13,7 @@ import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
+import 'package:kampusmart2/models/user_role.dart';
 
 class RegisterPage extends StatefulWidget {
   final UserRole userRole; // Add this parameter
@@ -87,19 +88,25 @@ class _RegisterPageState extends State<RegisterPage> {
       _showSuccessSnackBar("Account created successfully!");
 
       // Navigate based on user role with data ready
-      if (widget.userRole == UserRole.seller) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => SellerDashboardScreen()),
-          (route) => false,
-        );
-      } else {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-          (route) => false,
-        );
-      }
+      // In the signUpUser method, after successful registration:
+if (widget.userRole == UserRole.seller) {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (context) => HomePage(userRole: UserRole.seller),
+    ),
+    (route) => false,
+  );
+} else {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (context) => HomePage(userRole: UserRole.buyer),
+    ),
+    (route) => false,
+  );
+}
+      
     } on FirebaseAuthException catch (e) {
       if (Navigator.canPop(context)) {
         Navigator.of(context).pop();
@@ -195,23 +202,23 @@ class _RegisterPageState extends State<RegisterPage> {
       }
 
       // Navigate based on role
-      if (detectedRole == UserRole.seller) {
-        print('Navigating to seller dashboard'); // Debug log
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SellerDashboardScreen(),
-          ),
-          (route) => false, // Clear all previous routes
-        );
-      } else {
-        print('Navigating to home page'); // Debug log
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-          (route) => false, // Clear all previous routes
-        );
-      }
+      if (widget.userRole == UserRole.seller) {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (context) => HomePage(userRole: UserRole.seller),
+    ),
+    (route) => false,
+  );
+} else {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (context) => HomePage(userRole: UserRole.buyer),
+    ),
+    (route) => false,
+  );
+}
     } on FirebaseAuthException catch (e) {
       // Close the loading indicator FIRST
       if (Navigator.canPop(context)) {
@@ -722,4 +729,3 @@ class _RegisterPageState extends State<RegisterPage> {
 }
 
 // Add this enum if not already present
-enum UserRole { buyer, seller, none }

@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/home_page.dart';
+import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 
 class GuestWelcomeScreen extends StatefulWidget {
@@ -60,7 +62,7 @@ class _GuestWelcomeScreenState extends State<GuestWelcomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => HomePage(),
+          builder: (context) => HomePage(userRole: UserRole.buyer),
         ),
       );
     }

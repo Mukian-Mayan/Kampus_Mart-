@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart' show FirebaseFirestore;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/screens/seller_add_product.dart';
 import 'package:kampusmart2/services/product_service.dart';
@@ -235,8 +236,11 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
 
       await ProductService.deleteProduct(product.id);
       
-
-  
+      // Decrement the seller's product count after successful deletion
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await _decrementSellerProductCount(user.uid);
+      }
       
       if (mounted) Navigator.of(context).pop();
       
@@ -318,7 +322,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NotificationsScreen(userRole: UserRole.seller),
+                builder: (context) => NotificationsScreen(userRole: UserRole.seller, userId: '',),
               ),
             ),
           ),

@@ -1,6 +1,8 @@
-// ignore_for_file: unused_field, dead_code
+// ignore_for_file: unused_field, dead_code, override_on_non_overriding_member, unused_local_variable
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/models/user_role.dart';
+import 'package:kampusmart2/screens/register_page.dart' hide UserRole;
 import '../models/product.dart';
 import './notification_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -18,8 +20,10 @@ import '../widgets/my_button1.dart';
 import 'dart:ui';
 
 class HomePage extends StatefulWidget {
+  final UserRole userRole;
   static const String routeName = '/HomePage';
-  const HomePage({super.key});
+  const HomePage({super.key, required this. userRole});
+  
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -232,17 +236,16 @@ class _HomePageState extends State<HomePage> {
     final bool searchBarVisible = _showSearch;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      bottomNavigationBar: (userRole == 'option2')
-          ? BottomNavBar(
-              selectedIndex: selectedIndex,
-              navBarColor: AppTheme.tertiaryOrange,
-            )
-          : (userRole == 'option1')
+      bottomNavigationBar: widget.userRole == UserRole.seller
           ? BottomNavBar2(
               selectedIndex: selectedIndex,
               navBarColor: AppTheme.tertiaryOrange,
             )
-          : null,
+          : BottomNavBar(
+              selectedIndex: selectedIndex,
+              navBarColor: AppTheme.tertiaryOrange,
+            ),
+    
 
       body: CustomScrollView(
         slivers: [

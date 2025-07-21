@@ -4,6 +4,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/models/user_role.dart' show UserRole;
 import 'package:kampusmart2/screens/Product_management.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/screens/order_management.dart';
@@ -212,7 +213,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    NotificationsScreen(userRole: UserRole.seller),
+                    NotificationsScreen(userRole: UserRole.seller, userId: '',),
               ),
             ),
           ),

@@ -12,6 +12,7 @@ import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/my_square_tile.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
+import '../models/user_role.dart';
 
 class LoginPage extends StatefulWidget {
   final UserRole? userRole;
@@ -27,45 +28,36 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController emailController = TextEditingController();
   bool obscureText = true;
-
   void signInUser(BuildContext context) async {
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return const Center(child: CircularProgressIndicator());
-      },
+  // Show loading indicator
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => const Center(child: CircularProgressIndicator()),
+  );
+
+  try {
+    UserCredential userCredential = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: pwController.text,
+        );
+
+    // Get user role
+    UserRole userRole = await _getUserRole(userCredential.user!.uid);
+
+    // Close loading indicator
+    Navigator.of(context).pop();
+
+    // Navigate to home with the correct bottom nav bar
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomePage(userRole: userRole),
+      ),
+      (route) => false,
     );
-
-    try {
-      // Attempt sign-in
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: pwController.text,
-          );
-
-      // Get user role and navigate accordingly
-      UserRole? detectedRole = await _getUserRole(userCredential.user!.uid);
-
-      // Close the loading indicator
-      Navigator.of(context).pop();
-
-      // Navigate based on role
-      if (detectedRole == UserRole.seller) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SellerDashboardScreen(),
-          ),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
-      }
+  
     } on FirebaseAuthException catch (e) {
       // Close the loading indicator FIRST
       Navigator.of(context).pop();
@@ -117,56 +109,32 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<UserRole?> _getUserRole(String userId) async {
-    try {
-      // First check user_roles collection
-      DocumentSnapshot roleDoc = await FirebaseFirestore.instance
-          .collection('user_roles')
-          .doc(userId)
-          .get();
+  // Update the _getUserRole method in login_page.dart
+Future<UserRole> _getUserRole(String userId) async {
+  try {
+    // First check user_roles collection
+    DocumentSnapshot roleDoc = await FirebaseFirestore.instance
+        .collection('user_roles')
+        .doc(userId)
+        .get();
 
-      print('Checking user role for: $userId');
-
-      if (roleDoc.exists) {
-        String role =
-            (roleDoc.data() as Map<String, dynamic>?)?['role'] ?? 'customer';
-        print('Role from user_roles: $role');
-        return role == 'seller' ? UserRole.seller : UserRole.buyer;
-      }
-
-      print('No role document found, checking sellers collection');
-
-      // Fallback: check if user exists in sellers collection
-      DocumentSnapshot sellerDoc = await FirebaseFirestore.instance
-          .collection('sellers')
-          .doc(userId)
-          .get();
-
-      if (sellerDoc.exists) {
-        print('User found in sellers collection');
-        return UserRole.seller;
-      }
-
-      print('Checking users collection');
-
-      // Check users collection for regular users
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-
-      if (userDoc.exists) {
-        print('User found in users collection');
-        return UserRole.buyer;
-      }
-
-      print('User not found in any collection, defaulting to buyer');
-      return UserRole.buyer;
-    } catch (e) {
-      print('Error getting user role: $e');
-      return UserRole.buyer; // Default fallback
+    if (roleDoc.exists) {
+      String role = (roleDoc.data() as Map<String, dynamic>)['role'] ?? 'buyer';
+      return role == 'seller' ? UserRole.seller : UserRole.buyer;
     }
+
+    // Fallback: check if user exists in sellers collection
+    DocumentSnapshot sellerDoc = await FirebaseFirestore.instance
+        .collection('sellers')
+        .doc(userId)
+        .get();
+
+    return sellerDoc.exists ? UserRole.seller : UserRole.buyer;
+  } catch (e) {
+    debugPrint('Error getting user role: $e');
+    return UserRole.buyer; // Default fallback
   }
+}
 
   @override
   Widget build(BuildContext context) {

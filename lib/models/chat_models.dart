@@ -1,5 +1,6 @@
 // chat_models.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:kampusmart2/models/user_role.dart';
 
 // Enums
 enum MessageType {
@@ -24,11 +25,6 @@ enum ChatRoomStatus {
   deleted,
 }
 
-enum UserRole {
-  buyer,
-  seller,
-  admin,
-}
 
 // ChatMessage model specifically for MessageScreen compatibility
 class ChatMessage {
@@ -165,9 +161,6 @@ class UserProfile {
         case 'UserRole.seller':
         case 'seller':
           return UserRole.seller;
-        case 'UserRole.admin':
-        case 'admin':
-          return UserRole.admin;
         default:
           return UserRole.buyer;
       }
