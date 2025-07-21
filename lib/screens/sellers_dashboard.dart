@@ -52,7 +52,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       }
 
       // Get dashboard stats
-      final stats = await SellerService.getSellerDashboardStats(currentSeller.id);
+      final stats = await SellerService.getSellerDashboardStats(
+        currentSeller.id,
+      );
 
       setState(() {
         seller = currentSeller;
@@ -85,11 +87,15 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: AppTheme.textPrimary),
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: AppTheme.textPrimary,
+            ),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NotificationsScreen(userRole: UserRole.seller),
+                builder: (context) =>
+                    NotificationsScreen(userRole: UserRole.seller),
               ),
             ),
           ),
@@ -117,11 +123,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red.shade400,
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
             const SizedBox(height: 16),
             Text(
               error!,
@@ -132,10 +134,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _refreshData,
-              child: const Text('Retry'),
-            ),
+            ElevatedButton(onPressed: _refreshData, child: const Text('Retry')),
           ],
         ),
       );
@@ -145,10 +144,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       return const Center(
         child: Text(
           'No seller data available',
-          style: TextStyle(
-            fontSize: 18,
-            color: AppTheme.textSecondary,
-          ),
+          style: TextStyle(fontSize: 18, color: AppTheme.textSecondary),
         ),
       );
     }
@@ -161,15 +157,15 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           children: [
             // Seller Profile Section
             _buildProfileSection(),
-            
+
             // Quick Stats Cards
             _buildStatsSection(),
-            
+
             const SizedBox(height: 30),
-            
+
             // Main Action Section
             _buildActionSection(),
-            
+
             const SizedBox(height: 30),
           ],
         ),
@@ -215,9 +211,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: seller!.isVerified ? AppTheme.lightGreen : AppTheme.textSecondary,
+                    color: seller!.isVerified
+                        ? AppTheme.lightGreen
+                        : AppTheme.textSecondary,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -240,7 +241,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   Widget _buildStatsSection() {
     final stats = seller!.stats;
     final orderStats = dashboardStats?['orderStats'] ?? {};
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -315,7 +316,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           Text(
             seller!.businessName,
             style: const TextStyle(
@@ -328,13 +329,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           Text(
             seller!.businessDescription,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 30),
-          
+
           // Dashboard Actions
           _buildDashboardButton(
             context,
@@ -392,7 +390,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -421,10 +424,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
           ),
         ],
       ),
@@ -458,10 +458,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             const SizedBox(width: 12),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kampusmart2/screens/home_page.dart';
 import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
@@ -16,6 +17,7 @@ import 'screens/seller_sales_tracking.dart';
 import 'screens/login_or_register_page.dart';
 import 'package:kampusmart2/widgets/theme_provider.dart';
 import 'Theme/app_theme.dart';
+import 'screens/notification_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,10 +34,7 @@ Future<void> main() async {
   );
 
   runApp(
-    ChangeNotifierProvider.value(
-      value: themeProvider,
-      child: const MyApp(),
-    ),
+    ChangeNotifierProvider.value(value: themeProvider, child: const MyApp()),
   );
 }
 
@@ -49,19 +48,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kampus mart',
       theme: themeProvider.currentTheme,
-      initialRoute: '/',
       debugShowCheckedModeBanner: false,
+      home: HomePage(),
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/WelcomeScreen': (context) => const WelcomeScreen(),
-        '/OnboardingScreen': (context) => const OnboardingScreen(),
-        '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(),
-        '/InterestsScreen': (context) => const InterestsScreen(),
-        '/Signup': (context) => const LoginOrRegisterPage(),
-        '/ChatsScreen': (context) => const ChatsScreen(),
-        '/SellerDashboard': (context) => const SellerDashboardScreen(),
-        '/AddProduct': (context) => const SellerAddProductScreen(),
-        '/SalesTracking': (context) => const SellerSalesTrackingScreen(),
+        NotificationsScreen.routeName: (context) => NotificationsScreen(userRole: UserRole.buyer),
+        // Add other routes as needed
       },
     );
   }
