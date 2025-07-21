@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/help_&_support_page.dart';
+import 'package:kampusmart2/screens/login_or_register_page.dart';
 import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/mode_page.dart';
@@ -23,15 +24,24 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-   String? userRole;
-   int selectedIndex = 3;
-   void logoutUser() {
-    FirebaseAuth.instance.signOut();
+  String? userRole;
+  int selectedIndex = 3;
+
+  void logoutUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Clear session data
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginOrRegisterPage()),
+      (route) => false, // Remove all previous routes
+    );
   }
 
   @override
-
-  //link up setup 
+  //link up setup
   void _onTab(int index) {
     if (selectedIndex != index) {
       setState(() {
@@ -39,13 +49,14 @@ class _SettingsPageState extends State<SettingsPage> {
       });
     }
   }
+
   //initial link up
   void initState() {
     super.initState();
     _loadUserRole();
   }
 
-   Future<void> _loadUserRole() async {
+  Future<void> _loadUserRole() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       userRole = prefs.getString('user_role');
@@ -53,7 +64,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   //till here guys
-  
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.tertiaryOrange,
@@ -70,12 +81,17 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ),
-      
       ),
       bottomNavigationBar: (userRole == 'option2')
-      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.deepBlue)
-      : (userRole == 'option1')
-          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.deepBlue)
+          ? BottomNavBar(
+              selectedIndex: selectedIndex,
+              navBarColor: AppTheme.deepBlue,
+            )
+          : (userRole == 'option1')
+          ? BottomNavBar2(
+              selectedIndex: selectedIndex,
+              navBarColor: AppTheme.deepBlue,
+            )
           : null,
 
       body: Stack(
@@ -102,26 +118,29 @@ class _SettingsPageState extends State<SettingsPage> {
                             onTap: () {
                               // Navigate to profile edit page
                               Navigator.push(
-                                 context,
-                                 MaterialPageRoute(
-                                   builder: (context) => const UserProfilePage(),
-                                 ),
-                               );
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const UserProfilePage(),
+                                ),
+                              );
                             },
                             iconData: Icons.person,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'User name',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const PaymentTransactions(),
+                                  builder: (context) =>
+                                      const PaymentTransactions(),
                                 ),
                               );
                             },
@@ -129,16 +148,19 @@ class _SettingsPageState extends State<SettingsPage> {
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'Payment Method',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const ModeSettingsPage(),
+                                  builder: (context) =>
+                                      const ModeSettingsPage(),
                                 ),
                               );
                             },
@@ -146,10 +168,12 @@ class _SettingsPageState extends State<SettingsPage> {
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'App Settings',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
@@ -163,16 +187,19 @@ class _SettingsPageState extends State<SettingsPage> {
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'About Us',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const HelpAndSupportPage(),
+                                  builder: (context) =>
+                                      const HelpAndSupportPage(),
                                 ),
                               );
                             },
@@ -180,10 +207,12 @@ class _SettingsPageState extends State<SettingsPage> {
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'Help And Support',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               _showLogoutDialog(context);
@@ -192,8 +221,10 @@ class _SettingsPageState extends State<SettingsPage> {
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'Logout',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
                         ],
                       ),
@@ -222,9 +253,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           content: Text(
             'Are you sure you want to logout?',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-            ),
+            style: TextStyle(color: AppTheme.textPrimary),
           ),
           actions: [
             TextButton(
@@ -239,7 +268,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close dialog
-                _performLogout(context);
+                logoutUser();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.deepBlue,
@@ -253,7 +282,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _performLogout(BuildContext context) {
+  /*void _performLogout(BuildContext context) {
     // Add your logout logic here
     // For example:
     // - Clear user session/tokens
@@ -270,5 +299,5 @@ class _SettingsPageState extends State<SettingsPage> {
       '/login', // Replace with your login route
       (Route<dynamic> route) => false,
     );
-  }
+  }*/
 }

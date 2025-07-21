@@ -4,6 +4,7 @@ import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/help_&_support_page.dart';
 import 'package:kampusmart2/screens/history_page.dart';
+import 'package:kampusmart2/screens/login_or_register_page.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:kampusmart2/widgets/custom_detail_container.dart';
@@ -22,9 +23,20 @@ class UserProfilePage extends StatefulWidget {
 class _UserProfilePageState extends State<UserProfilePage> {
    String? userRole;
   int selectedIndex = 4;
-  void logoutUser() {
-    FirebaseAuth.instance.signOut();
+
+  void logoutUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Clear session data
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginOrRegisterPage()),
+      (route) => false, // Remove all previous routes
+    );
   }
+
 
   //link up setup 
   void _onTab(int index) {
