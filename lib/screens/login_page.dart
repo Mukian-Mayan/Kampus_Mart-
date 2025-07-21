@@ -13,13 +13,20 @@ import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/my_square_tile.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
 
-class LoginPage extends StatelessWidget {
-  static const String routeName = '/login';
-  final UserRole? userRole; // Optional - if null, detect from database
-  final TextEditingController pwController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-
+class LoginPage extends StatefulWidget {
+  final UserRole? userRole;
   LoginPage({super.key, this.userRole});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  // Optional - if null, detect from database
+  final TextEditingController pwController = TextEditingController();
+
+  final TextEditingController emailController = TextEditingController();
+  bool obscureText = true;
 
   void signInUser(BuildContext context) async {
     // Show loading indicator
@@ -33,14 +40,15 @@ class LoginPage extends StatelessWidget {
 
     try {
       // Attempt sign-in
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: pwController.text,
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: pwController.text,
+          );
 
       // Get user role and navigate accordingly
       UserRole? detectedRole = await _getUserRole(userCredential.user!.uid);
-      
+
       // Close the loading indicator
       Navigator.of(context).pop();
 
@@ -48,7 +56,9 @@ class LoginPage extends StatelessWidget {
       if (detectedRole == UserRole.seller) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const SellerDashboardScreen()),
+          MaterialPageRoute(
+            builder: (context) => const SellerDashboardScreen(),
+          ),
         );
       } else {
         Navigator.pushReplacement(
@@ -108,56 +118,55 @@ class LoginPage extends StatelessWidget {
   }
 
   Future<UserRole?> _getUserRole(String userId) async {
-  try {
-    // First check user_roles collection
-    DocumentSnapshot roleDoc = await FirebaseFirestore.instance
-        .collection('user_roles')
-        .doc(userId)
-        .get();
+    try {
+      // First check user_roles collection
+      DocumentSnapshot roleDoc = await FirebaseFirestore.instance
+          .collection('user_roles')
+          .doc(userId)
+          .get();
 
-    print('Checking user role for: $userId');
-    
-    if (roleDoc.exists) {
-      String role = (roleDoc.data() as Map<String, dynamic>?)?['role'] ?? 'customer';
-      print('Role from user_roles: $role');
-      return role == 'seller' ? UserRole.seller : UserRole.buyer;
-    }
+      print('Checking user role for: $userId');
 
-    print('No role document found, checking sellers collection');
-    
-    // Fallback: check if user exists in sellers collection
-    DocumentSnapshot sellerDoc = await FirebaseFirestore.instance
-        .collection('sellers')
-        .doc(userId)
-        .get();
+      if (roleDoc.exists) {
+        String role =
+            (roleDoc.data() as Map<String, dynamic>?)?['role'] ?? 'customer';
+        print('Role from user_roles: $role');
+        return role == 'seller' ? UserRole.seller : UserRole.buyer;
+      }
 
-    if (sellerDoc.exists) {
-      print('User found in sellers collection');
-      return UserRole.seller;
-    }
+      print('No role document found, checking sellers collection');
 
-    print('Checking users collection');
-    
-    // Check users collection for regular users
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .get();
+      // Fallback: check if user exists in sellers collection
+      DocumentSnapshot sellerDoc = await FirebaseFirestore.instance
+          .collection('sellers')
+          .doc(userId)
+          .get();
 
-    if (userDoc.exists) {
-      print('User found in users collection');
+      if (sellerDoc.exists) {
+        print('User found in sellers collection');
+        return UserRole.seller;
+      }
+
+      print('Checking users collection');
+
+      // Check users collection for regular users
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        print('User found in users collection');
+        return UserRole.buyer;
+      }
+
+      print('User not found in any collection, defaulting to buyer');
       return UserRole.buyer;
+    } catch (e) {
+      print('Error getting user role: $e');
+      return UserRole.buyer; // Default fallback
     }
-
-    print('User not found in any collection, defaulting to buyer');
-    return UserRole.buyer;
-  } catch (e) {
-    print('Error getting user role: $e');
-    return UserRole.buyer; // Default fallback
   }
-}
-
-    
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +179,9 @@ class LoginPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios),
         ),
         title: Text(
-          userRole == UserRole.seller ? 'Seller Login' : 'Customer Login',
+          widget.userRole == UserRole.seller
+              ? 'Seller Login'
+              : 'Customer Login',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
       ),
@@ -190,13 +201,10 @@ class LoginPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 19),
-                  Text(
-                    userRole == UserRole.seller 
-                        ? 'Welcome Back, Seller!'
-                        : 'Welcome Back, We missed you',
+                  Text('Welcome Back, We missed you',
                     style: TextStyle(
                       fontSize: 16,
-                      fontFamily: 'Birdy Script',
+                      fontFamily: 'KG Red Hands',
                       color: AppTheme.paleWhite,
                       shadows: [
                         Shadow(
@@ -221,7 +229,18 @@ class LoginPage extends StatelessWidget {
                     enabledColor: AppTheme.taleBlack,
                     controller: pwController,
                     hintText: 'Enter your password',
-                    obscureText: true,
+                    obscureText: obscureText,
+                    prefix: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          obscureText = !obscureText;
+                        });
+                      },
+                      icon: Icon(
+                        obscureText ? Icons.visibility : Icons.visibility_off,
+                        color: AppTheme.borderGrey,
+                      ),
+                    ),
                   ),
                   MyButton1(
                     height: MediaQuery.of(context).size.height * 0.07,
@@ -248,7 +267,7 @@ class LoginPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => RegisterPage(
-                              userRole: userRole ?? UserRole.buyer,
+                              userRole: widget.userRole ?? UserRole.buyer,
                             ),
                           ),
                         ),
@@ -263,7 +282,7 @@ class LoginPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   // Social login options
                   Padding(
                     padding: const EdgeInsets.all(20),

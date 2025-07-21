@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use, unused_element
+// ignore_for_file: unused_field, dead_code
 
 import 'package:flutter/material.dart';
 import '../models/product.dart';
@@ -12,6 +12,10 @@ import '../widgets/carousel_tile_card.dart';
 import '../widgets/product_card.dart';
 import './product_details_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/fancy_app_bar.dart';
+import './_fancy_app_bar_sliver_delegate.dart';
+import '../widgets/my_button1.dart';
+import 'dart:ui';
 
 class HomePage extends StatefulWidget {
   static const String routeName = '/HomePage';
@@ -22,6 +26,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _visibleCarouselGroups = 1;
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0.0;
   int selectedIndex = 0;
   bool _showSearch = false;
   final TextEditingController _searchController = TextEditingController();
@@ -182,15 +189,20 @@ class _HomePageState extends State<HomePage> {
     if (selectedIndex != index) {
       setState(() {
         selectedIndex = index;
+        _visibleCarouselGroups = 1; // Reset when switching tabs
       });
     }
   }
 
   @override
-  //initial link up
   void initState() {
     super.initState();
     _loadUserRole();
+    _scrollController.addListener(() {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+      });
+    });
   }
 
   Future<void> _loadUserRole() async {
@@ -200,17 +212,24 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  //till here guys
-
+  @override
   void dispose() {
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset visible groups if needed when widget updates
+    _visibleCarouselGroups = 1;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final carouselProducts = getCarouselProducts();
-
+    final bool searchBarVisible = _showSearch;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       bottomNavigationBar: (userRole == 'option2')
@@ -548,26 +567,26 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ];
 
-                if (index >= allProducts.length) return null;
-                final product = allProducts[index];
+                    if (index >= allProducts.length) return null;
+                    final product = allProducts[index];
 
-                return ProductCard(
-                  product: product,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ProductDetailsPage(product: product),
-                      ),
+                    return ProductCard(
+                      product: product,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ProductDetailsPage(product: product),
+                          ),
+                        );
+                      },
                     );
-                  },
-                );
-              }, childCount: 10),
-            ),
+                  }, childCount: 10),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+      );
   }
 }

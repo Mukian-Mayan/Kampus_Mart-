@@ -31,17 +31,18 @@ class MyButton1 extends StatelessWidget {
           height: height,
           width: width,
           decoration: BoxDecoration(
-            color: AppTheme.coffeeBrown,
-            borderRadius: BorderRadius.circular(10),
+            color: AppTheme.tertiaryOrange,
+            border: Border.all(color: Colors.brown, width: 2),
+            borderRadius: BorderRadius.circular(30),
           ),
           child: Center(
-            child: Text(text,
+            child: Text(
+              text,
               style: TextStyle(
-                color: AppTheme.paleWhite,
+                color: Colors.brown,
                 fontSize: fontSize,
                 fontFamily: 'TypoGraphica',
-                //fontFamily: 'League Spartan',
-                //fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

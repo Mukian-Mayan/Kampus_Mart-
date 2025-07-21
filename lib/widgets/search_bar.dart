@@ -4,12 +4,14 @@ class SearchBar extends StatelessWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;
   final TextEditingController? controller;
+  final Widget? suffixIcon;
 
   const SearchBar({
     Key? key,
     this.hintText = 'Search...',
     this.onChanged,
     this.controller,
+    this.suffixIcon,
   }) : super(key: key);
 
   @override
@@ -26,7 +28,7 @@ class SearchBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
         ),
-        suffixIcon: const Icon(Icons.search, color: Colors.black87),
+        suffixIcon: suffixIcon ?? const Icon(Icons.search, color: Colors.black87),
       ),
     );
   }

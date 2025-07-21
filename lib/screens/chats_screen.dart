@@ -28,7 +28,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
   bool _isLoading = true;
   String? _currentUserId;
   String? userRole;
-  int selectedIndex = 1;
+  int selectedIndex = 2;
 
   @override
   void initState() {

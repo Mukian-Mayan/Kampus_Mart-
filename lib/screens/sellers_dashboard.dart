@@ -211,7 +211,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NotificationsScreen(userRole: UserRole.seller),
+                builder: (context) =>
+                    NotificationsScreen(userRole: UserRole.seller),
               ),
             ),
           ),
@@ -296,11 +297,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red.shade400,
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
             const SizedBox(height: 16),
             Text(
               error!,
@@ -328,10 +325,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       return const Center(
         child: Text(
           'No seller data available',
-          style: TextStyle(
-            fontSize: 18,
-            color: AppTheme.textSecondary,
-          ),
+          style: TextStyle(fontSize: 18, color: AppTheme.textSecondary),
         ),
       );
     }
@@ -759,10 +753,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
           Text(
             seller!.businessDescription,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 30),
           Row(
