@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/payment_processing.dart';
+import 'package:kampusmart2/momo_service.dart'; // Add this import
 
 class PaymentTransactions extends StatefulWidget {
   const PaymentTransactions({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _PaymentScreenState createState() => _PaymentScreenState();
 }
 
@@ -17,11 +17,8 @@ class _PaymentScreenState extends State<PaymentTransactions> {
   @override
   void initState() {
     super.initState();
-    // Listen to changes in the phone number field
     phoneController.addListener(() {
-      setState(() {
-        // This will trigger a rebuild when the text changes
-      });
+      setState(() {});
     });
   }
 
@@ -34,7 +31,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5E6A8), // Light yellow background
+      backgroundColor: const Color(0xFFF5E6A8),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF5E6A8),
         elevation: 0,
@@ -83,16 +80,15 @@ class _PaymentScreenState extends State<PaymentTransactions> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFFF5E6A8), // Light yellow
-                    const Color(0xFFE8A317), // Orange
-                    const Color(0xFF2C3E50), // Dark blue
+                    const Color(0xFFF5E6A8),
+                    const Color(0xFFE8A317),
+                    const Color(0xFF2C3E50),
                   ],
                   stops: const [0.0, 0.3, 0.7],
                 ),
               ),
               child: Column(
                 children: [
-                  // Curved white section
                   Container(
                     height: 60,
                     decoration: const BoxDecoration(
@@ -106,7 +102,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
 
                   const SizedBox(height: 40),
 
-                  // Choose Payment Method title
                   const Text(
                     'Choose Payment Method',
                     style: TextStyle(
@@ -118,7 +113,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
 
                   const SizedBox(height: 30),
 
-                  // Payment method options
                   Expanded(
                     child: SingleChildScrollView(
                       child: Padding(
@@ -135,7 +129,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
                               selectedPaymentMethod == 'Mobile Money',
                             ),
 
-                            // Mobile Money providers section
                             if (selectedPaymentMethod == 'Mobile Money') ...[
                               const SizedBox(height: 20),
                               _buildMobileMoneyProviders(),
@@ -154,7 +147,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
                     ),
                   ),
 
-                  // Add button
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: SizedBox(
@@ -342,7 +334,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           hintText: selectedMobileMoneyProvider == 'MTN'
-              ? 'Enter MTN number (e.g., 0772123456)'
+              ? 'Enter phone number (e.g., 0772123456)'
               : selectedMobileMoneyProvider == 'Airtel'
               ? 'Enter Airtel number (e.g., 0702123456)'
               : 'Enter phone number',
@@ -364,24 +356,12 @@ class _PaymentScreenState extends State<PaymentTransactions> {
   }
 
   bool _isValidPhoneNumber(String phone) {
-    // Basic validation for Ugandan phone numbers
+    // Remove any non-numeric characters
     String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
 
-    if (selectedMobileMoneyProvider == 'MTN') {
-      // MTN numbers start with 077, 078, 039
-      return cleanPhone.length == 10 &&
-          (cleanPhone.startsWith('077') ||
-              cleanPhone.startsWith('078') ||
-              cleanPhone.startsWith('039'));
-    } else if (selectedMobileMoneyProvider == 'Airtel') {
-      // Airtel numbers start with 070, 075, 020
-      return cleanPhone.length == 10 &&
-          (cleanPhone.startsWith('070') ||
-              cleanPhone.startsWith('075') ||
-              cleanPhone.startsWith('020'));
-    }
-
-    return false;
+    // Accept any phone number that has at least 9 digits and at most 15 digits
+    // This covers most international phone number formats
+    return cleanPhone.length >= 9 && cleanPhone.length <= 15;
   }
 
   void _processPayment() {
@@ -398,68 +378,106 @@ class _PaymentScreenState extends State<PaymentTransactions> {
     }
   }
 
-  void _processMobileMoneyPayment() {
+  // Updated method to use actual MTN MoMo API
+  void _processMobileMoneyPayment() async {
+    if (selectedMobileMoneyProvider == 'MTN') {
+      await _processMTNPayment();
+    } else {
+      // Keep existing Airtel simulation for now
+      _processAirtelPayment();
+    }
+  }
+
+  Future<void> _processMTNPayment() async {
     // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (context) => const AlertDialog(
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            Text('Processing $selectedMobileMoneyProvider payment...'),
-            const SizedBox(height: 8),
-            const Text('Please check your phone for the payment prompt'),
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Processing MTN MoMo payment...'),
+            Text('Please wait...'),
           ],
         ),
       ),
     );
 
-    // Simulate payment processing
-    Future.delayed(const Duration(seconds: 3), () {
+    try {
+      // Format phone number for MTN API (should be in format 256XXXXXXXXX)
+      String formattedPhone = _formatPhoneForAPI(phoneController.text);
+
+      // Make actual MTN MoMo API call
+      final result = await MtnMomoService.requestToPay(
+        amount: '52000', // Convert to string as required by API
+        currency: 'UGX', // Changed from EUR to UGX for Uganda
+        phoneNumber: formattedPhone,
+        payerMessage: 'Payment for Kampus Mart order',
+        payeeNote: 'Order payment - Shs 52,000',
+      );
+
       Navigator.pop(context); // Close loading dialog
 
-      // Show payment instructions
-      _showPaymentInstructions();
-    });
+      if (result['success']) {
+        // Payment request sent successfully
+        _showMTNPaymentSuccess(result['referenceId']);
+      } else {
+        // Payment request failed
+        _showPaymentError(result['message']);
+      }
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog
+      _showPaymentError(
+        'Network error: Please check your connection and try again.',
+      );
+    }
   }
 
-  void _showPaymentInstructions() {
-    String instructions = '';
-    String shortCode = '';
+  String _formatPhoneForAPI(String phone) {
+    // Remove any non-numeric characters
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
 
-    if (selectedMobileMoneyProvider == 'MTN') {
-      shortCode = '*165*3#';
-      instructions =
+    // Convert from local format (0XXXXXXXXX) to international (256XXXXXXXXX)
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '256' + cleanPhone.substring(1);
+    }
+    // If it doesn't start with country code, assume it's a Ugandan number
+    else if (!cleanPhone.startsWith('256')) {
+      cleanPhone = '256' + cleanPhone;
+    }
+
+    return cleanPhone;
+  }
+
+  void _showMTNPaymentSuccess(String referenceId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Payment Request Sent'),
+        content: Text(
           'A payment request has been sent to ${phoneController.text}.\n\n'
+          'Reference ID: $referenceId\n\n'
           'Please:\n'
           '1. Check your phone for the payment prompt\n'
           '2. Enter your MTN Mobile Money PIN\n'
           '3. Confirm the payment of Shs 52,000\n\n'
-          'Or dial $shortCode and follow the prompts to complete payment.';
-    } else if (selectedMobileMoneyProvider == 'Airtel') {
-      shortCode = '*185*9#';
-      instructions =
-          'A payment request has been sent to ${phoneController.text}.\n\n'
-          'Please:\n'
-          '1. Check your phone for the payment prompt\n'
-          '2. Enter your Airtel Money PIN\n'
-          '3. Confirm the payment of Shs 52,000\n\n'
-          'Or dial $shortCode and follow the prompts to complete payment.';
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('$selectedMobileMoneyProvider Payment'),
-        content: Text(instructions),
+          'The payment will be verified automatically.',
+        ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // Navigate to payment processing screen
+              // You can add payment status checking here
+              _checkPaymentStatus(referenceId);
+            },
+            child: const Text('Check Payment Status'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -476,26 +494,170 @@ class _PaymentScreenState extends State<PaymentTransactions> {
       ),
     );
   }
-}
 
-// Main app to test the payment screen
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Payment Screen Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        // Using default font family (no custom fonts specified)
+  void _showPaymentError(String errorMessage) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Payment Failed'),
+        content: Text(errorMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Try Again'),
+          ),
+        ],
       ),
-      home: const PaymentTransactions(),
-      debugShowCheckedModeBanner: false,
+    );
+  }
+
+  Future<void> _checkPaymentStatus(String referenceId) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Checking payment status...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final result = await MtnMomoService.checkPaymentStatus(referenceId);
+      Navigator.pop(context); // Close loading dialog
+
+      if (result['success']) {
+        String status = result['status'];
+        _showPaymentStatusResult(status, referenceId);
+      } else {
+        _showPaymentError(
+          'Failed to check payment status: ${result['message']}',
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      _showPaymentError('Network error while checking status.');
+    }
+  }
+
+  void _showPaymentStatusResult(String status, String referenceId) {
+    String message;
+    bool isSuccess = false;
+
+    switch (status.toLowerCase()) {
+      case 'successful':
+        message = 'Payment completed successfully!';
+        isSuccess = true;
+        break;
+      case 'pending':
+        message =
+            'Payment is still pending. Please complete the payment on your phone.';
+        break;
+      case 'failed':
+        message = 'Payment failed. Please try again.';
+        break;
+      default:
+        message = 'Payment status: $status';
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isSuccess ? 'Payment Successful' : 'Payment Status'),
+        content: Text('$message\n\nReference ID: $referenceId'),
+        actions: [
+          if (!isSuccess)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _checkPaymentStatus(referenceId); // Check again
+              },
+              child: const Text('Check Again'),
+            ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (isSuccess) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PaymentProcessingScreen(
+                      cartItems: [],
+                      totalAmount: 52000.0,
+                    ),
+                  ),
+                );
+              }
+            },
+            child: Text(isSuccess ? 'Continue' : 'OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _processAirtelPayment() {
+    // Keep existing Airtel simulation
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Processing Airtel payment...'),
+            SizedBox(height: 8),
+            Text('Please check your phone for the payment prompt'),
+          ],
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pop(context);
+      _showAirtelPaymentInstructions();
+    });
+  }
+
+  void _showAirtelPaymentInstructions() {
+    String instructions =
+        'A payment request has been sent to ${phoneController.text}.\n\n'
+        'Please:\n'
+        '1. Check your phone for the payment prompt\n'
+        '2. Enter your Airtel Money PIN\n'
+        '3. Confirm the payment of Shs 52,000\n\n'
+        'Or dial *185*9# and follow the prompts to complete payment.';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Airtel Money Payment'),
+        content: Text(instructions),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PaymentProcessingScreen(
+                    cartItems: [],
+                    totalAmount: 52000.0,
+                  ),
+                ),
+              );
+            },
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
     );
   }
 }

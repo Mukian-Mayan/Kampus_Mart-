@@ -64,6 +64,14 @@ class SupabaseStorageService {
       throw Exception('Failed to upload image: $e');
     }
   }
+  // In your SupabaseStorageService class
+static Future<void> initializeBuckets() async {
+  await Future.wait([
+    createBucket(bucketName: chatImagesBucket, isPublic: false),
+    createBucket(bucketName: profileImagesBucket, isPublic: false),
+    createBucket(bucketName: productImagesBucket, isPublic: true),
+  ]);
+}
 
   /// Upload chat image
   static Future<String> uploadChatImage(XFile image, [String? s]) async {
@@ -73,6 +81,7 @@ class SupabaseStorageService {
       folderPath: 'chats',
     );
   }
+  
 
   /// Upload profile image
   static Future<String> uploadProfileImage(XFile image, String userId) async {
@@ -336,14 +345,7 @@ static Future<void> createBucket({
     }
   }
 
-  /// Initialize storage buckets
-  static Future<void> initializeBuckets() async {
-    await Future.wait([
-      createBucket(bucketName: chatImagesBucket),
-      createBucket(bucketName: profileImagesBucket),
-      createBucket(bucketName: productImagesBucket),
-    ]);
-  }
+  
 
   /// Get storage usage info
   static Future<Map<String, dynamic>> getStorageUsage() async {

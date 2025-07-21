@@ -697,7 +697,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                LoginPage(userRole: widget.userRole),
+                                LoginPage(),
                           ),
                         ),
                         child: const Text(
