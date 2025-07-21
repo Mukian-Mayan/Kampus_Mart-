@@ -53,7 +53,7 @@ class _ProductCardState extends State<ProductCard> {
                       child: IconButton(
                         icon: Icon(
                           isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite ? Colors.brown : Colors.grey,
+                          color: isFavorite ? Colors.orange[300] : Colors.grey,
                           size: 20,
                         ),
                         constraints: const BoxConstraints(
