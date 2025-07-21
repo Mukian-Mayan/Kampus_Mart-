@@ -1,23 +1,25 @@
+// lib/models/product.dart
 class Product {
-  final String? id;
+  final String id; // Add this field - it's required for CRUD operations
   final String name;
   final String description;
   final String ownerId;
   final String priceAndDiscount;
-  final double rating;
-  final String imageUrl;
-  final List<String>? imageUrls;
   final String originalPrice;
   final String condition;
   final String location;
+  final double rating;
+  final String imageUrl;
+  final List<String>? imageUrls;
   final bool bestOffer;
   final String? category;
   final double? price;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final int? stock;
 
   Product({
-    this.id,
+    required this.id, // Add this to constructor
     required this.name,
     required this.description,
     required this.ownerId,
@@ -33,34 +35,36 @@ class Product {
     this.price,
     this.createdAt,
     this.updatedAt,
+    this.stock,
   });
 
   // Factory constructor to create Product from Firestore document
   factory Product.fromFirestore(Map<String, dynamic> data, String documentId) {
     return Product(
-      id: documentId,
+      id: documentId, // Set the document ID as the product ID
       name: data['name'] ?? '',
       description: data['description'] ?? '',
-      ownerId: data['sellerId'] ?? data['ownerId'] ?? '',
+      ownerId: data['ownerId'] ?? data['sellerId'] ?? '', // Handle both field names
       priceAndDiscount: data['priceAndDiscount'] ?? '',
       originalPrice: data['originalPrice'] ?? '',
       condition: data['condition'] ?? '',
       location: data['location'] ?? '',
-      rating: (data['rating'] ?? 0.0).toDouble(),
+      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
       imageUrl: data['imageUrl'] ?? '',
       imageUrls: data['imageUrls'] != null 
-          ? List<String>.from(data['imageUrls']) 
+          ? List<String>.from(data['imageUrls'] as List) 
           : null,
       bestOffer: data['bestOffer'] ?? false,
       category: data['category'],
-      price: data['price']?.toDouble(),
+      price: (data['price'] as num?)?.toDouble(),
       createdAt: data['createdAt']?.toDate(),
       updatedAt: data['updatedAt']?.toDate(),
+      stock: data['stock'] as  int?,
     );
   }
 
   // Convert Product to Map for Firestore
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return {
       'name': name,
       'description': description,
@@ -75,22 +79,46 @@ class Product {
       'bestOffer': bestOffer,
       'category': category,
       'price': price,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+      'stock': stock,
     };
   }
 
-  // Create a copy of Product with updated fields
+  // Convert Product to Firestore document format
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'description': description,
+      'ownerId': ownerId,
+      'sellerId': ownerId, // Add sellerId for compatibility
+      'priceAndDiscount': priceAndDiscount,
+      'originalPrice': originalPrice,
+      'condition': condition,
+      'location': location,
+      'rating': rating,
+      'imageUrl': imageUrl,
+      'imageUrls': imageUrls,
+      'bestOffer': bestOffer,
+      'category': category,
+      'price': price,
+      // Note: createdAt and updatedAt will be set by Firestore timestamps
+    };
+  }
+
+  // Copy method for creating updated instances
   Product copyWith({
     String? id,
     String? name,
     String? description,
     String? ownerId,
     String? priceAndDiscount,
-    double? rating,
-    String? imageUrl,
-    List<String>? imageUrls,
     String? originalPrice,
     String? condition,
     String? location,
+    double? rating,
+    String? imageUrl,
+    List<String>? imageUrls,
     bool? bestOffer,
     String? category,
     double? price,
@@ -116,4 +144,4 @@ class Product {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
-} 
+}

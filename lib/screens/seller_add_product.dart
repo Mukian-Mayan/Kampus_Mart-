@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_final_fields, deprecated_member_use, unnecessary_nullable_for_final_variable_declarations, unused_local_variable
+// ignore_for_file: prefer_final_fields, deprecated_member_use, unnecessary_nullable_for_final_variable_declarations, unused_local_variable, avoid_print, unused_element
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -395,26 +395,60 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       // Don't rethrow - product creation should still succeed
     }
   }
+Future<void> _decrementSellerProductCount(String sellerId) async {
+  try {
+    final sellerRef = _firestore.collection('sellers').doc(sellerId);
+    
+    await _firestore.runTransaction((transaction) async {
+      final sellerDoc = await transaction.get(sellerRef);
+      
+      if (sellerDoc.exists) {
+        final currentStats = sellerDoc.data()?['stats'] as Map<String, dynamic>? ?? {};
+        final currentCount = (currentStats['totalProducts'] as num?)?.toInt() ?? 0;
+        
+        // Ensure count doesn't go below 0
+        final newCount = currentCount > 0 ? currentCount - 1 : 0;
+        
+        final updatedStats = {
+          ...currentStats,
+          'totalProducts': newCount,
+        };
+        
+        transaction.update(sellerRef, {
+          'stats': updatedStats,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    });
+    
+    print('Seller product count updated (decremented)');
+  } catch (e) {
+    print('Error decrementing seller product count: $e');
+    // Don't rethrow - product deletion should still succeed
+  }
+}
 
   // Enhanced validation for current step
-  bool _validateCurrentStep() {
-    switch (_currentStep) {
-      case 0:
-        return _nameController.text.isNotEmpty &&
-               _selectedCategory != null &&
-               _priceController.text.isNotEmpty &&
-               _locationController.text.isNotEmpty &&
-               _descriptionController.text.isNotEmpty &&
-               _descriptionController.text.length >= 20 &&
-               double.tryParse(_priceController.text) != null;
-      case 1:
-        return true; // Images are optional
-      case 2:
-        return true;
-      default:
-        return false;
-    }
+  
+ // Enhanced validation for current step
+bool _validateCurrentStep() {
+  switch (_currentStep) {
+    case 0:
+      return _nameController.text.isNotEmpty &&
+             _selectedCategory != null &&
+             _originalPriceController.text.isNotEmpty && // Changed from _priceController
+             _locationController.text.isNotEmpty &&
+             _descriptionController.text.isNotEmpty &&
+             _descriptionController.text.length >= 20 &&
+             double.tryParse(_originalPriceController.text) != null; // Changed from _priceController
+    case 1:
+      return true; // Images are optional
+    case 2:
+      return true;
+    default:
+      return false;
   }
+}
 
   @override
   Widget build(BuildContext context) {

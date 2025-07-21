@@ -14,6 +14,7 @@ import 'package:kampusmart2/widgets/my_square_tile.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
 
 class LoginPage extends StatelessWidget {
+  static const String routeName = '/login';
   final UserRole? userRole; // Optional - if null, detect from database
   final TextEditingController pwController = TextEditingController();
   final TextEditingController emailController = TextEditingController();

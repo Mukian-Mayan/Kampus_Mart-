@@ -41,7 +41,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'New',
             location: 'Kikoni',
             rating: 4.5,
-            imageUrl: 'lib/products/study_table.jpeg',
+            imageUrl: 'lib/products/study_table.jpeg', id: '',
           ),
           Product(
             name: 'Laptop Setup',
@@ -52,7 +52,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'Used',
             location: 'Campus',
             rating: 4.0,
-            imageUrl: 'lib/products/macbook2.jpg',
+            imageUrl: 'lib/products/macbook2.jpg', id: '',
           ),
           Product(
             name: 'Reading Corner',
@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'New',
             location: 'Library',
             rating: 4.2,
-            imageUrl: 'lib/products/studytable.jpg',
+            imageUrl: 'lib/products/studytable.jpg', id: '',
           ),
         ],
         [
@@ -76,7 +76,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'Used',
             location: 'Africa hall',
             rating: 4.0,
-            imageUrl: 'lib/products/cup_board.jpg',
+            imageUrl: 'lib/products/cup_board.jpg', id: '',
           ),
           Product(
             name: 'Dining Set',
@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'New',
             location: 'Kikoni',
             rating: 4.5,
-            imageUrl: 'lib/products/dinning_set.jpeg',
+            imageUrl: 'lib/products/dinning_set.jpeg', id: '',
           ),
           Product(
             name: 'CS Textbook',
@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'New',
             location: 'Kasubi',
             rating: 4.2,
-            imageUrl: 'lib/products/cs_book.jpeg',
+            imageUrl: 'lib/products/cs_book.jpeg', id: '',
           ),
         ],
       ];
@@ -114,7 +114,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'New',
             location: 'Wandegeya',
             rating: 4.8,
-            imageUrl: 'lib/images/Cooling_fan.jpg',
+            imageUrl: 'lib/images/Cooling_fan.jpg', id: '',
           ),
           Product(
             name: 'Entertainment Setup',
@@ -125,7 +125,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'New',
             location: 'Campus',
             rating: 4.7,
-            imageUrl: 'lib/products/tv_screen.jpg',
+            imageUrl: 'lib/products/tv_screen.jpg', id: '',
           ),
           Product(
             name: 'Student Backpack',
@@ -136,7 +136,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'New',
             location: 'Kikoni',
             rating: 4.5,
-            imageUrl: 'lib/products/back bag.jpeg',
+            imageUrl: 'lib/products/back bag.jpeg', id: '',
           ),
         ],
         [
@@ -149,7 +149,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'Used',
             location: 'Wandegeya',
             rating: 4.8,
-            imageUrl: 'lib/products/macbook.jpg',
+            imageUrl: 'lib/products/macbook.jpg', id: '',
           ),
           Product(
             name: 'Couch',
@@ -160,7 +160,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'Used',
             location: 'Kikoni',
             rating: 4.3,
-            imageUrl: 'lib/products/couch.jpg',
+            imageUrl: 'lib/products/couch.jpg', id: '',
           ),
           Product(
             name: 'Reading Lamp',
@@ -171,7 +171,7 @@ class _HomePageState extends State<HomePage> {
             condition: 'New',
             location: 'Hostel',
             rating: 4.6,
-            imageUrl: 'lib/products/reading_lamp.jpg',
+            imageUrl: 'lib/products/reading_lamp.jpg', id: '',
           ),
         ],
       ];
@@ -445,7 +445,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'New',
                     location: 'Kikoni',
                     rating: 4.5,
-                    imageUrl: 'lib/products/dinning_set.jpeg',
+                    imageUrl: 'lib/products/dinning_set.jpeg', id: '',
                   ),
                   Product(
                     name: 'Cup Board',
@@ -456,7 +456,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'Used',
                     location: 'Africa hall',
                     rating: 4.0,
-                    imageUrl: 'lib/products/cup_board.jpg',
+                    imageUrl: 'lib/products/cup_board.jpg', id: '',
                   ),
                   Product(
                     name: 'Computer Science Textbook',
@@ -467,7 +467,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'New',
                     location: 'Kasubi',
                     rating: 4.2,
-                    imageUrl: 'lib/products/cs_book.jpeg',
+                    imageUrl: 'lib/products/cs_book.jpeg', id: '',
                   ),
                   Product(
                     name: 'Study Table',
@@ -478,7 +478,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'Used',
                     location: 'Kikoni',
                     rating: 4.1,
-                    imageUrl: 'lib/products/study_table.jpeg',
+                    imageUrl: 'lib/products/study_table.jpeg', id: '',
                   ),
                   Product(
                     name: 'Back Bag',
@@ -489,7 +489,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'New',
                     location: 'Nkrumah',
                     rating: 4.4,
-                    imageUrl: 'lib/products/back bag.jpeg',
+                    imageUrl: 'lib/products/back bag.jpeg', id: '',
                   ),
                   Product(
                     name: 'TV Screen',
@@ -500,7 +500,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'New',
                     location: 'Campus',
                     rating: 4.7,
-                    imageUrl: 'lib/products/tv_screen.jpg',
+                    imageUrl: 'lib/products/tv_screen.jpg', id: '',
                   ),
                   Product(
                     name: 'Water Bottle',
@@ -511,7 +511,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'Used',
                     location: 'Kikoni',
                     rating: 4.3,
-                    imageUrl: 'lib/products/waterbottle.jpg',
+                    imageUrl: 'lib/products/waterbottle.jpg', id: '',
                   ),
                   Product(
                     name: 'Smart Watch',
@@ -522,7 +522,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'New',
                     location: 'Hostel',
                     rating: 4.6,
-                    imageUrl: 'lib/products/wraist_watch.jpg',
+                    imageUrl: 'lib/products/wraist_watch.jpg', id: '',
                   ),
                   Product(
                     name: 'Fashion shoes',
@@ -533,7 +533,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'Used',
                     location: 'Wandegeya',
                     rating: 4.8,
-                    imageUrl: 'lib/products/high hills.jpg',
+                    imageUrl: 'lib/products/high hills.jpg', id: '',
                   ),
                   Product(
                     name: 'Study Table 2',
@@ -544,7 +544,7 @@ class _HomePageState extends State<HomePage> {
                     condition: 'New',
                     location: 'Hostel',
                     rating: 4.3,
-                    imageUrl: 'lib/products/studytable.jpg',
+                    imageUrl: 'lib/products/studytable.jpg', id: '',
                   ),
                 ];
 

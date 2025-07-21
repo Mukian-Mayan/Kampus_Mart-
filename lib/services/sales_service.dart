@@ -291,6 +291,7 @@ class SaleService {
   static Future<void> signOutSeller() async {
     try {
       await _auth.signOut();
+      
     } catch (e) {
       print('Error signing out seller: $e');
       rethrow;

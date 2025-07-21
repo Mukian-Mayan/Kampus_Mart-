@@ -223,16 +223,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             icon: const Icon(Icons.more_vert, color: AppTheme.textPrimary),
             onSelected: _handleMenuAction,
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'profile',
-                child: Row(
-                  children: [
-                    Icon(Icons.person, color: AppTheme.textPrimary),
-                    SizedBox(width: 8),
-                    Text('Edit Profile'),
-                  ],
-                ),
-              ),
+              
               const PopupMenuItem(
                 value: 'settings',
                 child: Row(
@@ -240,7 +231,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     Icon(Icons.settings, color: AppTheme.textPrimary),
                     SizedBox(width: 8),
                     Text('Settings'),
-                    
+                
                   ],
                 ),
               ),
@@ -902,6 +893,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       case 'settings':
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Settings coming soon'),
+          
           ),
         );
         break;
