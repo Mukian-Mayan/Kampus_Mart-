@@ -381,30 +381,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      // Condition and Location
-                      Row(
-                        children: [
-                          Text(
-                            'Condition: ',
-                            style: AppTheme.subtitleStyle.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            widget.product.condition,
-                            style: AppTheme.subtitleStyle,
-                          ),
-                          const SizedBox(width: 16),
-                          Text(
-                            'Location: ',
-                            style: AppTheme.subtitleStyle.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            widget.product.location,
-                            style: AppTheme.subtitleStyle,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 14),
                       // Seller Info
                       Row(
                         children: [
