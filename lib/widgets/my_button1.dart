@@ -23,27 +23,27 @@ class MyButton1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.all(pad),
-        child: Container(
-          height: height,
-          width: width,
-          decoration: BoxDecoration(
-            color: AppTheme.tertiaryOrange,
-            border: Border.all(color: Colors.brown, width: 2),
-            borderRadius: BorderRadius.circular(30),
+    return Padding(
+      padding: EdgeInsets.all(pad),
+      child: SizedBox(
+        height: height,
+        width: width,
+        child: ElevatedButton(
+          onPressed: onTap,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.tertiaryOrange,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+              side: const BorderSide(color: Colors.brown, width: 2),
+            ),
           ),
-          child: Center(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: Colors.brown,
-                fontSize: fontSize,
-                fontFamily: 'TypoGraphica',
-                fontWeight: FontWeight.bold,
-              ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Colors.brown,
+              fontSize: fontSize,
+              fontFamily: 'TypoGraphica',
+              //fontWeight: FontWeight.bold,
             ),
           ),
         ),
