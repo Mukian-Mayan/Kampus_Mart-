@@ -1,8 +1,11 @@
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+// ignore_for_file: avoid_print, use_key_in_widget_constructors, deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/home_page.dart';
+import 'package:kampusmart2/screens/sellers_dashboard.dart';
 import 'package:kampusmart2/screens/register_page.dart';
 import 'package:kampusmart2/services/auth_services.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
@@ -10,16 +13,20 @@ import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/my_square_tile.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
+class LoginPage extends StatefulWidget {
+  final UserRole? userRole;
+  LoginPage({super.key, this.userRole});
 
-class LoginPage extends StatelessWidget {
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  // Optional - if null, detect from database
   final TextEditingController pwController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController secondNameController = TextEditingController();
-  final obscureText = true;
 
-  LoginPage({super.key});
+  final TextEditingController emailController = TextEditingController();
+  bool obscureText = true;
 
   void signInUser(BuildContext context) async {
     // Show loading indicator
@@ -33,25 +40,37 @@ class LoginPage extends StatelessWidget {
 
     try {
       // Attempt sign-in
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: pwController.text,
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: pwController.text,
+          );
+
+      // Get user role and navigate accordingly
+      UserRole? detectedRole = await _getUserRole(userCredential.user!.uid);
 
       // Close the loading indicator
       Navigator.of(context).pop();
 
-      // Navigate to home page
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage()),
-      );
+      // Navigate based on role
+      if (detectedRole == UserRole.seller) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SellerDashboardScreen(),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      }
     } on FirebaseAuthException catch (e) {
       // Close the loading indicator FIRST
       Navigator.of(context).pop();
 
       String errorMessage;
-
       switch (e.code) {
         case 'user-not-found':
           errorMessage = 'No user found with this email.';
@@ -78,7 +97,7 @@ class LoginPage extends StatelessWidget {
           errorMessage = 'An unknown error occurred. Please try again.';
       }
 
-      // Show snackbar (correctly)
+      // Show snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -86,6 +105,66 @@ class LoginPage extends StatelessWidget {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    } catch (e) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to determine user role: ${e.toString()}'),
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<UserRole?> _getUserRole(String userId) async {
+    try {
+      // First check user_roles collection
+      DocumentSnapshot roleDoc = await FirebaseFirestore.instance
+          .collection('user_roles')
+          .doc(userId)
+          .get();
+
+      print('Checking user role for: $userId');
+
+      if (roleDoc.exists) {
+        String role =
+            (roleDoc.data() as Map<String, dynamic>?)?['role'] ?? 'customer';
+        print('Role from user_roles: $role');
+        return role == 'seller' ? UserRole.seller : UserRole.buyer;
+      }
+
+      print('No role document found, checking sellers collection');
+
+      // Fallback: check if user exists in sellers collection
+      DocumentSnapshot sellerDoc = await FirebaseFirestore.instance
+          .collection('sellers')
+          .doc(userId)
+          .get();
+
+      if (sellerDoc.exists) {
+        print('User found in sellers collection');
+        return UserRole.seller;
+      }
+
+      print('Checking users collection');
+
+      // Check users collection for regular users
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        print('User found in users collection');
+        return UserRole.buyer;
+      }
+
+      print('User not found in any collection, defaulting to buyer');
+      return UserRole.buyer;
+    } catch (e) {
+      print('Error getting user role: $e');
+      return UserRole.buyer; // Default fallback
     }
   }
 
@@ -96,51 +175,52 @@ class LoginPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_ios),
+        ),
+        title: Text(
+          widget.userRole == UserRole.seller
+              ? 'Seller Login'
+              : 'Customer Login',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
       ),
       body: Stack(
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: Text(
+            child: const Text(
               'Kampus Mart',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 58, fontFamily: 'Keania One'),
             ),
           ),
-
           Layout1(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 19),
-                  Text(
-                    'Welcome Back, We missed you',
+                  Text('Welcome Back, We missed you',
                     style: TextStyle(
                       fontSize: 16,
-                      fontFamily: 'Birdy Script',
+                      fontFamily: 'KG Red Hands',
                       color: AppTheme.paleWhite,
                       shadows: [
                         Shadow(
-                          offset: Offset(2, 2),
+                          offset: const Offset(2, 2),
                           blurRadius: 4.0,
                           color: AppTheme.taleBlack.withOpacity(0.7),
                         ),
                       ],
                     ),
                   ),
-
                   MyTextField(
                     maxLength: null,
                     focusedColor: AppTheme.deepOrange,
                     enabledColor: AppTheme.taleBlack,
                     controller: emailController,
-                    hintText: 'enter your email',
+                    hintText: 'Enter your email',
                     obscureText: false,
                   ),
                   MyTextField(
@@ -148,10 +228,20 @@ class LoginPage extends StatelessWidget {
                     focusedColor: AppTheme.deepOrange,
                     enabledColor: AppTheme.taleBlack,
                     controller: pwController,
-                    hintText: 'enter your password',
-                    obscureText: true,
+                    hintText: 'Enter your password',
+                    obscureText: obscureText,
+                    prefix: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          obscureText = !obscureText;
+                        });
+                      },
+                      icon: Icon(
+                        obscureText ? Icons.visibility : Icons.visibility_off,
+                        color: AppTheme.borderGrey,
+                      ),
+                    ),
                   ),
-
                   MyButton1(
                     height: MediaQuery.of(context).size.height * 0.07,
                     width: MediaQuery.of(context).size.width * 0.7,
@@ -160,13 +250,12 @@ class LoginPage extends StatelessWidget {
                     onTap: () => signInUser(context),
                     pad: 25,
                   ),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        'not a member, ',
+                      const Text(
+                        'Not a member? ',
                         style: TextStyle(
                           color: AppTheme.paleWhite,
                           fontWeight: FontWeight.w800,
@@ -177,11 +266,13 @@ class LoginPage extends StatelessWidget {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => RegisterPage(),
+                            builder: (context) => RegisterPage(
+                              userRole: widget.userRole ?? UserRole.buyer,
+                            ),
                           ),
                         ),
-                        child: Text(
-                          'Register Now ',
+                        child: const Text(
+                          'Register Now',
                           style: TextStyle(
                             color: AppTheme.lightGreen,
                             fontWeight: FontWeight.w800,
@@ -192,7 +283,7 @@ class LoginPage extends StatelessWidget {
                     ],
                   ),
 
-                  //const SizedBox(height: 10,),
+                  // Social login options
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Row(
@@ -203,8 +294,7 @@ class LoginPage extends StatelessWidget {
                             color: AppTheme.deepOrange,
                           ),
                         ),
-
-                        Text(
+                        const Text(
                           '\t or continue with \t',
                           style: TextStyle(
                             color: AppTheme.paleWhite,
@@ -212,7 +302,6 @@ class LoginPage extends StatelessWidget {
                             fontSize: 15,
                           ),
                         ),
-
                         Expanded(
                           child: Divider(
                             thickness: 2,
@@ -222,18 +311,16 @@ class LoginPage extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       MySquareTile(
-                        onTap: () =>
-                            AuthService().signInWithGoogle(), // NOT YET FILLED
+                        onTap: () => AuthService().signInWithGoogle(),
                         imagePath: 'lib/images/Icon-google.png',
                       ),
                       SizedBox(width: MediaQuery.of(context).size.width * 0.1),
                       MySquareTile(
-                        onTap: () {}, // NOT YET FILLED
+                        onTap: () {}, // Apple sign-in implementation
                         imagePath: 'lib/images/apple_icon.png',
                       ),
                     ],

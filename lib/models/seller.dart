@@ -1,14 +1,98 @@
-// models/seller_model.dart
+// seller.dart - Fixed Seller model with proper Firestore Timestamp handling
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class SellerStats {
+  final int totalProducts;
+  final int totalOrders;
+  final int completedOrders;
+  final int pendingOrders;
+  final int cancelledOrders;
+  final double totalRevenue;
+  final double monthlyRevenue;
+  final int totalReviews;
+  final double rating;
+
+  SellerStats({
+    this.totalProducts = 0,
+    this.totalOrders = 0,
+    this.completedOrders = 0,
+    this.pendingOrders = 0,
+    this.cancelledOrders = 0,
+    this.totalRevenue = 0.0,
+    this.monthlyRevenue = 0.0,
+    this.totalReviews = 0,
+    this.rating = 0.0,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'totalProducts': totalProducts,
+      'totalOrders': totalOrders,
+      'completedOrders': completedOrders,
+      'pendingOrders': pendingOrders,
+      'cancelledOrders': cancelledOrders,
+      'totalRevenue': totalRevenue,
+      'monthlyRevenue': monthlyRevenue,
+      'totalReviews': totalReviews,
+      'rating': rating,
+    };
+  }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory SellerStats.fromMap(Map<String, dynamic> map) {
+    return SellerStats(
+      totalProducts: (map['totalProducts'] as num?)?.toInt() ?? 0,
+      totalOrders: (map['totalOrders'] as num?)?.toInt() ?? 0,
+      completedOrders: (map['completedOrders'] as num?)?.toInt() ?? 0,
+      pendingOrders: (map['pendingOrders'] as num?)?.toInt() ?? 0,
+      cancelledOrders: (map['cancelledOrders'] as num?)?.toInt() ?? 0,
+      totalRevenue: (map['totalRevenue'] as num?)?.toDouble() ?? 0.0,
+      monthlyRevenue: (map['monthlyRevenue'] as num?)?.toDouble() ?? 0.0,
+      totalReviews: (map['totalReviews'] as num?)?.toInt() ?? 0,
+      rating: (map['rating'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  factory SellerStats.fromJson(Map<String, dynamic> json) => SellerStats.fromMap(json);
+
+  SellerStats copyWith({
+    int? totalProducts,
+    int? totalOrders,
+    int? completedOrders,
+    int? pendingOrders,
+    int? cancelledOrders,
+    double? totalRevenue,
+    double? monthlyRevenue,
+    int? totalReviews,
+    double? rating,
+  }) {
+    return SellerStats(
+      totalProducts: totalProducts ?? this.totalProducts,
+      totalOrders: totalOrders ?? this.totalOrders,
+      completedOrders: completedOrders ?? this.completedOrders,
+      pendingOrders: pendingOrders ?? this.pendingOrders,
+      cancelledOrders: cancelledOrders ?? this.cancelledOrders,
+      totalRevenue: totalRevenue ?? this.totalRevenue,
+      monthlyRevenue: monthlyRevenue ?? this.monthlyRevenue,
+      totalReviews: totalReviews ?? this.totalReviews,
+      rating: rating ?? this.rating,
+    );
+  }
+}
+
 class Seller {
   final String id;
   final String name;
   final String email;
   final String? phone;
-  final String? profileImageUrl;
+  final String? phoneNumber; // Add this for compatibility with your registration
   final String businessName;
   final String businessDescription;
-  final String businessLocation;
+  final String? businessLocation;
+  final String? profileImageUrl;
   final bool isVerified;
+  final bool? isActive; // Add this for compatibility
   final DateTime createdAt;
   final DateTime updatedAt;
   final SellerStats stats;
@@ -18,60 +102,155 @@ class Seller {
     required this.name,
     required this.email,
     this.phone,
-    this.profileImageUrl,
+    this.phoneNumber,
     required this.businessName,
     required this.businessDescription,
-    required this.businessLocation,
+    this.businessLocation,
+    this.profileImageUrl,
     this.isVerified = false,
+    this.isActive = true,
     required this.createdAt,
     required this.updatedAt,
     required this.stats,
   });
 
-  Map<String, dynamic> toJson() {
+  // Helper method to safely convert timestamps from Firestore
+  static DateTime _convertTimestamp(dynamic timestamp) {
+    if (timestamp == null) {
+      return DateTime.now();
+    }
+    
+    if (timestamp is Timestamp) {
+      // This is a Firestore Timestamp - use toDate()
+      return timestamp.toDate();
+    }
+    
+    if (timestamp is int) {
+      // This is milliseconds since epoch
+      return DateTime.fromMillisecondsSinceEpoch(timestamp);
+    }
+    
+    if (timestamp is DateTime) {
+      return timestamp;
+    }
+    
+    if (timestamp is String) {
+      try {
+        return DateTime.parse(timestamp);
+      } catch (e) {
+        print('Error parsing timestamp string: $timestamp, error: $e');
+        return DateTime.now();
+      }
+    }
+    
+    print('Unknown timestamp type: ${timestamp.runtimeType}, value: $timestamp');
+    return DateTime.now();
+  }
+
+  // Convert Seller object to Map for Firestore
+  Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
       'email': email,
       'phone': phone,
-      'profileImageUrl': profileImageUrl,
+      'phoneNumber': phoneNumber ?? phone, // Ensure backward compatibility
       'businessName': businessName,
       'businessDescription': businessDescription,
       'businessLocation': businessLocation,
+      'profileImageUrl': profileImageUrl ?? '',
       'isVerified': isVerified,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-      'stats': stats.toJson(),
+      'isActive': isActive ?? true,
+      'createdAt': Timestamp.fromDate(createdAt), // Convert to Firestore Timestamp
+      'updatedAt': Timestamp.fromDate(updatedAt), // Convert to Firestore Timestamp
+      'stats': stats.toMap(),
     };
+  }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  // Create Seller object from Firestore document data
+  factory Seller.fromFirestore(Map<String, dynamic> data) {
+    try {
+      print('Creating Seller from Firestore data: $data');
+      
+      return Seller(
+        id: data['id'] as String? ?? '',
+        name: data['name'] as String? ?? '',
+        email: data['email'] as String? ?? '',
+        phone: data['phone'] as String?,
+        phoneNumber: data['phoneNumber'] as String? ?? data['phone'] as String?,
+        businessName: data['businessName'] as String? ?? '',
+        businessDescription: data['businessDescription'] as String? ?? '',
+        businessLocation: data['businessLocation'] as String?,
+        profileImageUrl: data['profileImageUrl'] as String?,
+        isVerified: data['isVerified'] as bool? ?? false,
+        isActive: data['isActive'] as bool? ?? true,
+        createdAt: _convertTimestamp(data['createdAt']),
+        updatedAt: _convertTimestamp(data['updatedAt']),
+        stats: data['stats'] != null 
+            ? SellerStats.fromMap(data['stats'] as Map<String, dynamic>)
+            : SellerStats(),
+      );
+    } catch (e) {
+      print('Error creating Seller from Firestore data: $e');
+      print('Problematic data: $data');
+      rethrow;
+    }
+  }
+
+  // Create Seller from DocumentSnapshot
+  factory Seller.fromDocument(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Document data is null for seller: ${doc.id}');
+    }
+    
+    // Ensure the document ID is included
+    data['id'] = doc.id;
+    
+    return Seller.fromFirestore(data);
+  }
+
+  // Alternative constructor from Map (useful for general Map conversions)
+  factory Seller.fromMap(Map<String, dynamic> map) {
+    return Seller.fromFirestore(map);
   }
 
   factory Seller.fromJson(Map<String, dynamic> json) {
     return Seller(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      phone: json['phone'],
-      profileImageUrl: json['profileImageUrl'],
-      businessName: json['businessName'],
-      businessDescription: json['businessDescription'],
-      businessLocation: json['businessLocation'],
-      isVerified: json['isVerified'] ?? false,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      stats: SellerStats.fromJson(json['stats'] ?? {}),
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      phone: json['phone'] as String?,
+      phoneNumber: json['phoneNumber'] as String? ?? json['phone'] as String?,
+      businessName: json['businessName'] as String? ?? '',
+      businessDescription: json['businessDescription'] as String? ?? '',
+      businessLocation: json['businessLocation'] as String?,
+      profileImageUrl: json['profileImageUrl'] as String?,
+      isVerified: json['isVerified'] as bool? ?? false,
+      isActive: json['isActive'] as bool? ?? true,
+      createdAt: _convertTimestamp(json['createdAt']),
+      updatedAt: _convertTimestamp(json['updatedAt']),
+      stats: json['stats'] != null 
+          ? SellerStats.fromJson(json['stats'] as Map<String, dynamic>)
+          : SellerStats(),
     );
   }
 
+  // Create a copy of Seller with updated fields
   Seller copyWith({
     String? id,
     String? name,
     String? email,
     String? phone,
-    String? profileImageUrl,
+    String? phoneNumber,
     String? businessName,
     String? businessDescription,
     String? businessLocation,
+    String? profileImageUrl,
     bool? isVerified,
+    bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
     SellerStats? stats,
@@ -81,86 +260,33 @@ class Seller {
       name: name ?? this.name,
       email: email ?? this.email,
       phone: phone ?? this.phone,
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       businessName: businessName ?? this.businessName,
       businessDescription: businessDescription ?? this.businessDescription,
       businessLocation: businessLocation ?? this.businessLocation,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       isVerified: isVerified ?? this.isVerified,
+      isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       stats: stats ?? this.stats,
     );
   }
-}
 
-class SellerStats {
-  final int totalProducts;
-  final int totalOrders;
-  final int completedOrders;
-  final int pendingOrders;
-  final double totalRevenue;
-  final double monthlyRevenue;
-  final double rating;
-  final int totalReviews;
-
-  SellerStats({
-    this.totalProducts = 0,
-    this.totalOrders = 0,
-    this.completedOrders = 0,
-    this.pendingOrders = 0,
-    this.totalRevenue = 0.0,
-    this.monthlyRevenue = 0.0,
-    this.rating = 0.0,
-    this.totalReviews = 0,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'totalProducts': totalProducts,
-      'totalOrders': totalOrders,
-      'completedOrders': completedOrders,
-      'pendingOrders': pendingOrders,
-      'totalRevenue': totalRevenue,
-      'monthlyRevenue': monthlyRevenue,
-      'rating': rating,
-      'totalReviews': totalReviews,
-    };
+  @override
+  String toString() {
+    return 'Seller(id: $id, name: $name, email: $email, businessName: $businessName)';
   }
 
-  factory SellerStats.fromJson(Map<String, dynamic> json) {
-    return SellerStats(
-      totalProducts: json['totalProducts'] ?? 0,
-      totalOrders: json['totalOrders'] ?? 0,
-      completedOrders: json['completedOrders'] ?? 0,
-      pendingOrders: json['pendingOrders'] ?? 0,
-      totalRevenue: (json['totalRevenue'] ?? 0.0).toDouble(),
-      monthlyRevenue: (json['monthlyRevenue'] ?? 0.0).toDouble(),
-      rating: (json['rating'] ?? 0.0).toDouble(),
-      totalReviews: json['totalReviews'] ?? 0,
-    );
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Seller && other.id == id;
   }
 
-  int get cancelledOrders => totalOrders - completedOrders - pendingOrders;
+  @override
+  int get hashCode => id.hashCode;
 
-  SellerStats copyWith({
-    int? totalProducts,
-    int? totalOrders,
-    int? completedOrders,
-    int? pendingOrders,
-    double? totalRevenue,
-    double? monthlyRevenue,
-    double? rating,
-    int? totalReviews,
-  }) {
-    return SellerStats(
-      totalProducts: totalProducts ?? this.totalProducts,
-      totalOrders: totalOrders ?? this.totalOrders,
-      completedOrders: completedOrders ?? this.completedOrders,
-      pendingOrders: pendingOrders ?? this.pendingOrders,
-      totalRevenue: totalRevenue ?? this.totalRevenue,
-      monthlyRevenue: monthlyRevenue ?? this.monthlyRevenue,
-      rating: rating ?? this.rating,
-      totalReviews: totalReviews ?? this.totalReviews,
-    );
-  }
+  // Helper getter for backward compatibility
+  String? get number => phoneNumber ?? phone;
 }

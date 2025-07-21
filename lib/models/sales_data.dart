@@ -1,4 +1,8 @@
+// ignore_for_file: avoid_types_as_parameter_names
+
 import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WeeklySales {
   final String period;
@@ -89,5 +93,65 @@ class SalesService {
       const Duration(seconds: 30),
       (count) => detectSalesChanges(),
     ).asyncMap((future) => future);
+  }
+}
+
+// Seller class moved to top-level
+class Seller {
+  final String id;
+  final String name;
+  final String businessName;
+  final String businessDescription;
+  final String number;
+  final String profileImageUrl;
+  final bool isVerified;
+  final Map<String, dynamic> stats;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  Seller({
+    required this.id,
+    required this.name,
+    required this.businessName,
+    required this.businessDescription,
+    required this.number,
+    required this.profileImageUrl,
+    required this.isVerified,
+    required this.stats,
+    required this.createdAt,
+    required this.updatedAt, required String email,
+  });
+
+  // Factory constructor to create Seller from Firestore document
+  factory Seller.fromFirestore(Map<String, dynamic> data) {
+    return Seller(
+      id: data['id'] ?? '',
+      name: data['name'] ?? '',
+      businessName: data['businessName'] ?? '',
+      businessDescription: data['businessDescription'] ?? '',
+      number: data['phoneNumber'] ?? '',
+      profileImageUrl: data['profileImageUrl'] ?? '',
+      isVerified: data['isVerified'] ?? false,
+      stats: data['stats'] ?? {},
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(), 
+      email: '',
+    );
+  }
+
+  // Convert Seller to Map for Firestore
+  Map<String, dynamic> toFirestore() {
+    return {
+      'id': id,
+      'name': name,
+      'businessName': businessName,
+      'businessDescription': businessDescription,
+      'phoneNumber': number,
+      'profileImageUrl': profileImageUrl,
+      'isVerified': isVerified,
+      'stats': stats,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
+    };
   }
 }

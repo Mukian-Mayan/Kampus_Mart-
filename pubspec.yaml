@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.0
+  
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -124,6 +125,14 @@ flutter:
     - family: Keania One
       fonts:
         - asset: assets/fonts/Keania_One.ttf
+    
+    - family: KG Penmanship
+      fonts:
+        - asset: assets/fonts/KGPerfectPenmanship.ttf
+    
+    - family: DreamOrphans-Bold
+      fonts:
+        - asset: assets/fonts/DreamOrphansItalicBold.otf
     
 
   #   - family: Schyler

@@ -8,8 +8,9 @@ class MyTextField extends StatelessWidget {
   final Color focusedColor;
   final Color enabledColor;
   final int? maxLength;
+  Widget? prefix;
 
-  const MyTextField({
+  MyTextField({
     super.key,
     required this.enabledColor,
     required this.focusedColor,
@@ -17,6 +18,7 @@ class MyTextField extends StatelessWidget {
     required this.hintText,
     required this.obscureText,
     required this.maxLength,
+    this.prefix,
   });
 
   @override
@@ -30,9 +32,10 @@ class MyTextField extends StatelessWidget {
           obscureText: obscureText,
           maxLength: maxLength,
 
-          style: TextStyle(color: AppTheme.paleWhite, fontFamily: 'Birdy Script',),
+          style: TextStyle(color: AppTheme.paleWhite, fontFamily: 'KG Penmanship',),
 
           decoration: InputDecoration(
+            prefixIcon: prefix,
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(color: enabledColor),
             ),
