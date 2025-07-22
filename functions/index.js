@@ -10,227 +10,260 @@
  */
 
 const logger = require("firebase-functions/logger");
-const {onDocumentCreated, onDocumentDeleted, onDocumentUpdated} = require("firebase-functions/v2/firestore");
-const {onCall} = require("firebase-functions/v2/https");
-const {onSchedule} = require("firebase-functions/v2/scheduler");
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
 const db = admin.firestore();
+
+// For cost control, you can set the maximum number of containers that can be
+// running at the same time. This helps mitigate the impact of unexpected
+// traffic spikes by instead downgrading performance. This limit is a
+// per-function limit. You can override the limit for each function using the
+// `maxInstances` option in the function's options, e.g.
+// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
+// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
+// functions should each use functions.runWith({ maxInstances: 10 }) instead.
+// In the v1 API, each function can only serve one request per container, so
+// this will be the maximum concurrent request count.
+
+
+// Create and deploy your first functions
+// https://firebase.google.com/docs/functions/get-started
+
+// exports.helloWorld = onRequest((request, response) => {
+//   logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+// });
 
 // ============================================
 // PRODUCT AND CATEGORY MANAGEMENT FUNCTIONS
 // ============================================
 
 // Update category product count when a product is created
-exports.onProductCreate = onDocumentCreated("products/{productId}", async (event) => {
-  try {
-    const productData = event.data.data();
-    const categoryId = productData.categoryId;
+exports.onProductCreate = functions
+    .firestore
+    .document("products/{productId}")
+    .onCreate(async (snap, context) => {
+      try {
+        const productData = snap.data();
+        const categoryId = productData.categoryId;
 
-    if (categoryId && productData.isActive) {
-      await db.collection("categories").doc(categoryId).update({
-        productCount: admin.firestore.FieldValue.increment(1),
-      });
-
-      logger.info(`Incremented product count for category ${categoryId}`);
-    }
-  } catch (error) {
-    logger.error("Error updating category count on product create:", error);
-  }
-});
-
-// Update category product count when a product is deleted
-exports.onProductDelete = onDocumentDeleted("products/{productId}", async (event) => {
-  try {
-    const productData = event.data.data();
-    const categoryId = productData.categoryId;
-
-    if (categoryId && productData.isActive) {
-      const categoryRef = db.collection("categories").doc(categoryId);
-      const categoryDoc = await categoryRef.get();
-
-      if (categoryDoc.exists) {
-        const currentCount = categoryDoc.data().productCount || 0;
-
-        if (currentCount > 0) {
-          await categoryRef.update({
-            productCount: admin.firestore.FieldValue.increment(-1),
+        if (categoryId && productData.isActive) {
+          await db.collection("categories").doc(categoryId).update({
+            productCount: admin.firestore.FieldValue.increment(1),
           });
 
-          logger.info(`Decremented product count for category ${categoryId}`);
+          logger.info(`Incremented product count for category ${categoryId}`);
         }
+      } catch (error) {
+        logger.error("Error updating category count on product create:", error);
       }
-    }
-  } catch (error) {
-    logger.error("Error updating category count on product delete:", error);
-  }
-});
+    });
 
-// Update category product count when a product is updated
-exports.onProductUpdate = onDocumentUpdated("products/{productId}", async (event) => {
-  try {
-    const beforeData = event.data.before.data();
-    const afterData = event.data.after.data();
+// Update category product count when a product is deleted
+exports.onProductDelete = functions
+    .firestore
+    .document("products/{productId}")
+    .onDelete(async (snap, context) => {
+      try {
+        const productData = snap.data();
+        const categoryId = productData.categoryId;
 
-    const oldCategoryId = beforeData.categoryId;
-    const newCategoryId = afterData.categoryId;
-    const oldIsActive = beforeData.isActive;
-    const newIsActive = afterData.isActive;
-
-    // Handle category change
-    if (oldCategoryId !== newCategoryId) {
-      if (oldCategoryId && oldIsActive) {
-        const oldCategoryRef = db.collection("categories").doc(oldCategoryId);
-        const oldCategoryDoc = await oldCategoryRef.get();
-
-        if (oldCategoryDoc.exists) {
-          const currentCount = oldCategoryDoc.data().productCount || 0;
-          if (currentCount > 0) {
-            await oldCategoryRef.update({
-              productCount: admin.firestore.FieldValue.increment(-1),
-            });
-          }
-        }
-      }
-
-      if (newCategoryId && newIsActive) {
-        await db.collection("categories").doc(newCategoryId).update({
-          productCount: admin.firestore.FieldValue.increment(1),
-        });
-      }
-    }
-
-    // Handle activation/deactivation
-    if (oldIsActive !== newIsActive && oldCategoryId === newCategoryId) {
-      const categoryId = newCategoryId;
-
-      if (categoryId) {
-        const increment = newIsActive ? 1 : -1;
-
-        if (!newIsActive) {
+        if (categoryId && productData.isActive) {
           const categoryRef = db.collection("categories").doc(categoryId);
           const categoryDoc = await categoryRef.get();
 
           if (categoryDoc.exists) {
             const currentCount = categoryDoc.data().productCount || 0;
+
             if (currentCount > 0) {
               await categoryRef.update({
+                productCount: admin.firestore.FieldValue.increment(-1),
+              });
+
+              logger.info(`Decremented product count for category ${categoryId}`);
+            }
+          }
+        }
+      } catch (error) {
+        logger.error("Error updating category count on product delete:", error);
+      }
+    });
+
+// Update category product count when a product is updated
+exports.onProductUpdate = functions
+    .firestore
+    .document("products/{productId}")
+    .onUpdate(async (change, context) => {
+      try {
+        const beforeData = change.before.data();
+        const afterData = change.after.data();
+
+        const oldCategoryId = beforeData.categoryId;
+        const newCategoryId = afterData.categoryId;
+        const oldIsActive = beforeData.isActive;
+        const newIsActive = afterData.isActive;
+
+        // Handle category change
+        if (oldCategoryId !== newCategoryId) {
+          if (oldCategoryId && oldIsActive) {
+            const oldCategoryRef = db.collection("categories").doc(oldCategoryId);
+            const oldCategoryDoc = await oldCategoryRef.get();
+
+            if (oldCategoryDoc.exists) {
+              const currentCount = oldCategoryDoc.data().productCount || 0;
+              if (currentCount > 0) {
+                await oldCategoryRef.update({
+                  productCount: admin.firestore.FieldValue.increment(-1),
+                });
+              }
+            }
+          }
+
+          if (newCategoryId && newIsActive) {
+            await db.collection("categories").doc(newCategoryId).update({
+              productCount: admin.firestore.FieldValue.increment(1),
+            });
+          }
+        }
+
+        // Handle activation/deactivation
+        if (oldIsActive !== newIsActive && oldCategoryId === newCategoryId) {
+          const categoryId = newCategoryId;
+
+          if (categoryId) {
+            const increment = newIsActive ? 1 : -1;
+
+            if (!newIsActive) {
+              const categoryRef = db.collection("categories").doc(categoryId);
+              const categoryDoc = await categoryRef.get();
+
+              if (categoryDoc.exists) {
+                const currentCount = categoryDoc.data().productCount || 0;
+                if (currentCount > 0) {
+                  await categoryRef.update({
+                    productCount: admin.firestore.FieldValue.increment(increment),
+                  });
+                }
+              }
+            } else {
+              await db.collection("categories").doc(categoryId).update({
                 productCount: admin.firestore.FieldValue.increment(increment),
               });
             }
           }
-        } else {
-          await db.collection("categories").doc(categoryId).update({
-            productCount: admin.firestore.FieldValue.increment(increment),
-          });
         }
-      }
-    }
 
-    logger.info("Successfully handled product update for category counts");
-  } catch (error) {
-    logger.error("Error updating category count on product update:", error);
-  }
-});
+        logger.info("Successfully handled product update for category counts");
+      } catch (error) {
+        logger.error("Error updating category count on product update:", error);
+      }
+    });
 
 // ============================================
 // ORDER PROCESSING FUNCTIONS
 // ============================================
 
 // Handle order status updates
-exports.onOrderStatusUpdate = onDocumentUpdated("orders/{orderId}", async (event) => {
-  try {
-    const beforeData = event.data.before.data();
-    const afterData = event.data.after.data();
+exports.onOrderStatusUpdate = functions
+    .firestore
+    .document("orders/{orderId}")
+    .onUpdate(async (change, context) => {
+      try {
+        const beforeData = change.before.data();
+        const afterData = change.after.data();
 
-    const oldStatus = beforeData.status;
-    const newStatus = afterData.status;
+        const oldStatus = beforeData.status;
+        const newStatus = afterData.status;
 
-    if (oldStatus !== newStatus) {
-    // Update product stock when order is completed
-      if (newStatus === "completed") {
-        const orderItems = afterData.items || [];
+        if (oldStatus !== newStatus) {
+        // Update product stock when order is completed
+          if (newStatus === "completed") {
+            const orderItems = afterData.items || [];
 
-        for (const item of orderItems) {
-          const productRef = db.collection("products").doc(item.productId);
-          await productRef.update({
-            stock: admin.firestore.FieldValue.increment(-item.quantity),
-            soldCount: admin.firestore.FieldValue.increment(item.quantity),
-          });
+            for (const item of orderItems) {
+              const productRef = db.collection("products").doc(item.productId);
+              await productRef.update({
+                stock: admin.firestore.FieldValue.increment(-item.quantity),
+                soldCount: admin.firestore.FieldValue.increment(item.quantity),
+              });
+            }
+
+            logger.info(`Updated stock for completed order ${context.params.orderId}`);
+          }
+
+          // Restore stock if order is cancelled
+          if (newStatus === "cancelled" && oldStatus !== "cancelled") {
+            const orderItems = afterData.items || [];
+
+            for (const item of orderItems) {
+              const productRef = db.collection("products").doc(item.productId);
+              await productRef.update({
+                stock: admin.firestore.FieldValue.increment(item.quantity),
+                soldCount: admin.firestore.FieldValue.increment(-item.quantity),
+              });
+            }
+
+            logger.info(`Restored stock for cancelled order ${context.params.orderId}`);
+          }
         }
-
-        logger.info(`Updated stock for completed order ${event.params.orderId}`);
+      } catch (error) {
+        logger.error("Error handling order status update:", error);
       }
-
-      // Restore stock if order is cancelled
-      if (newStatus === "cancelled" && oldStatus !== "cancelled") {
-        const orderItems = afterData.items || [];
-
-        for (const item of orderItems) {
-          const productRef = db.collection("products").doc(item.productId);
-          await productRef.update({
-            stock: admin.firestore.FieldValue.increment(item.quantity),
-            soldCount: admin.firestore.FieldValue.increment(-item.quantity),
-          });
-        }
-
-        logger.info(`Restored stock for cancelled order ${event.params.orderId}`);
-      }
-    }
-  } catch (error) {
-    logger.error("Error handling order status update:", error);
-  }
-});
+    });
 
 // ============================================
 // NOTIFICATION FUNCTIONS
 // ============================================
 
 // Send notification when order status changes
-exports.sendOrderNotification = onDocumentUpdated("orders/{orderId}", async (event) => {
-  try {
-    const beforeData = event.data.before.data();
-    const afterData = event.data.after.data();
+exports.sendOrderNotification = functions
+    .firestore
+    .document("orders/{orderId}")
+    .onUpdate(async (change, context) => {
+      try {
+        const beforeData = change.before.data();
+        const afterData = change.after.data();
 
-    if (beforeData.status !== afterData.status) {
-      const userId = afterData.userId;
-      const orderId = event.params.orderId;
+        if (beforeData.status !== afterData.status) {
+          const userId = afterData.userId;
+          const orderId = context.params.orderId;
 
-      // Get user's FCM token
-      const userDoc = await db.collection("users").doc(userId).get();
-      if (userDoc.exists && userDoc.data().fcmToken) {
-        const message = {
-          token: userDoc.data().fcmToken,
-          notification: {
-            title: "Order Status Updated",
-            body: `Your order ${orderId} status changed to ${afterData.status}`,
-          },
-          data: {
-            orderId: orderId,
-            status: afterData.status,
-            type: "order_update",
-          },
-        };
+          // Get user's FCM token
+          const userDoc = await db.collection("users").doc(userId).get();
+          if (userDoc.exists && userDoc.data().fcmToken) {
+            const message = {
+              token: userDoc.data().fcmToken,
+              notification: {
+                title: "Order Status Updated",
+                body: `Your order ${orderId} status changed to ${afterData.status}`,
+              },
+              data: {
+                orderId: orderId,
+                status: afterData.status,
+                type: "order_update",
+              },
+            };
 
-        await admin.messaging().send(message);
-        logger.info(`Notification sent for order ${orderId} status change`);
+            await admin.messaging().send(message);
+            logger.info(`Notification sent for order ${orderId} status change`);
+          }
+        }
+      } catch (error) {
+        logger.error("Error sending order notification:", error);
       }
-    }
-  } catch (error) {
-    logger.error("Error sending order notification:", error);
-  }
-});
+    });
 
 // ============================================
 // UTILITY AND MAINTENANCE FUNCTIONS
 // ============================================
 
 // Manual function to recalculate all category product counts
-exports.recalculateCategoryCounts = onCall(async (request) => {
+exports.recalculateCategoryCounts = functions.https.onCall(async (data, context) => {
   try {
-    if (!request.auth) {
-      throw new Error("User must be authenticated");
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
     }
 
     const batch = db.batch();
@@ -256,62 +289,65 @@ exports.recalculateCategoryCounts = onCall(async (request) => {
     };
   } catch (error) {
     logger.error("Error recalculating category counts:", error);
-    throw new Error("Failed to recalculate category counts");
+    throw new functions.https.HttpsError("internal", "Failed to recalculate category counts");
   }
 });
 
 // Scheduled function to verify and fix category counts
-exports.verifyCategoryCounts = onSchedule("0 2 * * *", async (event) => {
-  try {
-    logger.info("Starting daily category count verification...");
+exports.verifyCategoryCounts = functions.pubsub
+    .schedule("0 2 * * *")
+    .timeZone("UTC")
+    .onRun(async (context) => {
+      try {
+        logger.info("Starting daily category count verification...");
 
-    const categoriesSnapshot = await db.collection("categories").get();
-    const fixes = [];
+        const categoriesSnapshot = await db.collection("categories").get();
+        const fixes = [];
 
-    for (const categoryDoc of categoriesSnapshot.docs) {
-      const categoryId = categoryDoc.id;
-      const categoryData = categoryDoc.data();
-      const storedCount = categoryData.productCount || 0;
+        for (const categoryDoc of categoriesSnapshot.docs) {
+          const categoryId = categoryDoc.id;
+          const categoryData = categoryDoc.data();
+          const storedCount = categoryData.productCount || 0;
 
-      const productsSnapshot = await db.collection("products")
-          .where("categoryId", "==", categoryId)
-          .where("isActive", "==", true)
-          .get();
+          const productsSnapshot = await db.collection("products")
+              .where("categoryId", "==", categoryId)
+              .where("isActive", "==", true)
+              .get();
 
-      const actualCount = productsSnapshot.size;
+          const actualCount = productsSnapshot.size;
 
-      if (storedCount !== actualCount) {
-        await categoryDoc.ref.update({productCount: actualCount});
-        fixes.push({
-          categoryId,
-          oldCount: storedCount,
-          newCount: actualCount,
-        });
+          if (storedCount !== actualCount) {
+            await categoryDoc.ref.update({productCount: actualCount});
+            fixes.push({
+              categoryId,
+              oldCount: storedCount,
+              newCount: actualCount,
+            });
 
-        logger.info(`Fixed category ${categoryId}: ${storedCount} -> ${actualCount}`);
+            logger.info(`Fixed category ${categoryId}: ${storedCount} -> ${actualCount}`);
+          }
+        }
+
+        logger.info(`Category count verification completed. Fixed ${fixes.length} categories.`);
+        return {success: true, fixes};
+      } catch (error) {
+        logger.error("Error in category count verification:", error);
+        return {success: false, error: error.message};
       }
-    }
-
-    logger.info(`Category count verification completed. Fixed ${fixes.length} categories.`);
-    return {success: true, fixes};
-  } catch (error) {
-    logger.error("Error in category count verification:", error);
-    return {success: false, error: error.message};
-  }
-});
+    });
 
 // ============================================
 // ANALYTICS AND REPORTING FUNCTIONS
 // ============================================
 
 // Generate sales report
-exports.generateSalesReport = onCall(async (request) => {
+exports.generateSalesReport = functions.https.onCall(async (data, context) => {
   try {
-    if (!request.auth) {
-      throw new Error("User must be authenticated");
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
     }
 
-    const {sellerId, startDate, endDate} = request.data;
+    const {sellerId, startDate, endDate} = data;
 
     let query = db.collection("orders")
         .where("sellerId", "==", sellerId)
@@ -340,33 +376,36 @@ exports.generateSalesReport = onCall(async (request) => {
     };
   } catch (error) {
     logger.error("Error generating sales report:", error);
-    throw new Error("Failed to generate sales report");
+    throw new functions.https.HttpsError("internal", "Failed to generate sales report");
   }
 });
 
 // Clean up old cart items
-exports.cleanupOldCartItems = onSchedule("0 1 * * *", async (event) => {
-  try {
-    logger.info("Starting cleanup of old cart items...");
+exports.cleanupOldCartItems = functions.pubsub
+    .schedule("0 1 * * *")
+    .timeZone("UTC")
+    .onRun(async (context) => {
+      try {
+        logger.info("Starting cleanup of old cart items...");
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const oldCartItems = await db.collection("cart")
-        .where("createdAt", "<", thirtyDaysAgo)
-        .get();
+        const oldCartItems = await db.collection("cart")
+            .where("createdAt", "<", thirtyDaysAgo)
+            .get();
 
-    const batch = db.batch();
-    oldCartItems.docs.forEach((doc) => {
-      batch.delete(doc.ref);
+        const batch = db.batch();
+        oldCartItems.docs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+
+        logger.info(`Cleaned up ${oldCartItems.docs.length} old cart items`);
+        return {success: true, cleaned: oldCartItems.docs.length};
+      } catch (error) {
+        logger.error("Error cleaning up old cart items:", error);
+        return {success: false, error: error.message};
+      }
     });
-
-    await batch.commit();
-
-    logger.info(`Cleaned up ${oldCartItems.docs.length} old cart items`);
-    return {success: true, cleaned: oldCartItems.docs.length};
-  } catch (error) {
-    logger.error("Error cleaning up old cart items:", error);
-    return {success: false, error: error.message};
-  }
-});
