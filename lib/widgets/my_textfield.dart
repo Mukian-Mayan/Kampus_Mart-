@@ -37,9 +37,11 @@ class MyTextField extends StatelessWidget {
           decoration: InputDecoration(
             prefixIcon: prefix,
             enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: enabledColor),
             ),
             focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: focusedColor),
             ),
             filled: true,

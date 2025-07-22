@@ -146,12 +146,12 @@ Future<UserRole> _getUserRole(String userId) async {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_ios),
         ),
-        title: Text(
+        /*title: Text(
           widget.userRole == UserRole.seller
               ? 'Seller Login'
               : 'Customer Login',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
+        ),*/
       ),
       body: Stack(
         children: [
