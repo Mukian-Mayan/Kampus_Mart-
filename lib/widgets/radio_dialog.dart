@@ -9,7 +9,7 @@ class RadioDialog {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: AppTheme.deepBlue.withOpacity(0.8),
+          backgroundColor: AppTheme.deepBlue.withOpacity(0.97),
           title: Center(child: Text('Choose an Option', style: TextStyle(color: AppTheme.paleWhite),)),
           content: StatefulBuilder(
             builder: (context, setState) => Column(
