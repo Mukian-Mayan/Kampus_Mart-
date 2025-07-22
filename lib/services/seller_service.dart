@@ -1,8 +1,10 @@
 // services/seller_service.dart
 // ignore_for_file: prefer_interpolation_to_compose_strings, unused_local_variable
 
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/seller.dart';
 import 'supabase_storage_service.dart';
@@ -11,6 +13,29 @@ class SellerService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static const String _collection = 'sellers';
+  static final FirebaseStorage _storage = FirebaseStorage.instance;
+  static const String _profileImagesPath = 'seller_profile_images';
+
+  /// Upload profile image to Firebase Storage
+  static Future<String?> _uploadProfileImage(XFile imageFile, String userId) async {
+    try {
+      // Create a reference to the file location
+      final Reference storageRef = _storage.ref()
+          .child('$_profileImagesPath/$userId/${DateTime.now().millisecondsSinceEpoch}');
+      
+      // Upload the file
+      final TaskSnapshot uploadTask = await storageRef.putData(
+        await imageFile.readAsBytes(),
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+      
+      // Get the download URL
+      return await uploadTask.ref.getDownloadURL();
+    } catch (e) {
+      print('Error uploading profile image: $e');
+      return null;
+    }
+  }
 
   /// Register a new seller
   static Future<Seller> registerSeller({
@@ -35,7 +60,7 @@ class SellerService {
 
       // Upload profile image if provided
       if (profileImage != null) {
-        profileImageUrl = await SupabaseStorageService.uploadProfileImage(
+        profileImageUrl = await _uploadProfileImage(
           profileImage,
           userId,
         );
@@ -133,7 +158,7 @@ class SellerService {
 
       // Upload new profile image if provided
       if (profileImage != null) {
-        profileImageUrl = await SupabaseStorageService.uploadProfileImage(
+        profileImageUrl = await _uploadProfileImage(
           profileImage,
           sellerId,
         );
@@ -168,10 +193,11 @@ class SellerService {
     int? totalOrders,
     int? completedOrders,
     int? pendingOrders,
+    int? cancelledOrders,
     double? totalRevenue,
     double? monthlyRevenue,
     double? rating,
-    int? totalReviews, required int cancelledOrders,
+    int? totalReviews,
   }) async {
     try {
       final Seller currentSeller = await getSellerById(sellerId);
@@ -181,6 +207,7 @@ class SellerService {
         totalOrders: totalOrders ?? currentSeller.stats.totalOrders,
         completedOrders: completedOrders ?? currentSeller.stats.completedOrders,
         pendingOrders: pendingOrders ?? currentSeller.stats.pendingOrders,
+        cancelledOrders: cancelledOrders ?? currentSeller.stats.cancelledOrders,
         totalRevenue: totalRevenue ?? currentSeller.stats.totalRevenue,
         monthlyRevenue: monthlyRevenue ?? currentSeller.stats.monthlyRevenue,
         rating: rating ?? currentSeller.stats.rating,
@@ -300,9 +327,22 @@ class SellerService {
     }
   }
 
-  /// Delete seller account
+  /// Delete seller account and profile image
   static Future<void> deleteSeller(String sellerId) async {
     try {
+      // Get seller data first to check for profile image
+      final seller = await getSellerById(sellerId);
+      
+      // Delete profile image from storage if exists
+      if (seller.profileImageUrl != null && seller.profileImageUrl!.isNotEmpty) {
+        try {
+          final ref = _storage.refFromURL(seller.profileImageUrl!);
+          await ref.delete();
+        } catch (e) {
+          print('Error deleting profile image: $e');
+        }
+      }
+
       // Delete from Firestore
       await _firestore
           .collection(_collection)
@@ -386,6 +426,30 @@ class SellerService {
       };
     } catch (e) {
       throw Exception('Failed to get dashboard stats: $e');
+    }
+  }
+
+  /// Delete profile image from storage
+  static Future<void> deleteProfileImage(String sellerId) async {
+    try {
+      final seller = await getSellerById(sellerId);
+      
+      if (seller.profileImageUrl != null && seller.profileImageUrl!.isNotEmpty) {
+        // Delete from storage
+        final ref = _storage.refFromURL(seller.profileImageUrl!);
+        await ref.delete();
+        
+        // Update seller document to remove image URL
+        await _firestore
+            .collection(_collection)
+            .doc(sellerId)
+            .update({
+              'profileImageUrl': null,
+              'updatedAt': DateTime.now().toIso8601String(),
+            });
+      }
+    } catch (e) {
+      throw Exception('Failed to delete profile image: $e');
     }
   }
 }

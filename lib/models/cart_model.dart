@@ -1,34 +1,37 @@
+// models/cart_model.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CartModel {
-  final String? id;
+  final String id;  // This is the document ID from Firestore
   final String userId;
   final String productId;
   final String productName;
-  final String productImage;
+  final String? productImage;
   final double price;
   final int quantity;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   CartModel({
-    this.id,
+    required this.id,
     required this.userId,
     required this.productId,
     required this.productName,
-    required this.productImage,
+    this.productImage,
     required this.price,
     required this.quantity,
     this.createdAt,
     this.updatedAt,
   });
 
-  // Factory constructor to create CartModel from Firestore document
-  factory CartModel.fromFirestore(Map<String, dynamic> data, String documentId) {
+  // Create CartModel from Firestore document
+  factory CartModel.fromFirestore(Map<String, dynamic> data, String id) {
     return CartModel(
-      id: documentId,
+      id: id,  // Store the document ID
       userId: data['userId'] ?? '',
       productId: data['productId'] ?? '',
       productName: data['productName'] ?? '',
-      productImage: data['productImage'] ?? '',
+      productImage: data['productImage'],
       price: (data['price'] ?? 0.0).toDouble(),
       quantity: data['quantity'] ?? 0,
       createdAt: data['createdAt']?.toDate(),
@@ -36,7 +39,7 @@ class CartModel {
     );
   }
 
-  // Convert CartModel to Map for Firestore
+  // Convert CartModel to Firestore document
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -45,10 +48,11 @@ class CartModel {
       'productImage': productImage,
       'price': price,
       'quantity': quantity,
+      // Note: Don't include 'id' here as it's the document ID, not a field
     };
   }
 
-  // Create a copy of CartModel with updated fields
+  // Create a copy with updated fields
   CartModel copyWith({
     String? id,
     String? userId,
@@ -75,4 +79,18 @@ class CartModel {
 
   // Calculate total price for this cart item
   double get totalPrice => price * quantity;
-} 
+
+  @override
+  String toString() {
+    return 'CartModel(id: $id, productName: $productName, quantity: $quantity, price: $price)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CartModel && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+}
