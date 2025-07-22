@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/help_&_support_page.dart';
+import 'package:kampusmart2/screens/login_or_register_page.dart';
 import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/mode_page.dart';
@@ -27,8 +28,18 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
    String? userRole;
    int selectedIndex = 3;
-   void logoutUser() {
-    FirebaseAuth.instance.signOut();
+
+  void logoutUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Clear session data
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginOrRegisterPage()),
+      (route) => false, // Remove all previous routes
+    );
   }
 
   @override
@@ -94,9 +105,9 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                 children: [
                   const Center(
                     child: ProfilePicWidget(
-                      radius: 100,
-                      height: 200,
-                      width: 200,
+                      radius: 60,
+                      height: 120,
+                      width: 120,
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -118,7 +129,7 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                             iconData: Icons.person,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
-                            text: 'User name',
+                            text: ' Profile ',
                             containerHeight: MediaQuery.of(context).size.height * 0.065,
                             containerWidth: MediaQuery.of(context).size.width * 0.7,
                           ),
@@ -246,7 +257,7 @@ bottomNavigationBar: widget.userRole == UserRole.seller
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close dialog
-                _performLogout(context);
+                logoutUser();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.deepBlue,
@@ -260,7 +271,7 @@ bottomNavigationBar: widget.userRole == UserRole.seller
     );
   }
 
-  void _performLogout(BuildContext context) {
+  /*void _performLogout(BuildContext context) {
     // Add your logout logic here
     // For example:
     // - Clear user session/tokens
@@ -277,5 +288,5 @@ bottomNavigationBar: widget.userRole == UserRole.seller
       '/login', // Replace with your login route
       (Route<dynamic> route) => false,
     );
-  }
+  }*/
 }
