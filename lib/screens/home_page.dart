@@ -18,7 +18,7 @@ import '../widgets/fancy_app_bar.dart';
 import './_fancy_app_bar_sliver_delegate.dart';
 import '../widgets/my_button1.dart';
 import 'dart:ui';
-import '../data/products_data.dart';
+import '../services/product_service.dart';
 
 class HomePage extends StatefulWidget {
   final UserRole userRole;
@@ -40,22 +40,7 @@ class _HomePageState extends State<HomePage> {
   bool isSuggestedSelected = true;
   String? userRole;
 
-  List<List<Product>> getCarouselProducts() {
-    if (isSuggestedSelected) {
-      return suggestedCarouselProducts;
-    } else {
-      return trendingCarouselProducts;
-    }
-  }
-
-  void _onTab(int index) {
-    if (selectedIndex != index) {
-      setState(() {
-        selectedIndex = index;
-        _visibleCarouselGroups = 1; // Reset when switching tabs
-      });
-    }
-  }
+  late Future<List<Product>> _productsFuture;
 
   @override
   void initState() {
@@ -66,6 +51,7 @@ class _HomePageState extends State<HomePage> {
         _scrollOffset = _scrollController.offset;
       });
     });
+    _productsFuture = ProductService.getAllProducts();
   }
 
   Future<void> _loadUserRole() async {
@@ -91,7 +77,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final carouselProducts = getCarouselProducts();
     final bool searchBarVisible = _showSearch;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -105,7 +90,7 @@ class _HomePageState extends State<HomePage> {
               navBarColor: AppTheme.tertiaryOrange,
             ),
     
-
+ 
       
 
       body: Stack(
@@ -223,13 +208,25 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Padding(
+                child: FutureBuilder<List<Product>>(
+                  future: _productsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error:  [31m${snapshot.error} [0m'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No products found.'));
+                    }
+                    final products = snapshot.data!;
+                    // Carousel display (first 3 products as an example)
+                    if (products.length < 3) {
+                      return const SizedBox();
+                    }
+                    return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Carousel(
-                        items: carouselProducts.map((group) {
+                        items: [products.sublist(0, 3)].map((group) {
                           return CarouselTileCard(
                             leftImage: group[0].imageUrl,
                             centerImage: group[1].imageUrl,
@@ -242,8 +239,7 @@ class _HomePageState extends State<HomePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      ProductDetailsPage(product: product),
+                                  builder: (context) => ProductDetailsPage(product: product),
                                 ),
                               );
                             },
@@ -252,64 +248,8 @@ class _HomePageState extends State<HomePage> {
                         height: 180,
                         borderRadius: 20,
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 24, bottom: 4),
-                      child: SizedBox(
-                        height: 30,
-                        child: MyButton1(
-                          height: 30,
-                          width: 70,
-                          fontSize: 13,
-                          text: 'More',
-                          pad: 0,
-                          onTap: () {
-                            final allGroups = isSuggestedSelected
-                                ? suggestedCarouselProducts
-                                : trendingCarouselProducts;
-                            final allProducts = allGroups.expand((g) => g).toList();
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                              ),
-                              builder: (context) => FractionallySizedBox(
-                                heightFactor: 0.5,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: GridView.builder(
-                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      mainAxisSpacing: 12,
-                                      crossAxisSpacing: 12,
-                                      childAspectRatio: 0.85,
-                                    ),
-                                    itemCount: allProducts.length,
-                                    itemBuilder: (context, index) {
-                                      final product = allProducts[index];
-                                      return ProductCard(
-                                        product: product,
-                                        onTap: () {
-                                          Navigator.pop(context);
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ProductDetailsPage(product: product),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
               SliverPadding(
@@ -319,32 +259,41 @@ class _HomePageState extends State<HomePage> {
                   right: 0,
                   bottom: 16,
                 ),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.85,
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final List<Product> allProducts = allGridProducts;
-
-                    if (index >= allProducts.length) return null;
-                    final product = allProducts[index];
-
-                    return ProductCard(
-                      product: product,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ProductDetailsPage(product: product),
-                          ),
+                sliver: FutureBuilder<List<Product>>(
+                  future: _productsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
+                    } else if (snapshot.hasError) {
+                      return SliverToBoxAdapter(child: Center(child: Text('Error:  [31m${snapshot.error} [0m')));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const SliverToBoxAdapter(child: Center(child: Text('No products found.')));
+                    }
+                    final products = snapshot.data!;
+                    return SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 0.85,
+                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        if (index >= products.length) return null;
+                        final product = products[index];
+                        return ProductCard(
+                          product: product,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProductDetailsPage(product: product),
+                              ),
+                            );
+                          },
                         );
-                      },
+                      }, childCount: products.length),
                     );
-                  }, childCount: 10),
+                  },
                 ),
               ),
             ],

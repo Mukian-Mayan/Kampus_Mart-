@@ -1,4 +1,7 @@
 // lib/models/product.dart
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Product {
   final String id; // Add this field - it's required for CRUD operations
   final String name;
@@ -38,28 +41,53 @@ class Product {
     this.stock,
   });
 
+  // Helper functions for robust type conversion
+  static String _toString(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    return value.toString();
+  }
+
+  static String _getId(dynamic value) {
+    if (value is String) return value;
+    if (value is DocumentReference) return value.id;
+    return '';
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String && value.isNotEmpty) return double.tryParse(value);
+    return null;
+  }
+
+  static int? _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is String && value.isNotEmpty) return int.tryParse(value);
+    return null;
+  }
+
   // Factory constructor to create Product from Firestore document
   factory Product.fromFirestore(Map<String, dynamic> data, String documentId) {
     return Product(
       id: documentId, // Set the document ID as the product ID
-      name: data['name'] ?? '',
-      description: data['description'] ?? '',
-      ownerId: data['ownerId'] ?? data['sellerId'] ?? '', // Handle both field names
-      priceAndDiscount: data['priceAndDiscount'] ?? '',
-      originalPrice: data['originalPrice'] ?? '',
-      condition: data['condition'] ?? '',
-      location: data['location'] ?? '',
-      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
-      imageUrl: data['imageUrl'] ?? '',
+      name: _toString(data['name']),
+      description: _toString(data['description']),
+      ownerId: _getId(data['ownerId'] ?? data['sellerId']), // Handle both field names and DocumentReference
+      priceAndDiscount: _toString(data['priceAndDiscount']),
+      originalPrice: _toString(data['originalPrice']),
+      condition: _toString(data['condition']),
+      location: _toString(data['location']),
+      rating: _toDouble(data['rating']) ?? 0.0,
+      imageUrl: _toString(data['imageUrl']),
       imageUrls: data['imageUrls'] != null 
-          ? List<String>.from(data['imageUrls'] as List) 
+          ? List<String>.from((data['imageUrls'] as List).map(_toString))
           : null,
       bestOffer: data['bestOffer'] ?? false,
       category: data['category'],
-      price: (data['price'] as num?)?.toDouble(),
+      price: _toDouble(data['price']),
       createdAt: data['createdAt']?.toDate(),
       updatedAt: data['updatedAt']?.toDate(),
-      stock: data['stock'] as  int?,
+      stock: _toInt(data['stock']),
     );
   }
 

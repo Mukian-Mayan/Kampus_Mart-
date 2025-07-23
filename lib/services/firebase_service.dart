@@ -7,6 +7,8 @@ import '../models/user_model.dart';
 import '../models/order_model.dart';
 import '../models/cart_model.dart';
 import '../models/category_model.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -653,6 +655,17 @@ class FirebaseService {
     // Any cleanup operations if needed
   }
   
+  static Future<String> uploadProductImage(File imageFile) async {
+    try {
+      final storageRef = FirebaseStorage.instance.ref().child('product_images/${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}');
+      final uploadTask = storageRef.putFile(imageFile);
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Failed to upload image: $e');
+    }
+  }
 }
 class CartService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

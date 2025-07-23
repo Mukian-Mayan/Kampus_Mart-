@@ -36,10 +36,15 @@ class _ProductCardState extends State<ProductCard> {
                     borderRadius: BorderRadius.circular(12),
                     child: AspectRatio(
                       aspectRatio: 1.2,
-                      child: Image.asset(
-                        widget.product.imageUrl,
-                        fit: BoxFit.cover,
-                      ),
+                      child: widget.product.imageUrl.startsWith('http')
+                          ? Image.network(
+                              widget.product.imageUrl,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.asset(
+                              widget.product.imageUrl,
+                              fit: BoxFit.cover,
+                            ),
                     ),
                   ),
                   Positioned(

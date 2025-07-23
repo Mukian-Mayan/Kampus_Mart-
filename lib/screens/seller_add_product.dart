@@ -5,9 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../Theme/app_theme.dart';
 import '../widgets/continue_button.dart';
+import '../services/firebase_service.dart';
+import 'package:flutter/foundation.dart';
 
 class SellerAddProductScreen extends StatefulWidget {
   static const String routeName = '/AddProduct';
@@ -21,7 +22,6 @@ class SellerAddProductScreen extends StatefulWidget {
 class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
   // Firebase and Supabase instances
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final SupabaseClient _supabase = Supabase.instance.client;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   final _formKey = GlobalKey<FormState>();
@@ -114,64 +114,6 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
     }
   }
 
-  // Upload images to Supabase Storage
-  Future<List<String>> _uploadImagesToSupabase(String userId) async {
-    List<String> imageUrls = [];
-    
-    if (_productImages.isEmpty) {
-      return imageUrls;
-    }
-
-    print('Uploading ${_productImages.length} images to Supabase...');
-    
-    for (int i = 0; i < _productImages.length; i++) {
-      try {
-        // Create unique filename
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fileName = 'products/$userId/${timestamp}_$i.jpg';
-        
-        // Read file as bytes
-        final bytes = await _productImages[i].readAsBytes();
-        
-        print('Uploading image $i: $fileName');
-        
-        // Upload to Supabase Storage
-        final response = await _supabase.storage
-            .from('product-images')
-            .uploadBinary(
-              fileName, 
-              bytes,
-              fileOptions: const FileOptions(
-                contentType: 'image/jpeg',
-                upsert: true, // Allow overwrite if file exists
-              ),
-            );
-        
-        print('Upload response for image $i: $response');
-        
-        // Get public URL
-        final publicUrl = _supabase.storage
-            .from('product-images')
-            .getPublicUrl(fileName);
-        
-        imageUrls.add(publicUrl);
-        print('Image $i uploaded successfully: $publicUrl');
-        
-      } catch (e) {
-        print('Error uploading image $i to Supabase: $e');
-        
-        // Handle specific Supabase errors
-        if (e.toString().contains('403') || e.toString().contains('policy')) {
-          throw Exception('Storage permission denied. Please check Supabase bucket policies.');
-        }
-        
-        // Continue with other images even if one fails
-      }
-    }
-    
-    return imageUrls;
-  }
-
   // Main product submission method
   void _submitProduct() async {
     if (_formKey.currentState!.validate()) {
@@ -203,7 +145,7 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
           throw Exception('User not authenticated');
         }
 
-        print('Current user: ${currentUser.uid}');
+        print('Current user:  [38;5;2m${currentUser.uid} [0m');
 
         // Verify user is a seller
         final roleDoc = await _firestore
@@ -224,21 +166,13 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
 
         print('User verified as seller');
 
-        // Upload images to Supabase
+        // Upload images to Firebase Storage and get URLs
         List<String> imageUrls = [];
-        try {
-          imageUrls = await _uploadImagesToSupabase(currentUser.uid);
-          print('Successfully uploaded ${imageUrls.length} images');
-        } catch (e) {
-          print('Image upload failed: $e');
-          
-          // Check if it's a permission error
-          if (e.toString().contains('policy') || e.toString().contains('403')) {
-            throw Exception('Image upload failed: Storage permission denied. Please contact support.');
+        if (_productImages.isNotEmpty) {
+          for (File image in _productImages) {
+            final url = await FirebaseService.uploadProductImage(image);
+            imageUrls.add(url);
           }
-          
-          // For other errors, continue without images
-          print('Continuing product creation without images...');
         }
 
         // Create price and discount string
@@ -1095,7 +1029,9 @@ bool _validateCurrentStep() {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
                                 image: DecorationImage(
-                                  image: FileImage(_productImages[index]),
+                                  image: kIsWeb
+                                      ? NetworkImage(_productImages[index].path)
+                                      : FileImage(_productImages[index]) as ImageProvider,
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -1241,12 +1177,9 @@ bool _validateCurrentStep() {
                       itemBuilder: (context, index) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: Image.file(
-                            _productImages[index],
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                          ),
+                          child: kIsWeb
+                              ? Image.network(_productImages[index].path, fit: BoxFit.cover)
+                              : Image.file(_productImages[index], fit: BoxFit.cover),
                         );
                       },
                     ),

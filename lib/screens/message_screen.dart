@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import '../Theme/app_theme.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -38,7 +37,6 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
   final ScrollController _scrollController = ScrollController();
   final ChatService _chatService = ChatService();
   final ImagePicker _imagePicker = ImagePicker();
-  final SupabaseClient _supabase = Supabase.instance.client;
   bool _isLoading = false;
   bool _isTyping = false;
   String? _currentUserId;
@@ -75,30 +73,6 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
-    }
-  }
-
-  Future<String?> _uploadImageToSupabase(File imageFile) async {
-    try {
-      final fileName = 'chat_images/${DateTime.now().millisecondsSinceEpoch}_${widget.chatRoomId}_${_currentUserId}.jpg';
-      
-      final response = await _supabase.storage
-          .from('chat-images')
-          .upload(fileName, imageFile);
-
-      if (response.isEmpty) {
-        throw Exception('Failed to upload image to Supabase');
-      }
-
-      // Get public URL
-      final imageUrl = _supabase.storage
-          .from('chat-images')
-          .getPublicUrl(fileName);
-
-      return imageUrl;
-    } catch (e) {
-      print('Error uploading image: $e');
-      return null;
     }
   }
 
@@ -145,18 +119,17 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
         _isLoading = true;
       });
 
-      // Upload image to Supabase Storage
-      final imageFile = File(image.path);
-      final imageUrl = await _uploadImageToSupabase(imageFile);
-
-      if (imageUrl == null) {
-        throw Exception('Failed to upload image');
-      }
+      // TODO: Upload image to Firebase Storage here and get the imageUrl
+      // final imageFile = File(image.path);
+      // final imageUrl = await FirebaseService.uploadProductImage(imageFile);
+      // if (imageUrl == null) {
+      //   throw Exception('Failed to upload image');
+      // }
 
       // Send message with image URL using the service method
       await _chatService.sendImageMessage(
         chatRoomId: widget.chatRoomId,
-        imageUrl: imageUrl,
+        imageUrl: image.path, // Assuming image.path is the URL for now
         caption: 'Photo',
         receiverId: widget.otherParticipantId,
       );
