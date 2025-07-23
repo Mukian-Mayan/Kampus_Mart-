@@ -1,9 +1,10 @@
-// Fixed lib/services/product_service.dart
+// Complete lib/services/product_service.dart
 // ignore_for_file: avoid_print
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
+import 'category_service.dart'; // Import the CategoryService
 
 class ProductService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -58,6 +59,7 @@ class ProductService {
         'imageUrls': imageUrls ?? [imageUrl],
         'bestOffer': bestOffer,
         'category': category,
+        'categoryId': category, // For compatibility with category service
         'price': price,
         'stock': stock ?? 0,
         'sellerId': user.uid,
@@ -74,11 +76,49 @@ class ProductService {
 
       final docRef = await _firestore.collection('products').add(productData);
       
+      // Update category product count if categoryId exists
+      if (category != null && category.isNotEmpty) {
+        await CategoryService.incrementCategoryProductCount(category);
+      }
+      
       print('Product created with ID: ${docRef.id}');
       return docRef.id;
     } catch (e) {
       print('Error creating product: $e');
       throw Exception('Failed to create product: $e');
+    }
+  }
+
+  /// Add a new product and update category count (alternative method from first version)
+  static Future<String> addProduct(Map<String, dynamic> productData) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Add seller ID and timestamps
+      productData['sellerId'] = user.uid;
+      productData['createdAt'] = FieldValue.serverTimestamp();
+      productData['updatedAt'] = FieldValue.serverTimestamp();
+      productData['isActive'] = true;
+
+      // Add the product
+      final DocumentReference productRef = await _firestore
+          .collection('products')
+          .add(productData);
+
+      // Update category product count if categoryId exists
+      final String? categoryId = productData['categoryId'] as String?;
+      if (categoryId != null && categoryId.isNotEmpty) {
+        await CategoryService.incrementCategoryProductCount(categoryId);
+      }
+
+      print('Successfully added product ${productRef.id} and updated category count');
+      return productRef.id;
+    } catch (e) {
+      print('Error adding product: $e');
+      throw e;
     }
   }
 
@@ -240,7 +280,10 @@ class ProductService {
       if (imageUrl != null) updateData['imageUrl'] = imageUrl;
       if (imageUrls != null) updateData['imageUrls'] = imageUrls;
       if (bestOffer != null) updateData['bestOffer'] = bestOffer;
-      if (category != null) updateData['category'] = category;
+      if (category != null) {
+        updateData['category'] = category;
+        updateData['categoryId'] = category; // For compatibility
+      }
       if (price != null) updateData['price'] = price;
       if (stock != null) updateData['stock'] = stock;
 
@@ -248,6 +291,50 @@ class ProductService {
     } catch (e) {
       print('Error updating product: $e');
       throw Exception('Failed to update product: $e');
+    }
+  }
+
+  /// Update product category and adjust counts accordingly
+  static Future<void> updateProductCategory(String productId, String newCategoryId) async {
+    try {
+      // Get current product data
+      final DocumentSnapshot productDoc = await _firestore
+          .collection('products')
+          .doc(productId)
+          .get();
+
+      if (!productDoc.exists) {
+        throw Exception('Product not found');
+      }
+
+      final productData = productDoc.data() as Map<String, dynamic>;
+      final String? oldCategoryId = productData['categoryId'] as String?;
+      final bool isActive = productData['isActive'] as bool? ?? true;
+
+      // Only proceed if the category is actually changing and product is active
+      if (oldCategoryId != newCategoryId && isActive) {
+        // Update the product
+        await _firestore.collection('products').doc(productId).update({
+          'categoryId': newCategoryId,
+          'category': newCategoryId, // For compatibility
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        // Decrement old category count
+        if (oldCategoryId != null && oldCategoryId.isNotEmpty) {
+          await CategoryService.decrementCategoryProductCount(oldCategoryId);
+        }
+
+        // Increment new category count
+        if (newCategoryId.isNotEmpty) {
+          await CategoryService.incrementCategoryProductCount(newCategoryId);
+        }
+
+        print('Successfully moved product $productId from category $oldCategoryId to $newCategoryId');
+      }
+    } catch (e) {
+      print('Error updating product category: $e');
+      throw e;
     }
   }
 
@@ -274,15 +361,58 @@ class ProductService {
         throw Exception('Not authorized to delete this product');
       }
 
+      final String? categoryId = productData['categoryId'] as String?;
+
       // Soft delete by setting isActive to false
       await _firestore.collection('products').doc(productId).update({
         'isActive': false,
         'deletedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // Update category product count if categoryId exists
+      if (categoryId != null && categoryId.isNotEmpty) {
+        await CategoryService.decrementCategoryProductCount(categoryId);
+      }
+
+      print('Successfully deleted product $productId and updated category count');
     } catch (e) {
       print('Error deleting product: $e');
       throw Exception('Failed to delete product: $e');
+    }
+  }
+
+  /// Soft delete a product (mark as inactive) and update category count
+  static Future<void> softDeleteProduct(String productId) async {
+    try {
+      // First, get the product to find its categoryId
+      final DocumentSnapshot productDoc = await _firestore
+          .collection('products')
+          .doc(productId)
+          .get();
+
+      if (!productDoc.exists) {
+        throw Exception('Product not found');
+      }
+
+      final productData = productDoc.data() as Map<String, dynamic>;
+      final String? categoryId = productData['categoryId'] as String?;
+
+      // Mark product as inactive
+      await _firestore.collection('products').doc(productId).update({
+        'isActive': false,
+        'deletedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Update category product count if categoryId exists
+      if (categoryId != null && categoryId.isNotEmpty) {
+        await CategoryService.decrementCategoryProductCount(categoryId);
+      }
+
+      print('Successfully soft deleted product $productId and updated category count');
+    } catch (e) {
+      print('Error soft deleting product: $e');
+      throw e;
     }
   }
 
@@ -309,10 +439,100 @@ class ProductService {
         throw Exception('Not authorized to delete this product');
       }
 
+      final String? categoryId = productData['categoryId'] as String?;
+
       await _firestore.collection('products').doc(productId).delete();
+
+      // Update category product count if categoryId exists
+      if (categoryId != null && categoryId.isNotEmpty) {
+        await CategoryService.decrementCategoryProductCount(categoryId);
+      }
+
+      print('Successfully permanently deleted product $productId and updated category count');
     } catch (e) {
       print('Error permanently deleting product: $e');
       throw Exception('Failed to permanently delete product: $e');
+    }
+  }
+
+  /// Restore a soft-deleted product and update category count
+  static Future<void> restoreProduct(String productId) async {
+    try {
+      // Get the product to find its categoryId
+      final DocumentSnapshot productDoc = await _firestore
+          .collection('products')
+          .doc(productId)
+          .get();
+
+      if (!productDoc.exists) {
+        throw Exception('Product not found');
+      }
+
+      final productData = productDoc.data() as Map<String, dynamic>;
+      final String? categoryId = productData['categoryId'] as String?;
+
+      // Restore product
+      await _firestore.collection('products').doc(productId).update({
+        'isActive': true,
+        'deletedAt': FieldValue.delete(),
+        'restoredAt': FieldValue.serverTimestamp(),
+      });
+
+      // Update category product count if categoryId exists
+      if (categoryId != null && categoryId.isNotEmpty) {
+        await CategoryService.incrementCategoryProductCount(categoryId);
+      }
+
+      print('Successfully restored product $productId and updated category count');
+    } catch (e) {
+      print('Error restoring product: $e');
+      throw e;
+    }
+  }
+
+  /// Batch delete multiple products and update category counts
+  static Future<void> batchDeleteProducts(List<String> productIds) async {
+    try {
+      final WriteBatch batch = _firestore.batch();
+      final Map<String, int> categoryDecrements = {};
+
+      // Process each product
+      for (final productId in productIds) {
+        final DocumentSnapshot productDoc = await _firestore
+            .collection('products')
+            .doc(productId)
+            .get();
+
+        if (productDoc.exists) {
+          final productData = productDoc.data() as Map<String, dynamic>;
+          final String? categoryId = productData['categoryId'] as String?;
+
+          // Add deletion to batch
+          batch.delete(_firestore.collection('products').doc(productId));
+
+          // Track category decrements
+          if (categoryId != null && categoryId.isNotEmpty) {
+            categoryDecrements[categoryId] = (categoryDecrements[categoryId] ?? 0) + 1;
+          }
+        }
+      }
+
+      // Execute batch delete
+      await batch.commit();
+
+      // Update category counts
+      for (final entry in categoryDecrements.entries) {
+        final categoryId = entry.key;
+        final decrementAmount = entry.value;
+        
+        // Get current count and calculate new count
+        await CategoryService.updateCategoryProductCount(categoryId);
+      }
+
+      print('Successfully batch deleted ${productIds.length} products and updated category counts');
+    } catch (e) {
+      print('Error batch deleting products: $e');
+      throw e;
     }
   }
 
@@ -583,6 +803,26 @@ class ProductService {
     }
   }
 
+  /// Get products by seller with real-time updates
+  static Stream<QuerySnapshot> getSellerProductsStream(String sellerId) {
+    return _firestore
+        .collection('products')
+        .where('sellerId', isEqualTo: sellerId)
+        .where('isActive', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  /// Get products by category with real-time updates
+  static Stream<QuerySnapshot> getCategoryProductsStream(String categoryId) {
+    return _firestore
+        .collection('products')
+        .where('categoryId', isEqualTo: categoryId)
+        .where('isActive', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
   // Stream products (for real-time updates)
   static Stream<List<Product>> streamProducts() {
     return _firestore
@@ -613,5 +853,4 @@ class ProductService {
       }).toList();
     });
   }
-  
 }

@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use, unused_import, duplicate_import
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/models/user_role.dart';
@@ -233,7 +234,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    const NotificationsScreen(userRole: UserRole.buyer, userId: '',),
+                    NotificationsScreen(userRole: UserRole.buyer, userId: FirebaseAuth.instance.currentUser?.uid ?? '',),
               ),
             ),
           ),

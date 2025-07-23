@@ -322,7 +322,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NotificationsScreen(userRole: UserRole.seller, userId: '',),
+                builder: (context) => NotificationsScreen(userRole: UserRole.seller, userId: FirebaseAuth.instance.currentUser?.uid ?? '',),
               ),
             ),
           ),
@@ -1116,5 +1116,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
         );
       },
     );
+    
   }
+  
 }

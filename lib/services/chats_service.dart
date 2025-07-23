@@ -3,6 +3,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/chat_models.dart' ;
 import '../services/supabase_storage_service.dart';
@@ -12,7 +13,7 @@ import '../models/user_role.dart';// Only hide what you need// Fixed typo: notif
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final SupabaseStorageService _storageService = SupabaseStorageService();
+  final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
   final NotificationService _notificationService = NotificationService();
 
   // Get current user
@@ -347,7 +348,7 @@ Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) 
       
       for (int i = 0; i < images.length; i++) {
         String fileName = 'chat_images/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}_$i';
-        String imageUrl = await SupabaseStorageService.uploadChatImage(images[i], fileName);
+        String imageUrl = await _uploadFileToStorage(images[i], fileName);
         imageUrls.add(imageUrl);
       }
       
@@ -377,6 +378,25 @@ Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) 
       throw Exception('Failed to send image message: $e');
     }
   }
+  Future<String> _uploadFileToStorage(XFile file, String storagePath) async {
+    try {
+      // Create a reference to the file location
+      Reference storageRef = _firebaseStorage.ref().child(storagePath);
+      
+      // Upload the file
+      TaskSnapshot uploadTask = await storageRef.putData(
+        await file.readAsBytes(),
+        SettableMetadata(contentType: 'image/jpeg'), // Adjust content type as needed
+      );
+      
+      // Get the download URL
+      String downloadUrl = await uploadTask.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Failed to upload file: $e');
+    }
+  }
+
 
   // Send image message with file upload
   Future<void> sendImageMessageWithFile({
@@ -387,7 +407,7 @@ Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) 
   }) async {
     try {
       // Upload image to storage
-      String imageUrl = await SupabaseStorageService.uploadChatImage(
+      String imageUrl = await _uploadFileToStorage(
         imageFile,
         'chat_images/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}',
       );
@@ -445,8 +465,8 @@ Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) 
   }) async {
     try {
       // Upload voice file to storage
-      String voiceUrl = await _storageService.uploadVoiceMessage(
-        voiceFilePath,
+      String voiceUrl = await _uploadFileToStorage(
+        XFile(voiceFilePath),
         'voice_messages/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}',
       );
 
@@ -473,7 +493,7 @@ Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) 
   }) async {
     try {
       // Upload file to storage
-      String fileUrl = await _storageService.uploadChatFile(
+      String fileUrl = await _uploadFileToStorage(
         file,
         'chat_files/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}',
       );

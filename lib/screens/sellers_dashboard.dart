@@ -219,7 +219,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    NotificationsScreen(userRole: UserRole.seller, userId: '',),
+                    NotificationsScreen(userRole: UserRole.seller, userId: FirebaseAuth.instance.currentUser?.uid ?? '',),
               ),
             ),
           ),
