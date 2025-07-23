@@ -41,6 +41,9 @@ const db = admin.firestore();
 // ============================================
 
 // Update category product count when a product is created
+// Enhanced product count management functions
+
+// Update category product count when a product is created
 exports.onProductCreate = functions
     .firestore
     .document("products/{productId}")
@@ -49,7 +52,7 @@ exports.onProductCreate = functions
         const productData = snap.data();
         const categoryId = productData.categoryId;
 
-        if (categoryId && productData.isActive) {
+        if (categoryId) {
           await db.collection("categories").doc(categoryId).update({
             productCount: admin.firestore.FieldValue.increment(1),
           });
@@ -70,7 +73,7 @@ exports.onProductDelete = functions
         const productData = snap.data();
         const categoryId = productData.categoryId;
 
-        if (categoryId && productData.isActive) {
+        if (categoryId) {
           const categoryRef = db.collection("categories").doc(categoryId);
           const categoryDoc = await categoryRef.get();
 
@@ -91,6 +94,53 @@ exports.onProductDelete = functions
       }
     });
 
+// Function to manually fix product counts if they get out of sync
+exports.fixProductCounts = functions.https.onCall(async (data, context) => {
+  try {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
+    }
+
+    const batch = db.batch();
+    const categoriesSnapshot = await db.collection("categories").get();
+    const fixes = [];
+
+    for (const categoryDoc of categoriesSnapshot.docs) {
+      const categoryId = categoryDoc.id;
+      const categoryData = categoryDoc.data();
+      const storedCount = categoryData.productCount || 0;
+
+      // Count actual products in this category
+      const productsSnapshot = await db.collection("products")
+          .where("categoryId", "==", categoryId)
+          .get();
+
+      const actualCount = productsSnapshot.size;
+
+      if (storedCount !== actualCount) {
+        batch.update(categoryDoc.ref, { productCount: actualCount });
+        fixes.push({
+          categoryId,
+          oldCount: storedCount,
+          newCount: actualCount,
+        });
+
+        logger.info(`Fixed category ${categoryId}: ${storedCount} -> ${actualCount}`);
+      }
+    }
+
+    await batch.commit();
+
+    return {
+      success: true,
+      message: `Fixed ${fixes.length} categories`,
+      fixes: fixes,
+    };
+  } catch (error) {
+    logger.error("Error fixing product counts:", error);
+    throw new functions.https.HttpsError("internal", "Failed to fix product counts");
+  }
+});
 // Update category product count when a product is updated
 exports.onProductUpdate = functions
     .firestore
