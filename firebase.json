@@ -32,12 +32,8 @@
         "firebase-debug.log",
         "firebase-debug.*.log",
         "*.local"
-<<<<<<< HEAD
-=======
       ],
       "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint"
->>>>>>> daf68ec06ef66c19e94d8ddb4afbc392450eb26d
       ]
     }
   ]

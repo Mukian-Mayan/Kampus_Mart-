@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print, unused_import
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/seller.dart';
 import '../models/sales_data.dart' hide Seller;
@@ -63,6 +64,21 @@ class SaleService {
       throw e; // Re-throw to let the calling code handle it
     }
   }
+  // Add this method to your SaleService class in sales_service.dart
+
+// Fix product counts for all categories
+static Future<bool> fixProductCounts() async {
+  try {
+    final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('fixProductCounts');
+    final result = await callable.call();
+    
+    print('Product counts fixed: ${result.data}');
+    return result.data['success'] == true;
+  } catch (e) {
+    print('Error fixing product counts: $e');
+    return false;
+  }
+}
 
   // Get seller by ID
   static Future<Seller?> getSellerById(String sellerId) async {

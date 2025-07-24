@@ -444,7 +444,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   ProductDetailsPage.cart.add(widget.product);
                                   // Send notification
                                   NotificationService.sendCartReminder(
-                                      userId: 'current_user_id', // Pass the actual user ID
+                                      userId: FirebaseAuth.instance.currentUser?.uid ?? "", // Pass the actual user ID
                                       itemCount: ProductDetailsPage.cart.length,
           );
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -489,11 +489,22 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {
+                                final currentUser = FirebaseAuth.instance.currentUser;
+                                if (currentUser == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Please log in to chat')),
+                                   );
+                                return;
+                                }
+
+                                 // Generate chat room ID (sorted to ensure consistency)
+                                final participants = [currentUser.uid, widget.product.ownerId]..sort();
+                                final chatRoomId = participants.join('_');
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => MessageScreen(
-                                      userName: widget.product.ownerId, chatRoomId: '', otherParticipantName: '', otherParticipantId: '', productName: '',
+                                      userName: widget.product.ownerId, chatRoomId: chatRoomId, otherParticipantName: widget.product.ownerId, otherParticipantId: widget.product.ownerId, productName: widget.product.name,
                                     ),
                                   ),
                                 );

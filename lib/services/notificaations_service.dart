@@ -35,7 +35,7 @@ class NotificationService {
   };
 
   // Send notification to Firebase
-  static Future<bool> sendNotification({
+ static Future<bool> sendNotification({
   required String userId,
   required String title,
   required String message,
@@ -45,32 +45,56 @@ class NotificationService {
   Map<String, dynamic>? additionalData,
 }) async {
   try {
+    // Validate userId - don't allow placeholder values
+    if (userId.isEmpty || userId == "current_user_id" || userId == "placeholder") {
+      debugPrint('❌ Invalid userId provided: $userId');
+      return false;
+    }
+
+    // Validate required fields
+    if (title.isEmpty || message.isEmpty) {
+      debugPrint('❌ Title or message is empty');
+      return false;
+    }
+
     final notificationId = _uuid.v4();
+    final typeString = _getTypeString(type);
+    final userRoleString = userRole.toString().split('.').last;
+    
     final notificationData = {
       'id': notificationId,
       'userId': userId,
       'title': title,
       'message': message,
-      'type': _getTypeString(type),
-      'userRole': userRole.toString().split('.').last,
+      'type': typeString,
+      'userRole': userRoleString,
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
-      'orderId': orderId ?? '', // Handle null orderId
-      'additionalData': additionalData ?? {}, // Handle null additionalData
+      'orderId': orderId ?? '',
+      'additionalData': additionalData ?? {},
     };
+
+    // Debug log what we're about to save
+    debugPrint('📝 Creating notification:');
+    debugPrint('   userId: $userId');
+    debugPrint('   userRole: $userRoleString');
+    debugPrint('   type: $typeString');
+    debugPrint('   title: $title');
 
     await FirebaseFirestore.instance
         .collection(_collection)
         .doc(notificationId)
-        .set(notificationData, SetOptions(merge: true)); // Use merge option
+        .set(notificationData, SetOptions(merge: true));
     
+    debugPrint('✅ Notification created successfully: $notificationId');
     return true;
   } catch (e, stackTrace) {
-    debugPrint('Error sending notification: $e');
+    debugPrint('❌ Error sending notification: $e');
     debugPrint('Stack trace: $stackTrace');
     return false;
   }
 }
+
 
   // Get user notifications stream from Firebase
   static Stream<List<NotificationModel>> getUserNotificationsStream({
@@ -115,6 +139,71 @@ class NotificationService {
       return [];
     }
   }
+  // Add this method to your NotificationService for one-time cleanup
+static Future<void> cleanupPlaceholderNotifications() async {
+  try {
+    debugPrint('🧹 Starting cleanup of placeholder notifications...');
+    
+    // Get all notifications with placeholder userId
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? "")
+        .get();
+    
+    debugPrint('Found ${querySnapshot.docs.length} placeholder notifications');
+    
+    // Delete them in batches
+    final batch = FirebaseFirestore.instance.batch();
+    for (var doc in querySnapshot.docs) {
+      batch.delete(doc.reference);
+      debugPrint('Marking for deletion: ${doc.id}');
+    }
+    
+    await batch.commit();
+    debugPrint('✅ Cleanup completed - deleted ${querySnapshot.docs.length} placeholder notifications');
+    
+  } catch (e) {
+    debugPrint('❌ Error during cleanup: $e');
+  }
+}
+
+// Call this method once from your app initialization or debug screen
+// NotificationService.cleanupPlaceholderNotifications();
+
+// Alternative: Fix existing notifications by updating them with correct userIds
+static Future<void> fixExistingNotifications(String correctUserId) async {
+  try {
+    debugPrint('🔧 Fixing notifications for user: $correctUserId');
+    
+    // Get placeholder notifications
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? "")
+        .get();
+    
+    final batch = FirebaseFirestore.instance.batch();
+    
+    for (var doc in querySnapshot.docs) {
+      final data = doc.data();
+      
+      // Fix the userId and any malformed type strings
+      String fixedType = data['type'];
+      if (fixedType == 'ayment') fixedType = 'payment';
+      if (fixedType == 'art_reminder') fixedType = 'cart_reminder';
+      
+      batch.update(doc.reference, {
+        'userId': correctUserId,
+        'type': fixedType,
+      });
+    }
+    
+    await batch.commit();
+    debugPrint('✅ Fixed ${querySnapshot.docs.length} notifications');
+    
+  } catch (e) {
+    debugPrint('❌ Error fixing notifications: $e');
+  }
+}
   
 
   // Mark notification as read
@@ -167,7 +256,7 @@ class NotificationService {
   }
 
   // Get unread count
-  static Future<int> getUnreadCount(String userId, UserRole userRole) async {
+  static Future<int> getUnreadCount( userId, UserRole userRole) async {
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection(_collection)
@@ -295,20 +384,31 @@ class NotificationService {
     );
   }
 
-  static Future<void> sendPaymentSuccess({
-    required String userId,
-    required String orderId,
-    required double amount,
-  }) async {
-    await sendNotification(
-      userId: userId,
-      title: 'Payment Successful',
-      message: 'Payment of UGX ${amount.toStringAsFixed(0)} for order #$orderId was successful',
-      type: NotificationType.payment,
-      userRole: UserRole.buyer,
-      orderId: orderId,
-    );
+ static Future<void> sendPaymentSuccess({
+  required String userId,
+  required String orderId,
+  required double amount,
+}) async {
+  // Validate userId before sending
+  if (userId.isEmpty || userId == "current_user_id") {
+    debugPrint('❌ Cannot send payment notification - invalid userId: $userId');
+    return;
   }
+
+  final success = await sendNotification(
+    userId: userId,
+    title: 'Payment Successful',
+    message: 'Payment of UGX ${amount.toStringAsFixed(0)} for order #$orderId was successful',
+    type: NotificationType.payment,
+    userRole: UserRole.buyer,
+    orderId: orderId,
+  );
+
+  if (!success) {
+    debugPrint('❌ Failed to send payment success notification');
+  }
+}
+
 
   static Future<void> sendCartReminder({
     required String userId,

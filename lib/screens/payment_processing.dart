@@ -341,7 +341,7 @@ class PaymentProcessingScreen extends StatelessWidget {
 
     // Simulate payment processing
     NotificationService.sendPaymentSuccess(
-  userId: 'current_user_id', // You need to pass the actual user ID here
+  userId: FirebaseAuth.instance.currentUser?.uid ?? "", // You need to pass the actual user ID here
   orderId: 'order_id', // Pass the actual order ID if available
   amount: totalAmount,
 );
