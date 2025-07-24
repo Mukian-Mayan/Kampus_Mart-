@@ -59,19 +59,22 @@ class _ChatsScreenState extends State<ChatsScreen> {
     });
   }
 
-  List<ChatRoom> _filterChatRooms(List<ChatRoom> chatRooms) {
-    if (_searchQuery.isEmpty) {
-      return chatRooms;
-    }
-    return chatRooms.where((chat) {
-      String otherParticipantName = 
-      _chatService.getOtherParticipantName(_currentUserId!) as String;
-      return otherParticipantName.toLowerCase().contains(_searchQuery) ||
-          chat.productName.toLowerCase().contains(_searchQuery) ||
-          chat.lastMessage.toLowerCase().contains(_searchQuery);
-    }).toList();
-  }
+  // Replace the _filterChatRooms method in chats_screen.dart
 
+List<ChatRoom> _filterChatRooms(List<ChatRoom> chatRooms) {
+  if (_searchQuery.isEmpty) {
+    return chatRooms;
+  }
+  return chatRooms.where((chat) {
+    // Get the other participant's name directly from the chat room data
+    bool isCurrentUserSeller = chat.sellerId == _currentUserId;
+    String otherParticipantName = isCurrentUserSeller ? chat.buyerName : chat.sellerName;
+    
+    return otherParticipantName.toLowerCase().contains(_searchQuery) ||
+        chat.productName.toLowerCase().contains(_searchQuery) ||
+        chat.lastMessage.toLowerCase().contains(_searchQuery);
+  }).toList();
+}
   void _onTab(int index) {
     if (selectedIndex != index) {
       setState(() {
@@ -255,6 +258,8 @@ bottomNavigationBar: widget.userRole == UserRole.seller
 
                     List<ChatRoom> chatRooms = snapshot.data ?? [];
                     List<ChatRoom> filteredChatRooms = _filterChatRooms(chatRooms);
+                    _debugChatRooms(chatRooms);
+
 
                     if (filteredChatRooms.isEmpty) {
                       return Center(
@@ -553,6 +558,30 @@ Widget _buildChatItem(ChatRoom chat) {
       ),
     );
   }
+  void _debugChatRooms(List<ChatRoom> chatRooms) {
+  print('=== CHAT ROOMS DEBUG ===');
+  print('Current User ID: $_currentUserId');
+  print('Total Chat Rooms: ${chatRooms.length}');
+  
+  for (var chat in chatRooms) {
+    print('--- Chat Room: ${chat.id} ---');
+    print('Seller ID: ${chat.sellerId}');
+    print('Buyer ID: ${chat.buyerId}');
+    print('Seller Name: ${chat.sellerName}');
+    print('Buyer Name: ${chat.buyerName}');
+    print('Product: ${chat.productName}');
+    print('Last Message: ${chat.lastMessage}');
+    print('Last Message Time: ${chat.lastMessageTime}');
+    print('Last Message Sender: ${chat.lastMessageSenderId}');
+    print('Unread Count Seller: ${chat.unreadCountSeller}');
+    print('Unread Count Buyer: ${chat.unreadCountBuyer}');
+    print('Participants: ${chat.participants}');
+    print('Is Current User Seller: ${chat.sellerId == _currentUserId}');
+    print('');
+  }
+  print('=== END DEBUG ===');
+}
+
 
   Widget _buildAuthRequired() {
     return Scaffold(

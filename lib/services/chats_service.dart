@@ -34,90 +34,122 @@ class ChatService {
       throw Exception('Failed to get user profile: $e');
     }
   }
+  // In ChatService
+Future<bool> chatRoomExists(String chatRoomId) async {
+  final doc = await _firestore.collection('chatRooms').doc(chatRoomId).get();
+  return doc.exists;
+}
 
   // Create or get existing chat room with enhanced features
-  Future<String> createOrGetChatRoom({
-    required String sellerId,
-    required String buyerId,
-    required String productId,
-    required String productName,
-    required String productImageUrl,
-    required String productPrice,
-    required String productDescription,
-    required String sellerName,
-    required String buyerName,
-    String? sellerImageUrl,
-    String? buyerImageUrl,
-  }) async {
-    try {
-      // Get user profiles to fetch roles from database
-      UserProfile? sellerProfile = await getUserProfile(sellerId);
-      UserProfile? buyerProfile = await getUserProfile(buyerId);
+  // Replace your createOrGetChatRoom method with this fixed version
+
+Future<String> createOrGetChatRoom({
+  required String sellerId,
+  required String buyerId,
+  required String productId,
+  required String productName,
+  required String productImageUrl,
+  required String productPrice,
+  required String productDescription,
+  required String sellerName,
+  required String buyerName,
+  String? sellerImageUrl,
+  String? buyerImageUrl,
+}) async {
+  try {
+    // Get user profiles to fetch roles from database
+    UserProfile? sellerProfile = await getUserProfile(sellerId);
+    UserProfile? buyerProfile = await getUserProfile(buyerId);
+    
+    // Create chat room ID (consistent for same participants)
+    String chatRoomId = _generateChatRoomId(sellerId, buyerId, productId);
+    
+    print('=== CHAT ROOM CREATION DEBUG ===');
+    print('Chat Room ID: $chatRoomId');
+    print('Seller ID: $sellerId');
+    print('Buyer ID: $buyerId');
+    print('Product ID: $productId');
+    
+    // Check if chat room document already exists in chatRooms collection
+    DocumentSnapshot chatRoomDoc = await _firestore
+        .collection('chatRooms') // Make sure this is 'chatRooms', not 'chatsRooms'
+        .doc(chatRoomId)
+        .get();
+
+    if (!chatRoomDoc.exists) {
+      print('Creating new chat room...');
       
-      // Create chat room ID (consistent for same participants)
-      String chatRoomId = _generateChatRoomId(sellerId, buyerId, productId);
-      
-      // Check if chat room document already exists in chatRooms collection
-      DocumentSnapshot chatRoomDoc = await _firestore
+      // FIXED: Create proper document structure
+      Map<String, dynamic> chatRoomData = {
+        'id': chatRoomId,
+        'sellerId': sellerId,
+        'buyerId': buyerId,
+        'sellerName': sellerName,
+        'buyerName': buyerName,
+        'sellerImageUrl': sellerImageUrl ?? sellerProfile?.imageUrl ?? '',
+        'buyerImageUrl': buyerImageUrl ?? buyerProfile?.imageUrl ?? '',
+        'sellerRole': (sellerProfile?.role ?? UserRole.seller).toString(),
+        'buyerRole': (buyerProfile?.role ?? UserRole.buyer).toString(),
+        'productId': productId,
+        'productName': productName,
+        'productImageUrl': productImageUrl,
+        'productPrice': productPrice,
+        'productDescription': productDescription,
+        'lastMessage': '',
+        'lastMessageTime': Timestamp.now(),
+        'lastMessageSenderId': '',
+        'lastMessageType': MessageType.text.toString(),
+        'unreadCountSeller': 0,
+        'unreadCountBuyer': 0,
+        'isActiveForSeller': true,
+        'isActiveForBuyer': true,
+        'status': ChatRoomStatus.active.toString(),
+        'participants': [sellerId, buyerId], // CRITICAL: This was missing!
+        'blockedBy': [],
+        'isGroupChat': false,
+        'createdAt': Timestamp.now(),
+        'metadata': {
+          'created_by': currentUser?.uid ?? 'Unknown',
+          'chat_type': 'product_inquiry',
+        },
+      };
+
+      print('Chat room data to be saved: $chatRoomData');
+
+      // Save chat room document to Firestore
+      await _firestore
           .collection('chatRooms')
           .doc(chatRoomId)
-          .get();
+          .set(chatRoomData);
 
-      if (!chatRoomDoc.exists) {
-        // Create new chat room document with enhanced features
-        ChatRoom newChatRoom = ChatRoom(
-          id: chatRoomId,
-          sellerId: sellerId,
-          buyerId: buyerId,
-          sellerName: sellerName,
-          buyerName: buyerName,
-          sellerImageUrl: sellerImageUrl ?? sellerProfile?.imageUrl,
-          buyerImageUrl: buyerImageUrl ?? buyerProfile?.imageUrl,
-          sellerRole: sellerProfile?.role ?? UserRole.seller,
-          buyerRole: buyerProfile?.role ?? UserRole.buyer,
-          productId: productId,
-          productName: productName,
-          productImageUrl: productImageUrl,
-          productPrice: productPrice,
-          productDescription: productDescription,
-          lastMessage: '',
-          lastMessageTime: Timestamp.now(),
-          lastMessageSenderId: '',
-          lastMessageType: MessageType.text,
-          unreadCountSeller: 0,
-          unreadCountBuyer: 0,
-          isActiveForSeller: true,
-          isActiveForBuyer: true,
-          status: ChatRoomStatus.active,
-          participants: [sellerId, buyerId],
-          blockedBy: [],
-          isGroupChat: false,
-          createdAt: Timestamp.now(),
-          metadata: {
-            'created_by': currentUser?.uid,
-            'chat_type': 'product_inquiry',
-          },
-        );
+      print('Chat room created successfully!');
 
-        // Save chat room document to Firestore
-        await _firestore
-            .collection('chatRooms')
-            .doc(chatRoomId)
-            .set(newChatRoom.toMap());
-
-        // Send welcome message to messages subcollection
-        await _sendWelcomeMessage(chatRoomId, productName);
-      } else {
-        // Update existing chat room document if needed
-        await _updateChatRoomActivity(chatRoomId);
-      }
-
-      return chatRoomId;
-    } catch (e) {
-      throw Exception('Failed to create/get chat room: $e');
+      // Send welcome message to messages subcollection
+      await _sendWelcomeMessage(chatRoomId, productName);
+    } else {
+      print('Chat room already exists, updating activity...');
+      
+      // CRITICAL: Update existing chat room to ensure it has participants field
+      Map<String, dynamic> updateData = {
+        'participants': [sellerId, buyerId], // Ensure this field exists
+        'lastActivityTime': Timestamp.now(),
+        'isActiveForSeller': true,
+        'isActiveForBuyer': true,
+      };
+      
+      await _firestore
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .update(updateData);
     }
-  }
 
+    print('=== END CHAT ROOM CREATION DEBUG ===');
+    return chatRoomId;
+  } catch (e) {
+    print('ERROR in createOrGetChatRoom: $e');
+    throw Exception('Failed to create/get chat room: $e');
+  }
+}
   // Generate consistent chat room ID
   String _generateChatRoomId(String sellerId, String buyerId, String productId) {
     List<String> participants = [sellerId, buyerId];
@@ -155,6 +187,7 @@ class ChatService {
       print('Error sending welcome message: $e');
     }
   }
+  
 
   // Update chat room document activity
   Future<void> _updateChatRoomActivity(String chatRoomId) async {
@@ -283,6 +316,7 @@ class ChatService {
     } catch (e) {
       print('Error updating chat room last message: $e');
     }
+    
   }
 
   // Send notification to participant
@@ -346,7 +380,7 @@ Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) 
       List<String> imageUrls = [];
       
       for (int i = 0; i < images.length; i++) {
-        String fileName = 'chat_images/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}_$i';
+        String fileName = 'chat-images/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}_$i';
         String imageUrl = await _uploadFileToStorage(images[i], fileName);
         imageUrls.add(imageUrl);
       }
@@ -408,7 +442,7 @@ Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) 
       // Upload image to storage
       String imageUrl = await _uploadFileToStorage(
         imageFile,
-        'chat_images/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}',
+        'chat-images/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}',
       );
 
       // Send message with image
@@ -494,7 +528,7 @@ Future<void> _sendNotificationToParticipant(String chatRoomId, Message message) 
       // Upload file to storage
       String fileUrl = await _uploadFileToStorage(
         file,
-        'chat_files/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}',
+        'chat-files/${chatRoomId}/${DateTime.now().millisecondsSinceEpoch}',
       );
 
       // Send message with file
@@ -966,4 +1000,141 @@ Future<Map<String, dynamic>?> getOtherParticipantDetails(String chatRoomId, Stri
     return null;
   }
 }
+Future<void> debugChatRoomCreation({
+    required String sellerId,
+    required String buyerId,
+    required String productId,
+  }) async {
+    String chatRoomId = _generateChatRoomId(sellerId, buyerId, productId);
+    print('=== CHAT ROOM DEBUG ===');
+    print('Generated Chat Room ID: $chatRoomId');
+    print('Seller ID: $sellerId');
+    print('Buyer ID: $buyerId');
+    print('Product ID: $productId');
+    print('Current User ID: ${currentUser?.uid}');
+    
+    try {
+      DocumentSnapshot doc = await _firestore
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .get();
+      
+      print('Chat room exists: ${doc.exists}');
+      if (doc.exists) {
+        print('Chat room data: ${doc.data()}');
+      }
+    } catch (e) {
+      print('Error checking chat room: $e');
+    }
+    print('=== END DEBUG ===');
+  }
+Future<void> debugMessageSending({
+    required String chatRoomId,
+    required String message,
+    String? receiverId,
+  }) async {
+    print('=== MESSAGE SENDING DEBUG ===');
+    print('Chat Room ID: $chatRoomId');
+    print('Message: $message');
+    print('Receiver ID: $receiverId');
+    print('Current User ID: ${currentUser?.uid}');
+    
+    try {
+      // Check if chat room exists
+      DocumentSnapshot chatRoomDoc = await _firestore
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .get();
+      
+      print('Chat room exists: ${chatRoomDoc.exists}');
+      
+      if (chatRoomDoc.exists) {
+        Map<String, dynamic> chatRoomData = chatRoomDoc.data() as Map<String, dynamic>;
+        print('Chat room participants: ${chatRoomData['participants']}');
+        print('Seller ID: ${chatRoomData['sellerId']}');
+        print('Buyer ID: ${chatRoomData['buyerId']}');
+        
+        // Check if current user is participant
+        List<dynamic> participants = chatRoomData['participants'] ?? [];
+        bool isParticipant = participants.contains(currentUser?.uid);
+        print('Current user is participant: $isParticipant');
+        
+        // Check receiver ID logic
+        String determinedReceiverId = currentUser!.uid == chatRoomData['sellerId'] 
+            ? chatRoomData['buyerId'] 
+            : chatRoomData['sellerId'];
+        print('Determined receiver ID: $determinedReceiverId');
+      }
+      
+      // Check messages collection
+      QuerySnapshot messagesSnapshot = await _firestore
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
+          .limit(5)
+          .get();
+      
+      print('Recent messages count: ${messagesSnapshot.docs.length}');
+      for (var doc in messagesSnapshot.docs) {
+        Map<String, dynamic> messageData = doc.data() as Map<String, dynamic>;
+        print('Message: ${messageData['message']} from ${messageData['senderId']}');
+      }
+      
+    } catch (e) {
+      print('Error in debug: $e');
+    }
+    print('=== END MESSAGE DEBUG ===');
+  }
+  Future<void> debugUserPermissions() async {
+    print('=== USER PERMISSIONS DEBUG ===');
+    print('Current User: ${currentUser?.uid}');
+    print('Current User Email: ${currentUser?.email}');
+    
+    if (currentUser != null) {
+      try {
+        UserProfile? profile = await getUserProfile(currentUser!.uid);
+        print('User Profile: ${profile?.toMap()}');
+      } catch (e) {
+        print('Error getting user profile: $e');
+      }
+    }
+    print('=== END USER PERMISSIONS DEBUG ===');
+  }
+
+  // Fixed method to get chat rooms with better error handling
+  Stream<List<ChatRoom>> getChatRoomsStreamDebug() {
+    if (currentUser == null) {
+      print('DEBUG: No current user found');
+      return Stream.value([]);
+    }
+
+    print('DEBUG: Getting chat rooms for user: ${currentUser!.uid}');
+    
+    return _firestore
+        .collection('chatRooms')
+        .where('participants', arrayContains: currentUser!.uid)
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      print('DEBUG: Found ${snapshot.docs.length} chat rooms');
+      
+      return snapshot.docs.map((doc) {
+        try {
+          Map<String, dynamic> data = doc.data();
+          print('DEBUG: Processing chat room: ${doc.id}');
+          print('DEBUG: Chat room data: $data');
+          return ChatRoom.fromMap(data);
+        } catch (e) {
+          print('DEBUG: Error processing chat room ${doc.id}: $e');
+          return null;
+        }
+      }).where((chatRoom) => chatRoom != null).cast<ChatRoom>().toList();
+    }).handleError((error) {
+      print('DEBUG: Stream error: $error');
+      return <ChatRoom>[];
+    });
+  }
+
+
 }

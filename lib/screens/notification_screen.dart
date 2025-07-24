@@ -1,4 +1,4 @@
-// Enhanced NotificationsScreen with proper parameter validation
+// Enhanced NotificationsScreen with proper parameter validation and debugging
 // ignore_for_file: deprecated_member_use
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -31,6 +31,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String? _currentUserId;
   UserRole? _currentUserRole;
   bool _isLoading = true;
+  String? _debugInfo;
 
   @override
   void initState() {
@@ -40,9 +41,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _initializeUserData() async {
     try {
+      setState(() {
+        _debugInfo = "Initializing user data...";
+      });
+
       // Get userId - prioritize widget parameter, fallback to Firebase Auth
       _currentUserId = widget.userId ?? FirebaseAuth.instance.currentUser?.uid;
       
+      // Debug: Check for placeholder values
+      if (_currentUserId == "current_user_id" || _currentUserId == null) {
+        _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+        debugPrint('Warning: Using placeholder userId, replaced with: $_currentUserId');
+      }
+
       // Get userRole - prioritize widget parameter, fallback to fetching from Firebase
       if (widget.userRole != null) {
         _currentUserRole = widget.userRole;
@@ -51,10 +62,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _currentUserRole = await _fetchUserRole(_currentUserId!);
       }
 
+      setState(() {
+        _debugInfo = "UserId: $_currentUserId, UserRole: $_currentUserRole";
+      });
+
       // Validate that we have both userId and userRole
       if (_currentUserId == null || _currentUserRole == null) {
         setState(() {
           _isLoading = false;
+          _debugInfo = "Missing data - UserId: $_currentUserId, UserRole: $_currentUserRole";
         });
         return;
       }
@@ -64,11 +80,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       
       setState(() {
         _isLoading = false;
+        _debugInfo = "Initialization complete";
       });
     } catch (e) {
       debugPrint('Error initializing user data: $e');
       setState(() {
         _isLoading = false;
+        _debugInfo = "Error: $e";
       });
     }
   }
@@ -94,6 +112,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _initializeNotificationsStream() {
     if (_currentUserId == null || _currentUserRole == null) return;
     
+    debugPrint('Creating notifications stream for userId: $_currentUserId, userRole: $_currentUserRole');
+    
     _notificationsStream = NotificationService.getUserNotificationsStream(
       userId: _currentUserId!,
       userRole: _currentUserRole!,
@@ -101,11 +121,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     // Listen to stream to update unread count
     _notificationsStream.listen((notifications) {
+      debugPrint('Received ${notifications.length} notifications');
       if (mounted) {
         setState(() {
           _unreadCount = notifications.where((n) => !n.isRead).length;
         });
       }
+    }, onError: (error) {
+      debugPrint('Stream error: $error');
     });
   }
 
@@ -113,16 +136,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // Update the bottomNavigationBar section to match home_page.dart
-bottomNavigationBar: widget.userRole == UserRole.seller
-    ? BottomNavBar2(
-        selectedIndex: -1, // Keep this if you want to highlight no tab
-        navBarColor: AppTheme.tertiaryOrange,
-      )
-    : BottomNavBar(
-        selectedIndex: -1, // Keep this if you want to highlight no tab
-        navBarColor: AppTheme.tertiaryOrange,
-      ),
+      bottomNavigationBar: widget.userRole == UserRole.seller
+          ? BottomNavBar2(
+              selectedIndex: -1,
+              navBarColor: AppTheme.tertiaryOrange,
+            )
+          : BottomNavBar(
+              selectedIndex: -1,
+              navBarColor: AppTheme.tertiaryOrange,
+            ),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
         elevation: 0,
@@ -175,15 +197,26 @@ bottomNavigationBar: widget.userRole == UserRole.seller
         ],
       ),
       body: _buildBody(),
-
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: AppTheme.primaryOrange,
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              color: AppTheme.primaryOrange,
+            ),
+            const SizedBox(height: 16),
+            if (_debugInfo != null)
+              Text(
+                _debugInfo!,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+          ],
         ),
       );
     }
@@ -197,6 +230,15 @@ bottomNavigationBar: widget.userRole == UserRole.seller
     return StreamBuilder<List<NotificationModel>>(
       stream: _notificationsStream,
       builder: (context, snapshot) {
+        // Debug information
+        debugPrint('StreamBuilder state: ${snapshot.connectionState}');
+        debugPrint('Has data: ${snapshot.hasData}');
+        debugPrint('Data length: ${snapshot.data?.length ?? 0}');
+        debugPrint('Has error: ${snapshot.hasError}');
+        if (snapshot.hasError) {
+          debugPrint('Error: ${snapshot.error}');
+        }
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(
@@ -211,8 +253,14 @@ bottomNavigationBar: widget.userRole == UserRole.seller
 
         final notifications = snapshot.data ?? [];
         
+        // Debug: Print each notification
+        for (var i = 0; i < notifications.length; i++) {
+          final notif = notifications[i];
+          debugPrint('Notification $i: ${notif.title} - ${notif.message}');
+        }
+
         if (notifications.isEmpty) {
-          return _buildEmptyState();
+          return _buildEmptyStateWithDebug();
         }
 
         return RefreshIndicator(
@@ -231,6 +279,110 @@ bottomNavigationBar: widget.userRole == UserRole.seller
         );
       },
     );
+  }
+
+  Widget _buildEmptyStateWithDebug() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.notifications_off,
+            size: 80,
+            color: Colors.grey.withOpacity(0.6),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No notifications yet',
+            style: AppTheme.titleStyle.copyWith(color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _currentUserRole == UserRole.buyer
+                ? 'You\'ll see payment updates and cart reminders here'
+                : 'You\'ll see new orders and business updates here',
+            style: AppTheme.subtitleStyle.copyWith(color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          // Debug information
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'Debug Info:',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'User ID: $_currentUserId',
+                  style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
+                ),
+                Text(
+                  'User Role: $_currentUserRole',
+                  style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: _testDirectQuery,
+                  child: const Text('Test Direct Query'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _testDirectQuery() async {
+    try {
+      debugPrint('Testing direct Firestore query...');
+      
+      // Test direct query to notifications collection
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .limit(10)
+          .get();
+      
+      debugPrint('Total notifications in collection: ${querySnapshot.docs.length}');
+      
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        debugPrint('Doc ${doc.id}: userId=${data['userId']}, userRole=${data['userRole']}, type=${data['type']}');
+      }
+      
+      // Test specific query for current user
+      final userQuery = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: _currentUserId)
+          .where('userRole', isEqualTo: _currentUserRole.toString().split('.').last)
+          .get();
+      
+      debugPrint('Notifications for current user: ${userQuery.docs.length}');
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Found ${userQuery.docs.length} notifications for you'),
+          backgroundColor: AppTheme.primaryOrange,
+        ),
+      );
+      
+    } catch (e) {
+      debugPrint('Test query error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Query error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildErrorState() {
@@ -255,6 +407,14 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                 : 'User role is required',
             style: AppTheme.subtitleStyle.copyWith(color: Colors.red),
           ),
+          if (_debugInfo != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _debugInfo!,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
@@ -304,35 +464,6 @@ bottomNavigationBar: widget.userRole == UserRole.seller
     );
   }
 
-  // Rest of your existing methods remain the same...
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.notifications_off,
-            size: 80,
-            color: Colors.grey.withOpacity(0.6),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No notifications yet',
-            style: AppTheme.titleStyle.copyWith(color: Colors.grey),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _currentUserRole == UserRole.buyer
-                ? 'You\'ll see payment updates and cart reminders here'
-                : 'You\'ll see new orders and business updates here',
-            style: AppTheme.subtitleStyle.copyWith(color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showNotificationOptions() {
     showModalBottomSheet(
       context: context,
@@ -359,145 +490,154 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                 Navigator.pop(context);
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.bug_report),
+              title: const Text('Debug Info'),
+              onTap: () {
+                Navigator.pop(context);
+                _testDirectQuery();
+              },
+            ),
           ],
         ),
       ),
     );
   }
-  // Add these missing methods to your _NotificationsScreenState class in notification_screen.dart
 
-Widget _buildNotificationItem(NotificationModel notification) {
-  return Dismissible(
-    key: Key(notification.id),
-    direction: DismissDirection.endToStart,
-    background: Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        color: Colors.red,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Icon(
-        Icons.delete,
-        color: Colors.white,
-      ),
-    ),
-    onDismissed: (direction) {
-      NotificationService.deleteNotification(notification.id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Notification deleted'),
-          duration: Duration(seconds: 2),
+  // Include all your existing notification item building methods here
+  Widget _buildNotificationItem(NotificationModel notification) {
+    return Dismissible(
+      key: Key(notification.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(16),
         ),
-      );
-    },
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: notification.isRead 
-            ? AppTheme.chipBackground.withOpacity(0.8)
-            : AppTheme.chipBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: notification.isRead 
-            ? null 
-            : Border.all(color: AppTheme.primaryOrange, width: 2),
+        child: const Icon(
+          Icons.delete,
+          color: Colors.white,
+        ),
       ),
-      child: InkWell(
-        onTap: () => _handleNotificationTap(notification),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildNotificationIcon(notification.type),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notification.title,
-                            style: AppTheme.chipTextStyle.copyWith(
-                              fontWeight: notification.isRead 
-                                  ? FontWeight.w500 
-                                  : FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        if (!notification.isRead)
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primaryOrange,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      notification.message,
-                      style: AppTheme.subtitleStyle.copyWith(
-                        fontSize: 14,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _formatTimestamp(notification.timestamp),
-                          style: AppTheme.subtitleStyle.copyWith(
-                            fontSize: 12,
-                            color: AppTheme.textSecondary.withOpacity(0.7),
-                          ),
-                        ),
-                        if (notification.orderId != null && notification.orderId!.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryOrange.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+      onDismissed: (direction) {
+        NotificationService.deleteNotification(notification.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notification deleted'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: notification.isRead 
+              ? AppTheme.chipBackground.withOpacity(0.8)
+              : AppTheme.chipBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: notification.isRead 
+              ? null 
+              : Border.all(color: AppTheme.primaryOrange, width: 2),
+        ),
+        child: InkWell(
+          onTap: () => _handleNotificationTap(notification),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildNotificationIcon(notification.type),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
                             child: Text(
-                              '#${notification.orderId}',
-                              style: AppTheme.subtitleStyle.copyWith(
-                                fontSize: 12,
-                                color: AppTheme.primaryOrange,
-                                fontWeight: FontWeight.w500,
+                              notification.title,
+                              style: AppTheme.chipTextStyle.copyWith(
+                                fontWeight: notification.isRead 
+                                    ? FontWeight.w500 
+                                    : FontWeight.w600,
                               ),
                             ),
                           ),
-                      ],
-                    ),
-                    if (_shouldShowAction(notification))
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: _buildActionButton(notification),
+                          if (!notification.isRead)
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: AppTheme.primaryOrange,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        notification.message,
+                        style: AppTheme.subtitleStyle.copyWith(
+                          fontSize: 14,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _formatTimestamp(notification.timestamp),
+                            style: AppTheme.subtitleStyle.copyWith(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary.withOpacity(0.7),
+                            ),
+                          ),
+                          if (notification.orderId != null && notification.orderId!.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryOrange.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '#${notification.orderId}',
+                                style: AppTheme.subtitleStyle.copyWith(
+                                  fontSize: 12,
+                                  color: AppTheme.primaryOrange,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (_shouldShowAction(notification))
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: _buildActionButton(notification),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildNotificationIcon(NotificationType type) {
+  // Include all the rest of your existing methods here...
+  Widget _buildNotificationIcon(NotificationType type) {
   IconData icon;
   Color color;
 
@@ -548,7 +688,7 @@ Widget _buildNotificationIcon(NotificationType type) {
       break;
     case NotificationType.chatMessage:
       icon = Icons.chat_bubble;
-      color = AppTheme.selectedBlue;
+      color = AppTheme.selectedBlue; // Fixed: changed from colon (:) to equals (=)
       break;
   }
 
@@ -562,219 +702,201 @@ Widget _buildNotificationIcon(NotificationType type) {
   );
 }
 
-bool _shouldShowAction(NotificationModel notification) {
-  switch (notification.type) {
-    case NotificationType.orderReady:
-    case NotificationType.cartReminder:
-    case NotificationType.newOrder:
-    case NotificationType.lowStock:
-    case NotificationType.orderConfirmed:
-    case NotificationType.payment:
-    case NotificationType.chatMessage:
-      return true;
-    default:
-      return false;
-  }
-}
 
-Widget _buildActionButton(NotificationModel notification) {
-  String buttonText;
-  VoidCallback onPressed;
-
-  switch (notification.type) {
-    case NotificationType.orderReady:
-      buttonText = _currentUserRole == UserRole.seller ? 'View Order' : 'Track Order';
-      onPressed = () => _trackOrder(notification.orderId!);
-      break;
-    case NotificationType.cartReminder:
-      buttonText = 'View Cart';
-      onPressed = () => _viewCart();
-      break;
-    case NotificationType.newOrder:
-      buttonText = 'View Order';
-      onPressed = () => _viewOrder(notification.orderId!);
-      break;
-    case NotificationType.lowStock:
-      buttonText = 'Manage Stock';
-      onPressed = () => _manageStock();
-      break;
-    case NotificationType.orderConfirmed:
-      buttonText = 'Track Order';
-      onPressed = () => _trackOrder(notification.orderId!);
-      break;
-    case NotificationType.payment:
-      buttonText = 'View Receipt';
-      onPressed = () => _viewReceipt(notification.orderId);
-      break;
-    case NotificationType.chatMessage:
-      buttonText = 'Open Chat';
-      onPressed = () => _openChat(notification.additionalData);
-      break;
-    default:
-      buttonText = 'View';
-      onPressed = () => _viewCart();
+  bool _shouldShowAction(NotificationModel notification) {
+    switch (notification.type) {
+      case NotificationType.orderReady:
+      case NotificationType.cartReminder:
+      case NotificationType.newOrder:
+      case NotificationType.lowStock:
+      case NotificationType.orderConfirmed:
+      case NotificationType.payment:
+      case NotificationType.chatMessage:
+        return true;
+      default:
+        return false;
+    }
   }
 
-  return ElevatedButton(
-    onPressed: onPressed,
-    style: ElevatedButton.styleFrom(
-      backgroundColor: AppTheme.primaryOrange,
-      foregroundColor: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+  Widget _buildActionButton(NotificationModel notification) {
+    String buttonText;
+    VoidCallback onPressed;
+
+    switch (notification.type) {
+      case NotificationType.orderReady:
+        buttonText = _currentUserRole == UserRole.seller ? 'View Order' : 'Track Order';
+        onPressed = () => _trackOrder(notification.orderId!);
+        break;
+      case NotificationType.cartReminder:
+        buttonText = 'View Cart';
+        onPressed = () => _viewCart();
+        break;
+      case NotificationType.newOrder:
+        buttonText = 'View Order';
+        onPressed = () => _viewOrder(notification.orderId!);
+        break;
+      case NotificationType.lowStock:
+        buttonText = 'Manage Stock';
+        onPressed = () => _manageStock();
+        break;
+      case NotificationType.orderConfirmed:
+        buttonText = 'Track Order';
+        onPressed = () => _trackOrder(notification.orderId!);
+        break;
+      case NotificationType.payment:
+        buttonText = 'View Receipt';
+        onPressed = () => _viewReceipt(notification.orderId);
+        break;
+      case NotificationType.chatMessage:
+        buttonText = 'Open Chat';
+        onPressed = () => _openChat(notification.additionalData);
+        break;
+      default:
+        buttonText = 'View';
+        onPressed = () => _viewCart();
+    }
+
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppTheme.primaryOrange,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
       ),
-    ),
-    child: Text(
-      buttonText,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-    ),
-  );
-}
-
-String _formatTimestamp(DateTime timestamp) {
-  final now = DateTime.now();
-  final difference = now.difference(timestamp);
-
-  if (difference.inMinutes < 1) {
-    return 'Just now';
-  } else if (difference.inMinutes < 60) {
-    return '${difference.inMinutes}m ago';
-  } else if (difference.inHours < 24) {
-    return '${difference.inHours}h ago';
-  } else if (difference.inDays < 7) {
-    return '${difference.inDays}d ago';
-  } else {
-    return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
-  }
-}
-
-void _handleNotificationTap(NotificationModel notification) {
-  // Mark notification as read in Firebase
-  if (!notification.isRead) {
-    NotificationService.markAsRead(notification.id);
+      child: Text(
+        buttonText,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+    );
   }
 
-  // Handle navigation based on notification type
-  switch (notification.type) {
-    case NotificationType.orderConfirmed:
-    case NotificationType.orderPreparing:
-    case NotificationType.orderReady:
-    case NotificationType.orderDelivered:
-      if (notification.orderId != null) {
-        _trackOrder(notification.orderId!);
-      }
-      break;
-    case NotificationType.cartReminder:
-      _viewCart();
-      break;
-    case NotificationType.newOrder:
-      if (notification.orderId != null) {
-        _viewOrder(notification.orderId!);
-      }
-      break;
-    case NotificationType.productApproved:
-      _navigateToProductManagement();
-      break;
-    case NotificationType.lowStock:
-      _manageStock();
-      break;
-    case NotificationType.payment:
-      _viewReceipt(notification.orderId);
-      break;
-    case NotificationType.chatMessage:
-      _openChat(notification.additionalData);
-      break;
-    default:
-      break;
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
+    }
   }
-}
 
-void _navigateToProductManagement() {
-  // Add your navigation logic here
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Navigate to Product Management'),
-      backgroundColor: AppTheme.deepBlue,
-    ),
-  );
-}
+  void _handleNotificationTap(NotificationModel notification) {
+    // Mark notification as read in Firebase
+    if (!notification.isRead) {
+      NotificationService.markAsRead(notification.id);
+    }
 
-void _trackOrder(String orderId) {
-  // Add your order tracking logic here
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('Tracking order #$orderId'),
-      backgroundColor: AppTheme.deepBlue,
-    ),
-  );
-}
+    // Handle navigation based on notification type
+    switch (notification.type) {
+      case NotificationType.orderConfirmed:
+      case NotificationType.orderPreparing:
+      case NotificationType.orderReady:
+      case NotificationType.orderDelivered:
+        if (notification.orderId != null) {
+          _trackOrder(notification.orderId!);
+        }
+        break;
+      case NotificationType.cartReminder:
+        _viewCart();
+        break;
+      case NotificationType.newOrder:
+        if (notification.orderId != null) {
+          _viewOrder(notification.orderId!);
+        }
+        break;
+      case NotificationType.productApproved:
+        _navigateToProductManagement();
+        break;
+      case NotificationType.lowStock:
+        _manageStock();
+        break;
+      case NotificationType.payment:
+        _viewReceipt(notification.orderId);
+        break;
+      case NotificationType.chatMessage:
+        _openChat(notification.additionalData);
+        break;
+      default:
+        break;
+    }
+  }
 
-void _viewCart() {
-  // Add your cart view logic here
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Navigate to Cart'),
-      backgroundColor: AppTheme.deepBlue,
-    ),
-  );
-}
-
-void _viewOrder(String orderId) {
-  // Add your order view logic here
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('Viewing order #$orderId'),
-      backgroundColor: AppTheme.deepBlue,
-    ),
-  );
-}
-
-void _manageStock() {
-  // Add your stock management logic here
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Navigate to Stock Management'),
-      backgroundColor: AppTheme.deepBlue,
-    ),
-  );
-}
-
-void _viewReceipt(String? orderId) {
-  if (orderId != null) {
-    // Add your receipt view logic here
+  void _navigateToProductManagement() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Viewing receipt for order #$orderId'),
+      const SnackBar(
+        content: Text('Navigate to Product Management'),
         backgroundColor: AppTheme.deepBlue,
       ),
     );
   }
-}
 
-void _openChat(Map<String, dynamic> chatData) {
-  // Implement chat opening logic here
-  final chatRoomId = chatData['chatRoomId'];
-  final productName = chatData['productName'];
-  final senderName = chatData['senderName'];
-  
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('Opening chat with $senderName'),
-      backgroundColor: AppTheme.deepBlue,
-    ),
-  );
-  
-  // Navigate to chat screen with the provided data
-  // Example:
-  // Navigator.push(context, MaterialPageRoute(
-  //   builder: (context) => ChatScreen(
-  //     chatRoomId: chatRoomId,
-  //     productName: productName,
-  //     senderName: senderName,
-  //   ),
-  // ));
-}
+  void _trackOrder(String orderId) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Tracking order #$orderId'),
+        backgroundColor: AppTheme.deepBlue,
+      ),
+    );
+  }
 
-  // Include your existing _buildNotificationItem and other methods here...
+  void _viewCart() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Navigate to Cart'),
+        backgroundColor: AppTheme.deepBlue,
+      ),
+    );
+  }
+
+  void _viewOrder(String orderId) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Viewing order #$orderId'),
+        backgroundColor: AppTheme.deepBlue,
+      ),
+    );
+  }
+
+  void _manageStock() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Navigate to Stock Management'),
+        backgroundColor: AppTheme.deepBlue,
+      ),
+    );
+  }
+
+  void _viewReceipt(String? orderId) {
+    if (orderId != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Viewing receipt for order #$orderId'),
+          backgroundColor: AppTheme.deepBlue,
+        ),
+      );
+    }
+  }
+
+  void _openChat(Map<String, dynamic> chatData) {
+    final chatRoomId = chatData['chatRoomId'];
+    final productName = chatData['productName'];
+    final senderName = chatData['senderName'];
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Opening chat with $senderName'),
+        backgroundColor: AppTheme.deepBlue,
+      ),
+    );
+  }
 }

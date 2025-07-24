@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
-import 'package:kampusmart2/services/notificaations_service.dart' show NotificationService;
+import 'package:kampusmart2/services/notificaations_service.dart'
+    show NotificationService;
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import '../models/product.dart';
@@ -48,7 +49,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
   Future<void> _loadSellerInfo() async {
     try {
-      final sellerData = await SellerService.getSellerById(widget.product.ownerId);
+      final sellerData = await SellerService.getSellerById(
+        widget.product.ownerId,
+      );
       if (mounted) {
         setState(() {
           seller = sellerData;
@@ -96,10 +99,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           const Expanded(
             child: Text(
               'Loading seller info...',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
           ),
         ],
@@ -120,10 +120,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           const Expanded(
             child: Text(
               'Seller information not available',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
           ),
         ],
@@ -182,7 +179,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         widget.product.id,
         _commentController.text.trim(),
       );
-      
+
       if (comment != null) {
         _commentController.clear();
         // The UI will update automatically through the stream
@@ -192,7 +189,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             const SnackBar(
               content: Text('Failed to add comment. Please try again.'),
               backgroundColor: Colors.red,
-                    ),
+            ),
           );
         }
       }
@@ -205,10 +202,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
-                            child: Text(
+            child: Text(
               'Error loading comments: ${snapshot.error}',
               style: TextStyle(color: Colors.red[300]),
-                            ),
+            ),
           );
         }
 
@@ -220,26 +217,23 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
         if (comments.isEmpty) {
           return Center(
-                            child: Text(
+            child: Text(
               'No comments yet',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 16,
-                              ),
-                            ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 16),
+            ),
           );
         }
 
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
+          itemCount: comments.length,
+          itemBuilder: (context, index) {
             final comment = comments[index];
-                      return Container(
+            return Container(
               margin: const EdgeInsets.only(bottom: 14),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
@@ -252,12 +246,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     offset: const Offset(0, 2),
                   ),
                 ],
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Container(
-                              width: 32,
+                    width: 32,
                     height: 32,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -268,9 +262,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       size: 20,
                       color: AppTheme.borderGrey,
                     ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -285,9 +279,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         const SizedBox(height: 4),
                         Text(
                           comment.text,
-                                style: AppTheme.subtitleStyle.copyWith(
-                                  color: AppTheme.textPrimary,
-                                ),
+                          style: AppTheme.subtitleStyle.copyWith(
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -295,29 +289,31 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
+                      ],
+                    ),
                   ),
                   if (comment.userId == FirebaseAuth.instance.currentUser?.uid)
                     IconButton(
                       icon: const Icon(Icons.delete_outline, size: 20),
                       color: Colors.red[300],
                       onPressed: () async {
-                        final success = await _commentService.deleteComment(comment.id);
+                        final success = await _commentService.deleteComment(
+                          comment.id,
+                        );
                         if (!success && mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Failed to delete comment'),
                               backgroundColor: Colors.red,
                             ),
-                      );
+                          );
                         }
                       },
-                ),
-              ],
-            ),
+                    ),
+                ],
+              ),
             );
           },
         );
@@ -351,16 +347,16 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             Icons.image_not_supported_outlined,
             size: 80,
             color: Colors.grey,
+          ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
     if (imageUrl.startsWith('http')) {
       return Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
           return Container(
             color: Colors.grey[200],
             child: const Center(
@@ -376,30 +372,28 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           if (loadingProgress == null) return child;
           return Container(
             color: Colors.grey[200],
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
-              );
-            },
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
       );
     }
 
     return Image.asset(
-            imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
         return Container(
           color: Colors.grey[200],
           child: const Center(
             child: Icon(
               Icons.broken_image_outlined,
-                size: 80,
+              size: 80,
               color: Colors.grey,
             ),
           ),
-              );
-            },
-          );
+        );
+      },
+    );
   }
 
   // Helper method to build detail rows
@@ -429,11 +423,13 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               Expanded(
                 child: Text(
                   value,
-                  style: valueStyle ?? TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[800],
-                    height: 1.3, // Added line height for better readability
-                  ),
+                  style:
+                      valueStyle ??
+                      TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[800],
+                        height: 1.3, // Added line height for better readability
+                      ),
                 ),
               ),
               if (suffix != null) suffix,
@@ -469,8 +465,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    NotificationsScreen(userRole: UserRole.buyer, userId: FirebaseAuth.instance.currentUser?.uid ?? '',),
+                builder: (context) => NotificationsScreen(
+                  userRole: UserRole.buyer,
+                  userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                ),
               ),
             ),
           ),
@@ -518,7 +516,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 itemCount: images.length,
                                 onPageChanged: (index) =>
                                     setState(() => _currentPage = index),
-                                itemBuilder: (context, index) => _buildImage(images[index]),
+                                itemBuilder: (context, index) =>
+                                    _buildImage(images[index]),
                               ),
                             ),
                           ),
@@ -528,7 +527,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             children: List.generate(
                               images.length,
                               (index) => Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 3),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
                                 width: _currentPage == index ? 12 : 8,
                                 height: 8,
                                 decoration: BoxDecoration(
@@ -560,19 +561,19 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                      child: images.isNotEmpty
+                        child: images.isNotEmpty
                             ? _buildImage(images.first)
                             : Container(
                                 color: Colors.grey[200],
                                 child: const Center(
                                   child: Icon(
                                     Icons.image_not_supported_outlined,
-                              size: 80,
+                                    size: 80,
                                     color: Colors.grey,
                                   ),
                                 ),
                               ),
-                            ),
+                      ),
                     );
                   }
                 },
@@ -594,11 +595,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     ),
                   ],
                 ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.product.name,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.product.name,
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -627,7 +628,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       value: widget.product.formattedDiscountedPrice,
                       valueStyle: const TextStyle(
                         color: Colors.green,
-                          fontSize: 18,
+                        fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                       suffix: widget.product.discountPercentage != null
@@ -641,12 +642,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 color: Colors.green[50],
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                            child: Text(
+                              child: Text(
                                 '${widget.product.discountPercentage!.round()}% off',
                                 style: TextStyle(
                                   color: Colors.green[700],
                                   fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             )
@@ -675,18 +676,23 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     ),
                     const SizedBox(height: 12),
                     StreamBuilder<double>(
-                      stream: _ratingService.getAverageRating(widget.product.id),
+                      stream: _ratingService.getAverageRating(
+                        widget.product.id,
+                      ),
                       builder: (context, snapshot) {
                         final avgRating = snapshot.data ?? 0.0;
                         return Row(
                           children: [
-                            ...List.generate(5, (index) => Icon(
-                              index < avgRating.round()
-                                ? Icons.star
-                                : Icons.star_border,
-                              color: AppTheme.primaryOrange,
-                              size: 24,
-                            )),
+                            ...List.generate(
+                              5,
+                              (index) => Icon(
+                                index < avgRating.round()
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color: AppTheme.primaryOrange,
+                                size: 24,
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               avgRating.toStringAsFixed(1),
@@ -701,15 +707,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     ),
                     const SizedBox(height: 8),
                     Row(
-                            children: List.generate(
-                              5,
-                              (index) => GestureDetector(
-                                onTap: () => _updateRating(index + 1.0),
-                                child: Icon(
-                                  Icons.star,
-                                  color: index < rating
-                                      ? AppTheme.primaryOrange
-                                      : AppTheme.lightGrey,
+                      children: List.generate(
+                        5,
+                        (index) => GestureDetector(
+                          onTap: () => _updateRating(index + 1.0),
+                          child: Icon(
+                            Icons.star,
+                            color: index < rating
+                                ? AppTheme.primaryOrange
+                                : AppTheme.lightGrey,
                             size: 28,
                           ),
                         ),
@@ -720,98 +726,118 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
                           'Your rating: ${userRating!.toStringAsFixed(1)}',
-                          style: const TextStyle(fontSize: 13, color: Colors.grey),
-                            ),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
                           ),
+                        ),
+                      ),
                     const SizedBox(height: 24),
                     // Action Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                              if (!ProductDetailsPage.cart.contains(widget.product)) {
-                                  ProductDetailsPage.cart.add(widget.product);
-                                  // Send notification
-                                  NotificationService.sendCartReminder(
-                                      userId: 'current_user_id', // Pass the actual user ID
-                                      itemCount: ProductDetailsPage.cart.length,
-          );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Added ${widget.product.name} to cart!',
-                                      ),
-                                      backgroundColor: AppTheme.primaryOrange,
-                                      behavior: SnackBarBehavior.floating,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              if (!ProductDetailsPage.cart.contains(
+                                widget.product,
+                              )) {
+                                ProductDetailsPage.cart.add(widget.product);
+                                // Send notification
+                                NotificationService.sendCartReminder(
+                                  userId:
+                                      FirebaseAuth.instance.currentUser?.uid ??
+                                      "", // Pass the actual user ID
+                                  itemCount: ProductDetailsPage.cart.length,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Added ${widget.product.name} to cart!',
                                     ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        '${widget.product.name} is already in your cart.',
-                                      ),
-                                      backgroundColor: Colors.red,
-                                      behavior: SnackBarBehavior.floating,
+                                    backgroundColor: AppTheme.primaryOrange,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      '${widget.product.name} is already in your cart.',
                                     ),
-                                  );
-                                }
-                              },
-                              icon: const Icon(Icons.shopping_cart_outlined),
-                              label: Text(
-                                'Add to Cart',
-                                style: AppTheme.buttonTextStyle,
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryOrange,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.shopping_cart_outlined),
+                            label: Text(
+                              'Add to Cart',
+                              style: AppTheme.buttonTextStyle,
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryOrange,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => MessageScreen(
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              final currentUser =
+                                  FirebaseAuth.instance.currentUser;
+                              if (currentUser == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Please log in to chat'),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              // Generate chat room ID (sorted to ensure consistency)
+                              final participants = [
+                                currentUser.uid,
+                                widget.product.ownerId,
+                              ]..sort();
+                              final chatRoomId = participants.join('_');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MessageScreen(
                                     userName: widget.product.ownerId,
                                     chatRoomId: '',
                                     otherParticipantName: seller?.name ?? '',
                                     otherParticipantId: widget.product.ownerId,
                                     productName: widget.product.name,
                                   ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.chat_bubble_outline),
-                              label: Text(
-                                'Chat Seller',
-                                style: AppTheme.buttonTextStyle,
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.lightGreen,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                vertical: 16,
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.chat_bubble_outline),
+                            label: Text(
+                              'Chat Seller',
+                              style: AppTheme.buttonTextStyle,
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.lightGreen,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               // Comments Section at the bottom
@@ -887,15 +913,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       const SizedBox(height: 20),
                       // Comments list
                       _buildCommentsList(),
-                              ],
-                            ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(selectedIndex: 0, navBarColor: AppTheme.tertiaryOrange),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: 0,
+        navBarColor: AppTheme.tertiaryOrange,
+      ),
     );
   }
 
