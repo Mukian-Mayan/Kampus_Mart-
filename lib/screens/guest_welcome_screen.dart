@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/home_page.dart';
-import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 
 class GuestWelcomeScreen extends StatefulWidget {
