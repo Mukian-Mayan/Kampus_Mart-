@@ -2,7 +2,7 @@
 
 import 'dart:math' as math;
 
-import 'package:cloud_firestore/cloud_firestore.dart' show FirebaseFirestore;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:kampusmart2/models/user_role.dart';
@@ -15,9 +15,10 @@ import '../widgets/logo_widget.dart';
 
 class SellerEditProductScreen extends StatelessWidget {
   final Product product;
-  
-  const SellerEditProductScreen({Key? key, required this.product}) : super(key: key);
-  
+
+  const SellerEditProductScreen({Key? key, required this.product})
+    : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,15 +72,17 @@ class SellerProductManagementScreen extends StatefulWidget {
   const SellerProductManagementScreen({super.key});
 
   @override
-  State<SellerProductManagementScreen> createState() => _SellerProductManagementScreenState();
+  State<SellerProductManagementScreen> createState() =>
+      _SellerProductManagementScreenState();
 }
 
-class _SellerProductManagementScreenState extends State<SellerProductManagementScreen> {
+class _SellerProductManagementScreenState
+    extends State<SellerProductManagementScreen> {
   String _selectedFilterCategory = 'All';
   double _priceFilterRange = 200000;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  
+
   List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
   bool _isLoading = true;
@@ -110,15 +113,14 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
       }
 
       final products = await ProductService.getProductsBySeller(user.uid);
-      
+
       setState(() {
         _allProducts = products;
         _filteredProducts = products;
         _isLoading = false;
       });
-      
+
       _applyFilters();
-      
     } catch (e) {
       setState(() {
         _error = 'Failed to load products: ${e.toString()}';
@@ -131,16 +133,21 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
   void _applyFilters() {
     setState(() {
       _filteredProducts = _allProducts.where((product) {
-        final matchesCategory = _selectedFilterCategory == 'All' || 
-                            (product.category != null && product.category == _selectedFilterCategory);
-        
+        final matchesCategory =
+            _selectedFilterCategory == 'All' ||
+            (product.category != null &&
+                product.category == _selectedFilterCategory);
+
         double productPrice = _extractPrice(product);
         final matchesPrice = productPrice <= _priceFilterRange;
-        
-        final matchesSearch = _searchQuery.isEmpty || 
-                            product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                            product.description.toLowerCase().contains(_searchQuery.toLowerCase());
-        
+
+        final matchesSearch =
+            _searchQuery.isEmpty ||
+            product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            product.description.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
+
         return matchesCategory && matchesPrice && matchesSearch;
       }).toList();
     });
@@ -150,7 +157,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
     if (product.price != null && product.price! > 0) {
       return product.price!;
     }
-    
+
     if (product.originalPrice.isNotEmpty) {
       try {
         final priceStr = product.originalPrice
@@ -161,7 +168,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
         if (price != null && price > 0) return price;
       } catch (e) {}
     }
-    
+
     try {
       final priceStr = product.priceAndDiscount
           .replaceAll('UGX', '')
@@ -173,28 +180,86 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
       return 0.0;
     }
   }
-  Future<void> _decrementSellerProductCount(String sellerId) async {
-  try {
-    // Assuming you're using Firestore to track seller data
-    // You'll need to import cloud_firestore package
-    // import 'package:cloud_firestore/cloud_firestore.dart';
-    
-    final firestore = FirebaseFirestore.instance;
-    final sellerDoc = firestore.collection('sellers').doc(sellerId);
-    
-    await firestore.runTransaction((transaction) async {
-      final snapshot = await transaction.get(sellerDoc);
-      if (snapshot.exists) {
-        final currentCount = snapshot.data()?['productCount'] ?? 0;
-        transaction.update(sellerDoc, {'productCount': math.max(0, currentCount - 1)});
-      }
-    });
-  } catch (e) {
-    print('Error decrementing product count: $e');
-    // Don't throw error here to avoid breaking the delete operation
-  }
-}
 
+  Future<void> _decrementSellerProductCount(String sellerId) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final sellerRef = firestore.collection('sellers').doc(sellerId);
+
+      await firestore.runTransaction((transaction) async {
+        final sellerDoc = await transaction.get(sellerRef);
+
+        if (sellerDoc.exists) {
+          final currentStats =
+              sellerDoc.data()?['stats'] as Map<String, dynamic>? ?? {};
+          final currentCount =
+              (currentStats['totalProducts'] as num?)?.toInt() ?? 0;
+
+          // Ensure count doesn't go below 0
+          final newCount = math.max(0, currentCount - 1);
+
+          final updatedStats = {...currentStats, 'totalProducts': newCount};
+
+          transaction.update(sellerRef, {
+            'stats': updatedStats,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+
+      print('Seller product count decremented successfully');
+    } catch (e) {
+      print('Error decrementing product count: $e');
+      // Don't throw error here to avoid breaking the delete operation
+    }
+  }
+
+  Future<void> _fixProductCount() async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Expanded(child: Text('Fixing product count...')),
+            ],
+          ),
+        ),
+      );
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await ProductService.recalculateSellerProductCount(user.uid);
+      }
+
+      if (mounted) Navigator.of(context).pop();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product count has been fixed successfully!'),
+            backgroundColor: AppTheme.lightGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to fix product count: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      print('Error fixing product count: $e');
+    }
+  }
 
   Future<void> _deleteProduct(Product product) async {
     final confirmed = await showDialog<bool>(
@@ -235,20 +300,16 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
       );
 
       await ProductService.deleteProduct(product.id);
-      
-      // Decrement the seller's product count after successful deletion
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await _decrementSellerProductCount(user.uid);
-      }
-      
+
+      // Note: ProductService.deleteProduct already handles seller count decrement
+
       if (mounted) Navigator.of(context).pop();
-      
+
       setState(() {
         _allProducts.removeWhere((p) => p.id == product.id);
         _applyFilters();
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -257,10 +318,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
           ),
         );
       }
-      
     } catch (e) {
       if (mounted) Navigator.of(context).pop();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -288,15 +348,17 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
     if (price > 0) {
       return 'UGX ${price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
     }
-    
-    if (product.originalPrice.isNotEmpty && !product.originalPrice.contains('100%')) {
+
+    if (product.originalPrice.isNotEmpty &&
+        !product.originalPrice.contains('100%')) {
       return product.originalPrice;
     }
-    
-    if (product.priceAndDiscount.isNotEmpty && !product.priceAndDiscount.contains('100%')) {
+
+    if (product.priceAndDiscount.isNotEmpty &&
+        !product.priceAndDiscount.contains('100%')) {
       return product.priceAndDiscount;
     }
-    
+
     return 'Price not set';
   }
 
@@ -309,7 +371,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
     return Scaffold(
       backgroundColor: AppTheme.tertiaryOrange,
       appBar: AppBar(
-        title: const LogoWidget(),
+        //title: const LogoWidget(),
         backgroundColor: AppTheme.tertiaryOrange,
         elevation: 0,
         leading: IconButton(
@@ -318,11 +380,15 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: AppTheme.textPrimary),
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: AppTheme.textPrimary,
+            ),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NotificationsScreen(userRole: UserRole.seller, userId: FirebaseAuth.instance.currentUser?.uid ?? '',),
+                builder: (context) =>
+                    const NotificationsScreen(userRole: UserRole.seller),
               ),
             ),
           ),
@@ -335,15 +401,46 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                   builder: (context) => const SellerAddProductScreen(),
                 ),
               );
-              
+
               if (result == true) {
-               await _loadProducts();
+                await _loadProducts();
               }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppTheme.textPrimary),
-            onPressed: _loadProducts,
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: AppTheme.textPrimary),
+            onSelected: (value) async {
+              switch (value) {
+                case 'refresh':
+                  await _loadProducts();
+                  break;
+                case 'fix_count':
+                  await _fixProductCount();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'refresh',
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh, size: 16),
+                    SizedBox(width: 8),
+                    Text('Refresh'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'fix_count',
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_fix_high, size: 16),
+                    SizedBox(width: 8),
+                    Text('Fix Product Count'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -361,7 +458,10 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                       prefixIcon: const Icon(Icons.search, size: 20),
                       filled: true,
                       fillColor: AppTheme.paleWhite,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -389,8 +489,10 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
               ],
             ),
           ),
-          
-          if (_selectedFilterCategory != 'All' || _priceFilterRange < 200000 || _searchQuery.isNotEmpty)
+
+          if (_selectedFilterCategory != 'All' ||
+              _priceFilterRange < 200000 ||
+              _searchQuery.isNotEmpty)
             Container(
               height: 40,
               margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -454,9 +556,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                 ),
               ),
             ),
-          
+
           const SizedBox(height: 8),
-          
+
           Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -485,10 +587,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
             SizedBox(height: 16),
             Text(
               'Loading your products...',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppTheme.textSecondary,
-              ),
+              style: TextStyle(fontSize: 16, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -502,11 +601,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 60,
-                color: Colors.red.shade400,
-              ),
+              Icon(Icons.error_outline, size: 60, color: Colors.red.shade400),
               const SizedBox(height: 16),
               Text(
                 _error!,
@@ -553,7 +648,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
               ),
               const SizedBox(height: 8),
               Text(
-                _allProducts.isEmpty 
+                _allProducts.isEmpty
                     ? 'Start by adding your first product'
                     : 'Try adjusting your filters or search',
                 style: TextStyle(
@@ -601,20 +696,26 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: product.imageUrl.isNotEmpty 
+                      child: product.imageUrl.isNotEmpty
                           ? Image.network(
                               product.imageUrl,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.image, color: AppTheme.textSecondary);
+                                return const Icon(
+                                  Icons.image,
+                                  color: AppTheme.textSecondary,
+                                );
                               },
                             )
-                          : const Icon(Icons.image, color: AppTheme.textSecondary),
+                          : const Icon(
+                              Icons.image,
+                              color: AppTheme.textSecondary,
+                            ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 12),
-                  
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -651,9 +752,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(width: 8),
-                  
+
                   SizedBox(
                     width: 80,
                     child: Column(
@@ -669,7 +770,10 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                         ),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.lightGreen.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
@@ -686,9 +790,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(width: 8),
-                  
+
                   PopupMenuButton<String>(
                     onSelected: (value) async {
                       switch (value) {
@@ -755,7 +859,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
         builder: (context) => SellerEditProductScreen(product: product),
       ),
     );
-    
+
     if (result == true) {
       await _loadProducts();
     }
@@ -802,7 +906,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   const Text(
                     'Category',
                     style: TextStyle(
@@ -829,8 +933,8 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                             },
                             selectedColor: AppTheme.tertiaryOrange,
                             labelStyle: TextStyle(
-                              color: _selectedFilterCategory == category 
-                                  ? Colors.white 
+                              color: _selectedFilterCategory == category
+                                  ? Colors.white
                                   : AppTheme.textPrimary,
                             ),
                           ),
@@ -838,9 +942,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                       }).toList(),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   const Text(
                     'Price Range',
                     style: TextStyle(
@@ -871,9 +975,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                       color: AppTheme.textSecondary,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   Row(
                     children: [
                       Expanded(
@@ -959,7 +1063,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                   ),
                 ),
               ),
-              
+
               Container(
                 height: 200,
                 width: double.infinity,
@@ -988,9 +1092,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                         color: AppTheme.textSecondary,
                       ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               Text(
                 product.name,
                 style: const TextStyle(
@@ -999,9 +1103,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                   color: AppTheme.textPrimary,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Text(
                 _formatPrice(product),
                 style: const TextStyle(
@@ -1010,9 +1114,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                   color: AppTheme.primaryOrange,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               if (product.category != null) ...[
                 Text(
                   'Category: ${product.category}',
@@ -1023,7 +1127,7 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                 ),
                 const SizedBox(height: 8),
               ],
-              
+
               Text(
                 'Condition: ${product.condition}',
                 style: const TextStyle(
@@ -1031,9 +1135,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                   color: AppTheme.textSecondary,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Text(
                 'Location: ${product.location}',
                 style: const TextStyle(
@@ -1041,9 +1145,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                   color: AppTheme.textSecondary,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               const Text(
                 'Description:',
                 style: TextStyle(
@@ -1052,9 +1156,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                   color: AppTheme.textPrimary,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Expanded(
                 child: SingleChildScrollView(
                   child: Text(
@@ -1067,9 +1171,9 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -1116,7 +1220,5 @@ class _SellerProductManagementScreenState extends State<SellerProductManagementS
         );
       },
     );
-    
   }
-  
 }
