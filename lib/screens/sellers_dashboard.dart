@@ -219,7 +219,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    NotificationsScreen(userRole: UserRole.seller, userId: FirebaseAuth.instance.currentUser?.uid ?? '',),
+                    NotificationsScreen(userRole: UserRole.seller, userId: FirebaseAuth.instance.currentUser?.uid ?? 'Unknown',),
               ),
             ),
           ),
@@ -902,41 +902,68 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   }
 
   void _handleLogout() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await SaleService.signOutSeller();
-                if (mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/login',
-                    (route) => false,
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Logout failed: ${e.toString()}')),
-                  );
-                }
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Logout'),
+      content: const Text('Are you sure you want to logout?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.pop(context); // Close dialog first
+            
+            // Show loading indicator
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => const AlertDialog(
+                content: Row(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 20),
+                    Text('Logging out...'),
+                  ],
+                ),
+              ),
+            );
+
+            try {
+              await SaleService.signOutSeller();
+              
+              if (mounted) {
+                Navigator.pop(context); // Close loading dialog
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/login',
+                  (route) => false,
+                );
               }
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
+            } catch (e) {
+              if (mounted) {
+                Navigator.pop(context); // Close loading dialog
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Logout failed: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                    action: SnackBarAction(
+                      label: 'Retry',
+                      textColor: Colors.white,
+                      onPressed: _handleLogout,
+                    ),
+                  ),
+                );
+              }
+            }
+          },
+          child: const Text('Logout', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ),
+  );
+}
 
   void _handleProfilePictureChange() {
     ScaffoldMessenger.of(context).showSnackBar(

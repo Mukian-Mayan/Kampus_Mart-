@@ -4,7 +4,8 @@ module.exports = {
     node: true,
   },
   parserOptions: {
-    "ecmaVersion": 2018,
+    ecmaVersion: 2020, // Updated to support modern JS features
+    sourceType: "module", // Added to support ES modules
   },
   extends: [
     "eslint:recommended",
@@ -14,6 +15,8 @@ module.exports = {
     "no-restricted-globals": ["error", "name", "length"],
     "prefer-arrow-callback": "error",
     "quotes": ["error", "double", {"allowTemplateLiterals": true}],
+    "indent": ["error", 2], // Consistent with Google style
+    "max-len": ["error", {"code": 80}], // Google style line length
   },
   overrides: [
     {
@@ -21,8 +24,12 @@ module.exports = {
       env: {
         mocha: true,
       },
-      rules: {},
+      rules: {
+        "max-len": "off", // Allow longer lines in test files
+      },
     },
   ],
-  globals: {},
+  globals: {
+    // Add any global variables your project uses
+  },
 };

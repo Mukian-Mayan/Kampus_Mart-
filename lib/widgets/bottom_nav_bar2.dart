@@ -15,7 +15,11 @@ import 'package:kampusmart2/screens/user_profile_page.dart';
 class BottomNavBar2 extends StatefulWidget {
   final Color navBarColor;
   final int selectedIndex;
-  const BottomNavBar2({super.key, required this.selectedIndex, required this.navBarColor});
+  const BottomNavBar2({
+    super.key,
+    required this.selectedIndex,
+    required this.navBarColor,
+  });
 
   @override
   State<BottomNavBar2> createState() => _BottomNavBarState();
@@ -27,25 +31,33 @@ class _BottomNavBarState extends State<BottomNavBar2> {
       case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(userRole:UserRole.seller,)),
+          MaterialPageRoute(
+            builder: (context) => HomePage(userRole: UserRole.seller),
+          ),
         );
         break;
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) =>CartPage(userRole:UserRole.seller)),
+          MaterialPageRoute(
+            builder: (context) => CartPage(userRole: UserRole.seller),
+          ),
         );
         break;
       case 2:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ChatsScreen(userRole: UserRole.seller)),
+          MaterialPageRoute(
+            builder: (context) => ChatsScreen(userRole: UserRole.seller),
+          ),
         );
         break;
       case 3:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => SettingsPage(userRole: UserRole.seller)),
+          MaterialPageRoute(
+            builder: (context) => SettingsPage(userRole: UserRole.seller),
+          ),
         );
         break;
       case 4:
@@ -84,13 +96,13 @@ class _BottomNavBarState extends State<BottomNavBar2> {
             backgroundColor: widget.navBarColor,
             textStyle: TextStyle(
               fontFamily: 'TypoGraphica',
-              color: AppTheme.deepOrange,
+              color: AppTheme.paleWhite,
             ),
             gap: 7,
             padding: EdgeInsets.all(8),
-            activeColor: AppTheme.deepOrange,
+            activeColor: AppTheme.paleWhite,
             color: Theme.of(context).colorScheme.secondary,
-            tabBackgroundColor: AppTheme.deepBlue,
+            tabBackgroundColor: Colors.brown,
             onTabChange: (index) => _handleTabChange(context, index),
 
             tabs: [

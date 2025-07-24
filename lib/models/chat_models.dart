@@ -39,8 +39,9 @@ class ChatMessage {
   final String? voiceUrl;
   final String? fileName;
   final String? fileUrl;
+  final String? participants;
 
-  ChatMessage({
+  ChatMessage( {
     required this.id,
     required this.senderId,
     required this.senderName,
@@ -52,6 +53,7 @@ class ChatMessage {
     this.voiceUrl,
     this.fileName,
     this.fileUrl,
+    this.participants,
   });
 
   Map<String, dynamic> toMap() {
@@ -67,6 +69,7 @@ class ChatMessage {
       'voiceUrl': voiceUrl,
       'fileName': fileName,
       'fileUrl': fileUrl,
+      'participants': participants,
     };
   }
 
@@ -83,6 +86,7 @@ class ChatMessage {
       voiceUrl: map['voiceUrl'],
       fileName: map['fileName'],
       fileUrl: map['fileUrl'],
+      participants: map['participants']
     );
   }
 

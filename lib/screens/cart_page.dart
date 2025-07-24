@@ -241,7 +241,7 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                         child: Padding(
                           padding: const EdgeInsets.all(14),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Product Image
                               ClipRRect(
@@ -306,7 +306,7 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                                       ),
                               ),
                               const SizedBox(width: 16),
-                              // Product Details
+                              // Product Details and Controls (left)
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,8 +314,8 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                                     Text(
                                       product.name,
                                       style: AppTheme.titleStyle.copyWith(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20, // Increased size
+                                        fontWeight: FontWeight.bold, // Bold
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -331,16 +331,16 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 12),
                                     Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
                                       children: [
-                                        // Quantity Controls
+                                        // Quantity Controls (smaller)
                                         Container(
+                                          height: 32,
                                           decoration: BoxDecoration(
-                                            color: AppTheme.primaryOrange,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
+                                            color: AppTheme.tertiaryOrange,
+                                            borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -348,148 +348,86 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                                               IconButton(
                                                 icon: const Icon(
                                                   Icons.remove,
-                                                  size: 16,
+                                                  size: 14,
                                                 ),
-                                                onPressed: () =>
-                                                    _updateQuantity(
-                                                      index,
-                                                      false,
-                                                    ),
-                                                padding: const EdgeInsets.all(
-                                                  2,
+                                                onPressed: () => _updateQuantity(
+                                                  index,
+                                                  false,
                                                 ),
-                                                constraints:
-                                                    const BoxConstraints(
-                                                      minWidth: 28,
-                                                      minHeight: 28,
-                                                    ),
-                                                color: AppTheme.paleWhite,
+                                                padding: const EdgeInsets.all(0),
+                                                constraints: const BoxConstraints(
+                                                  minWidth: 24,
+                                                  minHeight: 24,
+                                                ),
+                                                color: Colors.black,
                                               ),
                                               Container(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                      horizontal: 8,
+                                                      horizontal: 6,
                                                     ),
                                                 child: Text(
                                                   quantities[index].toString(),
                                                   style: AppTheme.chipTextStyle
                                                       .copyWith(
-                                                        color:
-                                                            AppTheme.paleWhite,
-                                                        fontSize: 13,
+                                                        color: Colors.black,
+                                                        fontSize: 12,
                                                       ),
                                                 ),
                                               ),
                                               IconButton(
                                                 icon: const Icon(
                                                   Icons.add,
-                                                  size: 16,
+                                                  size: 14,
                                                 ),
-                                                onPressed: () =>
-                                                    _updateQuantity(
-                                                      index,
-                                                      true,
-                                                    ),
-                                                padding: const EdgeInsets.all(
-                                                  2,
+                                                onPressed: () => _updateQuantity(
+                                                  index,
+                                                  true,
                                                 ),
-                                                constraints:
-                                                    const BoxConstraints(
-                                                      minWidth: 28,
-                                                      minHeight: 28,
-                                                    ),
-                                                color: AppTheme.paleWhite,
+                                                padding: const EdgeInsets.all(0),
+                                                constraints: const BoxConstraints(
+                                                  minWidth: 24,
+                                                  minHeight: 24,
+                                                ),
+                                                color: Colors.black,
                                               ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(width: 10),
-                                        // Rating
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: List.generate(
-                                            5,
-                                            (star) => GestureDetector(
-                                              onTap: () => _updateRating(
-                                                index,
-                                                star + 1.0,
-                                              ),
-                                              child: Icon(
-                                                Icons.star,
-                                                color: star < ratings[index]
-                                                    ? AppTheme.primaryOrange
-                                                    : AppTheme.lightGrey,
-                                                size: 16,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        // Details Button
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ProductDetailsPage(
-                                                      product: product,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppTheme.deepBlue,
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 8,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            elevation: 0,
-                                          ),
-                                          child: Text(
-                                            'Details',
-                                            style: AppTheme.chipTextStyle
-                                                .copyWith(
-                                                  color: Colors.white,
-                                                  fontSize: 12,
+                                        const Spacer(),
+                                        // Only Remove button (right)
+                                        SizedBox(
+                                          height: 40,
+                                          width: 40,
+                                          child: IconButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                ProductDetailsPage.cart.remove(
+                                                  product,
+                                                );
+                                                quantities.removeAt(index);
+                                                ratings.removeAt(index);
+                                              });
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    'Removed ${product.name} from cart.',
+                                                  ),
+                                                  backgroundColor: Colors.red,
+                                                  behavior:
+                                                      SnackBarBehavior.floating,
                                                 ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        // Remove from Cart Button
-                                        TextButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              ProductDetailsPage.cart.remove(
-                                                product,
                                               );
-                                              quantities.removeAt(index);
-                                              ratings.removeAt(index);
-                                            });
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Removed ${product.name} from cart.',
-                                                ),
-                                                backgroundColor: Colors.red,
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                              ),
-                                            );
-                                          },
-                                          child: Text(
-                                            'Remove',
-                                            style: TextStyle(
-                                              color: Colors.red,
-                                              fontWeight: FontWeight.bold,
+                                            },
+                                            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 24),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(
+                                              minWidth: 40,
+                                              minHeight: 40,
                                             ),
+                                            tooltip: 'Remove',
                                           ),
                                         ),
                                       ],
