@@ -14,7 +14,7 @@ import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
-import 'package:kampusmart2/widgets/profile_pic_widget.dart';
+//import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -103,13 +103,13 @@ bottomNavigationBar: widget.userRole == UserRole.seller
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Center(
+                  /*const Center(
                     child: ProfilePicWidget(
                       radius: 60,
                       height: 120,
                       width: 120,
                     ),
-                  ),
+                  ),*/
                   const SizedBox(height: 40),
                   Layout1(
                     child: Center(

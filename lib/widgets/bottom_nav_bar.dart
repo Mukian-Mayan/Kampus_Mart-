@@ -56,8 +56,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(40),
-            topRight: Radius.circular(40),
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
           color: widget.navBarColor,
           boxShadow: [
@@ -71,7 +71,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ),
 
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 25.0, horizontal: 15),
+          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
           child: GNav(
             selectedIndex: widget.selectedIndex,
             backgroundColor: widget.navBarColor,
