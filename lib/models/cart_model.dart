@@ -1,5 +1,4 @@
 // models/cart_model.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CartModel {
   final String id;  // This is the document ID from Firestore

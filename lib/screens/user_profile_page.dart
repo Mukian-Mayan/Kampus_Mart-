@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
@@ -22,24 +23,63 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
-   String? userRole;
+  String? userRole;
   int selectedIndex = 4;
 
   void logoutUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Clear session data
-    await FirebaseAuth.instance.signOut();
-    if (!mounted) return;
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Logging out...'),
+            ],
+          ),
+        ),
+      );
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginOrRegisterPage()),
-      (route) => false, // Remove all previous routes
-    );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear(); // Clear session data
+
+      // Clear Firestore cache to prevent permission errors
+      try {
+        await FirebaseFirestore.instance.terminate();
+        await FirebaseFirestore.instance.clearPersistence();
+      } catch (e) {
+        print('Firestore cleanup error: $e');
+      }
+
+      await FirebaseAuth.instance.signOut();
+
+      if (!mounted) return;
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginOrRegisterPage()),
+        (route) => false, // Remove all previous routes
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logout failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
-
-  //link up setup 
+  //link up setup
   void _onTab(int index) {
     if (selectedIndex != index) {
       setState(() {
@@ -48,16 +88,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
-
   @override
-
-    //initial link up
+  //initial link up
   void initState() {
     super.initState();
     _loadUserRole();
   }
 
-   Future<void> _loadUserRole() async {
+  Future<void> _loadUserRole() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       userRole = prefs.getString('user_role');
@@ -84,9 +122,15 @@ class _UserProfilePageState extends State<UserProfilePage> {
         ),
       ),
       bottomNavigationBar: (userRole == 'option2')
-      ? BottomNavBar(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
-      : (userRole == 'option1')
-          ? BottomNavBar2(selectedIndex: selectedIndex, navBarColor: AppTheme.tertiaryOrange)
+          ? BottomNavBar(
+              selectedIndex: selectedIndex,
+              navBarColor: AppTheme.tertiaryOrange,
+            )
+          : (userRole == 'option1')
+          ? BottomNavBar2(
+              selectedIndex: selectedIndex,
+              navBarColor: AppTheme.tertiaryOrange,
+            )
           : null,
 
       body: SingleChildScrollView(
@@ -97,7 +141,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
               child: Center(
                 child: Padding(
                   padding: EdgeInsets.only(bottom: 50),
-                  child: ProfilePicWidget(radius: 60, height: 120, width: 120),
+                  child: ProfilePicWidget(
+                    radius: 60,
+                    height: 120,
+                    width: 120,
+                    isEditable: true,
+                  ),
                 ),
               ),
             ),
@@ -122,14 +171,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   iconData: Icons.edit,
                 ),
 
-                  DetailContainer(
+                DetailContainer(
                   fontColor: AppTheme.deepBlue,
                   fontSize: 20,
                   text: 'History',
                   containerHeight: MediaQuery.of(context).size.height * 0.065,
                   containerWidth: MediaQuery.of(context).size.width * 0.7,
                   iconData: Icons.history_sharp,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HistoryPage(),),),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HistoryPage()),
+                  ),
                 ),
                   /*DetailContainer(
                   fontColor: AppTheme.deepBlue,
@@ -149,7 +201,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   iconData: Icons.favorite,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => FavoritePage(),),),
                 ),
-                  DetailContainer(
+                DetailContainer(
                   fontColor: AppTheme.red,
                   fontSize: 20,
                   text: 'Logout',

@@ -1,6 +1,7 @@
 // Enhanced NotificationsScreen with proper parameter validation and debugging
 // ignore_for_file: deprecated_member_use
 
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -32,11 +33,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   UserRole? _currentUserRole;
   bool _isLoading = true;
   String? _debugInfo;
+  
+  // Add subscription to track and dispose properly
+  StreamSubscription<List<NotificationModel>>? _notificationSubscription;
 
   @override
   void initState() {
     super.initState();
     _initializeUserData();
+  }
+
+  @override
+  void dispose() {
+    // Cancel any active subscriptions to prevent permission errors
+    _notificationSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeUserData() async {
@@ -114,13 +125,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     
     debugPrint('Creating notifications stream for userId: $_currentUserId, userRole: $_currentUserRole');
     
+    // Cancel existing subscription if any
+    _notificationSubscription?.cancel();
+    
     _notificationsStream = NotificationService.getUserNotificationsStream(
       userId: _currentUserId!,
       userRole: _currentUserRole!,
     );
 
-    // Listen to stream to update unread count
-    _notificationsStream.listen((notifications) {
+    // Listen to stream to update unread count with proper subscription tracking
+    _notificationSubscription = _notificationsStream.listen((notifications) {
       debugPrint('Received ${notifications.length} notifications');
       if (mounted) {
         setState(() {
@@ -129,6 +143,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
     }, onError: (error) {
       debugPrint('Stream error: $error');
+      // Check if error is due to auth state change
+      if (error.toString().contains('PERMISSION_DENIED') || 
+          error.toString().contains('permission-denied')) {
+        // User is likely signed out, cancel subscription
+        _notificationSubscription?.cancel();
+        if (mounted) {
+          setState(() {
+            _unreadCount = 0;
+          });
+        }
+      }
     });
   }
 
@@ -306,36 +331,36 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
           const SizedBox(height: 20),
           // Debug information
-          Container(
-            padding: const EdgeInsets.all(12),
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'Debug Info:',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'User ID: $_currentUserId',
-                  style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
-                ),
-                Text(
-                  'User Role: $_currentUserRole',
-                  style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: _testDirectQuery,
-                  child: const Text('Test Direct Query'),
-                ),
-              ],
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.all(12),
+          //   margin: const EdgeInsets.symmetric(horizontal: 20),
+          //   decoration: BoxDecoration(
+          //     color: Colors.grey.withOpacity(0.1),
+          //     borderRadius: BorderRadius.circular(8),
+          //   ),
+            // child: Column(
+            //   children: [
+            //     Text(
+            //       'Debug Info:',
+            //       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            //     ),
+            //     const SizedBox(height: 4),
+            //     Text(
+            //       'User ID: $_currentUserId',
+            //       style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
+            //     ),
+            //     Text(
+            //       'User Role: $_currentUserRole',
+            //       style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
+            //     ),
+            //      const SizedBox(height: 8),
+            //      ElevatedButton(
+            //        onPressed: _testDirectQuery,
+            //        child: const Text('Test Direct Query'),
+            //      ),
+            //   ],
+            // ),
+          //),
         ],
       ),
     );

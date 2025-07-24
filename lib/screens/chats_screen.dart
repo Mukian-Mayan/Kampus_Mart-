@@ -36,8 +36,12 @@ class _ChatsScreenState extends State<ChatsScreen> {
   void initState() {
     super.initState();
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    print('Current User ID: $_currentUserId');
     _searchController.addListener(_onSearchChanged);
     _loadUserRole();
+
+    // Clear chat service cache to force refresh of user profiles
+    _chatService.clearUserProfileCache();
   }
 
   @override
@@ -53,6 +57,10 @@ class _ChatsScreenState extends State<ChatsScreen> {
     });
   }
 
+  void testFirestoreConnection() async {
+    await _chatService.debugFirestoreConnection();
+  }
+
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text.toLowerCase();
@@ -61,20 +69,23 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
   // Replace the _filterChatRooms method in chats_screen.dart
 
-List<ChatRoom> _filterChatRooms(List<ChatRoom> chatRooms) {
-  if (_searchQuery.isEmpty) {
-    return chatRooms;
+  List<ChatRoom> _filterChatRooms(List<ChatRoom> chatsRooms) {
+    if (_searchQuery.isEmpty) {
+      return chatsRooms;
+    }
+    return chatsRooms.where((chat) {
+      // Get the other participant's name directly from the chat room data
+      bool isCurrentUserSeller = chat.sellerId == _currentUserId;
+      String otherParticipantName = isCurrentUserSeller
+          ? chat.buyerName
+          : chat.sellerName;
+
+      return otherParticipantName.toLowerCase().contains(_searchQuery) ||
+          chat.productName.toLowerCase().contains(_searchQuery) ||
+          chat.lastMessage.toLowerCase().contains(_searchQuery);
+    }).toList();
   }
-  return chatRooms.where((chat) {
-    // Get the other participant's name directly from the chat room data
-    bool isCurrentUserSeller = chat.sellerId == _currentUserId;
-    String otherParticipantName = isCurrentUserSeller ? chat.buyerName : chat.sellerName;
-    
-    return otherParticipantName.toLowerCase().contains(_searchQuery) ||
-        chat.productName.toLowerCase().contains(_searchQuery) ||
-        chat.lastMessage.toLowerCase().contains(_searchQuery);
-  }).toList();
-}
+
   void _onTab(int index) {
     if (selectedIndex != index) {
       setState(() {
@@ -98,15 +109,15 @@ List<ChatRoom> _filterChatRooms(List<ChatRoom> chatRooms) {
 
     return Scaffold(
       // Update the bottomNavigationBar section to match home_page.dart
-bottomNavigationBar: widget.userRole == UserRole.seller
-    ? BottomNavBar2(
-        selectedIndex: selectedIndex,
-        navBarColor: AppTheme.tertiaryOrange,
-      )
-    : BottomNavBar(
-        selectedIndex: selectedIndex,
-        navBarColor: AppTheme.tertiaryOrange,
-      ),
+      bottomNavigationBar: widget.userRole == UserRole.seller
+          ? BottomNavBar2(
+              selectedIndex: selectedIndex,
+              navBarColor: AppTheme.tertiaryOrange,
+            )
+          : BottomNavBar(
+              selectedIndex: selectedIndex,
+              navBarColor: AppTheme.tertiaryOrange,
+            ),
       backgroundColor: AppTheme.tertiaryOrange,
       body: SafeArea(
         child: Column(
@@ -144,7 +155,8 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                                 FutureBuilder<int>(
                                   future: _chatService.getUnreadMessagesCount(),
                                   builder: (context, snapshot) {
-                                    if (snapshot.hasData && snapshot.data! > 0) {
+                                    if (snapshot.hasData &&
+                                        snapshot.data! > 0) {
                                       return Container(
                                         margin: const EdgeInsets.only(left: 8),
                                         padding: const EdgeInsets.all(6),
@@ -170,7 +182,9 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                             const SizedBox(height: 20),
                             // Search bar
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
@@ -219,7 +233,8 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                     topRight: Radius.circular(30),
                   ),
                 ),
-                child: StreamBuilder<List<ChatRoom>>(
+                child: // Replace the StreamBuilder in your ChatsScreen with this version
+                StreamBuilder<List<ChatRoom>>(
                   stream: _chatService.getChatRoomsStream(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -227,6 +242,7 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                     }
 
                     if (snapshot.hasError) {
+                      print('StreamBuilder error: ${snapshot.error}');
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -245,21 +261,38 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                               ),
                             ),
                             const SizedBox(height: 8),
+                            Text(
+                              '${snapshot.error}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[500],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: () {
                                 setState(() {});
                               },
                               child: const Text('Retry'),
                             ),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: () async {
+                                await _chatService.debugFirestoreConnection();
+                              },
+                              child: const Text('Debug Connection'),
+                            ),
                           ],
                         ),
                       );
                     }
 
-                    List<ChatRoom> chatRooms = snapshot.data ?? [];
-                    List<ChatRoom> filteredChatRooms = _filterChatRooms(chatRooms);
-                    _debugChatRooms(chatRooms);
-
+                    List<ChatRoom> chatsRooms = snapshot.data ?? [];
+                    List<ChatRoom> filteredChatRooms = _filterChatRooms(
+                      chatsRooms,
+                    );
+                    _debugChatRooms(chatsRooms);
 
                     if (filteredChatRooms.isEmpty) {
                       return Center(
@@ -317,186 +350,215 @@ bottomNavigationBar: widget.userRole == UserRole.seller
   }
 
   // Update the _buildChatItem method in _ChatsScreenState
-Widget _buildChatItem(ChatRoom chat) {
-  // Get the other participant's details
-  bool isCurrentUserSeller = chat.sellerId == _currentUserId;
-  String otherParticipantName = isCurrentUserSeller ? chat.buyerName : chat.sellerName;
-  String otherParticipantId = isCurrentUserSeller ? chat.buyerId : chat.sellerId;
-  
-  // Get unread count for current user
-  int unreadCount = isCurrentUserSeller ? chat.unreadCountSeller : chat.unreadCountBuyer;
-  bool hasUnread = unreadCount > 0;
+  Widget _buildChatItem(ChatRoom chat) {
+    // Get the other participant's details
+    bool isCurrentUserSeller = chat.sellerId == _currentUserId;
+    String otherParticipantName = isCurrentUserSeller
+        ? chat.buyerName
+        : chat.sellerName;
+    String otherParticipantId = isCurrentUserSeller
+        ? chat.buyerId
+        : chat.sellerId;
 
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: InkWell(
-      onTap: () async {
-        // Mark messages as read when opening chat
-        if (hasUnread) {
-          await _chatService.markMessagesAsRead(chat.id);
-        }
+    // Fallback to IDs if names are empty or look like fallback names
+    if (otherParticipantName.isEmpty ||
+        otherParticipantName.startsWith('User ')) {
+      otherParticipantName = 'User';
+    }
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MessageScreen(
-              chatRoomId: chat.id,
-              otherParticipantName: otherParticipantName,
-              otherParticipantId: otherParticipantId,
-              productName: chat.productName,
-              productImageUrl: chat.productImageUrl,
-              userName: isCurrentUserSeller ? chat.sellerName : chat.buyerName,
+    // Same for current user name
+    String currentUserName = isCurrentUserSeller
+        ? chat.sellerName
+        : chat.buyerName;
+    if (currentUserName.isEmpty || currentUserName.startsWith('User ')) {
+      currentUserName = 'You';
+    }
+
+    // Get unread count for current user
+    int unreadCount = isCurrentUserSeller
+        ? chat.unreadCountSeller
+        : chat.unreadCountBuyer;
+    bool hasUnread = unreadCount > 0;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () async {
+          // Mark messages as read when opening chat
+          if (hasUnread) {
+            await _chatService.markMessagesAsRead(chat.id);
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MessageScreen(
+                chatRoomId: chat.id,
+                otherParticipantName: otherParticipantName,
+                otherParticipantId: otherParticipantId,
+                productName: chat.productName,
+                productImageUrl: chat.productImageUrl,
+                userName: currentUserName,
+              ),
             ),
+          );
+        },
+        onLongPress: () {
+          _showChatOptions(chat);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppTheme.paleWhite.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(15),
+            border: hasUnread
+                ? Border.all(color: AppTheme.primaryOrange, width: 2)
+                : null,
           ),
-        );
-      },
-      onLongPress: () {
-        _showChatOptions(chat);
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppTheme.paleWhite.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(15),
-          border: hasUnread
-              ? Border.all(
-                  color: AppTheme.primaryOrange,
-                  width: 2,
-                )
-              : null,
-        ),
-        child: Row(
-          children: [
-            // Profile avatar with indicator
-            Stack(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.person,
-                    color: Colors.grey[600],
-                    size: 30,
-                  ),
-                ),
-                if (hasUnread)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.lightGreen,
-                        shape: BoxShape.circle,
-                      ),
+          child: Row(
+            children: [
+              // Profile avatar with indicator
+              Stack(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      color: Colors.grey[600],
+                      size: 30,
                     ),
                   ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            // Message content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          otherParticipantName,
-                          style: TextStyle(
-                            fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
-                            fontSize: 16,
-                            color: AppTheme.textPrimary,
-                          ),
+                  if (hasUnread)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: const BoxDecoration(
+                          color: AppTheme.lightGreen,
+                          shape: BoxShape.circle,
                         ),
                       ),
-                      if (!isCurrentUserSeller)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.lightGreen,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Text(
-                            'Seller',
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              // Message content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            otherParticipantName,
                             style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: hasUnread
+                                  ? FontWeight.bold
+                                  : FontWeight.w600,
+                              fontSize: 16,
+                              color: AppTheme.textPrimary,
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
+                        if (!isCurrentUserSeller)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.lightGreen,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'Seller',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      chat.productName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.primaryOrange,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      chat.lastMessage.isNotEmpty
+                          ? chat.lastMessage
+                          : 'No messages yet',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: hasUnread
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Time and notification
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
                   Text(
-                    chat.productName,
+                    ChatService.getFormattedTime(chat.lastMessageTime),
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppTheme.primaryOrange,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    chat.lastMessage.isNotEmpty ? chat.lastMessage : 'No messages yet',
-                    style: TextStyle(
-                      fontSize: 14,
                       color: Colors.grey[600],
-                      fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: hasUnread
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Time and notification
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _chatService.getFormattedTime(chat.lastMessageTime),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (unreadCount > 0)
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryOrange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$unreadCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                  const SizedBox(height: 8),
+                  if (unreadCount > 0)
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryOrange,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
   void _showChatOptions(ChatRoom chat) {
     showModalBottomSheet(
       context: context,
@@ -515,7 +577,10 @@ Widget _buildChatItem(ChatRoom chat) {
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Chat', style: TextStyle(color: Colors.red)),
+              title: const Text(
+                'Delete Chat',
+                style: TextStyle(color: Colors.red),
+              ),
               onTap: () async {
                 Navigator.pop(context);
                 _showDeleteConfirmation(chat);
@@ -532,7 +597,9 @@ Widget _buildChatItem(ChatRoom chat) {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Chat'),
-        content: const Text('Are you sure you want to delete this chat? This action cannot be undone.'),
+        content: const Text(
+          'Are you sure you want to delete this chat? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -558,30 +625,30 @@ Widget _buildChatItem(ChatRoom chat) {
       ),
     );
   }
-  void _debugChatRooms(List<ChatRoom> chatRooms) {
-  print('=== CHAT ROOMS DEBUG ===');
-  print('Current User ID: $_currentUserId');
-  print('Total Chat Rooms: ${chatRooms.length}');
-  
-  for (var chat in chatRooms) {
-    print('--- Chat Room: ${chat.id} ---');
-    print('Seller ID: ${chat.sellerId}');
-    print('Buyer ID: ${chat.buyerId}');
-    print('Seller Name: ${chat.sellerName}');
-    print('Buyer Name: ${chat.buyerName}');
-    print('Product: ${chat.productName}');
-    print('Last Message: ${chat.lastMessage}');
-    print('Last Message Time: ${chat.lastMessageTime}');
-    print('Last Message Sender: ${chat.lastMessageSenderId}');
-    print('Unread Count Seller: ${chat.unreadCountSeller}');
-    print('Unread Count Buyer: ${chat.unreadCountBuyer}');
-    print('Participants: ${chat.participants}');
-    print('Is Current User Seller: ${chat.sellerId == _currentUserId}');
-    print('');
-  }
-  print('=== END DEBUG ===');
-}
 
+  void _debugChatRooms(List<ChatRoom> chatsRooms) {
+    print('=== CHAT ROOMS DEBUG ===');
+    print('Current User ID: $_currentUserId');
+    print('Total Chat Rooms: ${chatsRooms.length}');
+
+    for (var chat in chatsRooms) {
+      print('--- Chat Room: ${chat.id} ---');
+      print('Seller ID: ${chat.sellerId}');
+      print('Buyer ID: ${chat.buyerId}');
+      print('Seller Name: ${chat.sellerName}');
+      print('Buyer Name: ${chat.buyerName}');
+      print('Product: ${chat.productName}');
+      print('Last Message: ${chat.lastMessage}');
+      print('Last Message Time: ${chat.lastMessageTime}');
+      print('Last Message Sender: ${chat.lastMessageSenderId}');
+      print('Unread Count Seller: ${chat.unreadCountSeller}');
+      print('Unread Count Buyer: ${chat.unreadCountBuyer}');
+      print('Participants: ${chat.participants}');
+      print('Is Current User Seller: ${chat.sellerId == _currentUserId}');
+      print('');
+    }
+    print('=== END DEBUG ===');
+  }
 
   Widget _buildAuthRequired() {
     return Scaffold(
@@ -589,18 +656,11 @@ Widget _buildChatItem(ChatRoom chat) {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.login,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.login, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'Please log in to view chats',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 16),
             ElevatedButton(

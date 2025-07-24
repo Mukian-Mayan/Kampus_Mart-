@@ -20,11 +20,13 @@ class FirebaseService {
   User? get currentUser => _auth.currentUser;
 
   // Collection references
-  CollectionReference get productsCollection => _firestore.collection('products');
+  CollectionReference get productsCollection =>
+      _firestore.collection('products');
   CollectionReference get usersCollection => _firestore.collection('users');
   CollectionReference get ordersCollection => _firestore.collection('orders');
   CollectionReference get cartCollection => _firestore.collection('cart');
-  CollectionReference get categoriesCollection => _firestore.collection('categories');
+  CollectionReference get categoriesCollection =>
+      _firestore.collection('categories');
 
   // ============================================
   // PRODUCT OPERATIONS
@@ -39,12 +41,51 @@ class FirebaseService {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // Update seller product count
+      if (currentUser != null) {
+        await _incrementSellerProductCount(currentUser!.uid);
+      }
     } catch (e) {
       throw Exception('Failed to add product: $e');
     }
   }
 
-  Future<void> updateProduct(String productId, Map<String, dynamic> data) async {
+  /// Helper method to increment seller product count
+  Future<void> _incrementSellerProductCount(String sellerId) async {
+    try {
+      final sellerRef = _firestore.collection('sellers').doc(sellerId);
+
+      await _firestore.runTransaction((transaction) async {
+        final sellerDoc = await transaction.get(sellerRef);
+
+        if (sellerDoc.exists) {
+          final currentStats =
+              sellerDoc.data()?['stats'] as Map<String, dynamic>? ?? {};
+          final currentCount =
+              (currentStats['totalProducts'] as num?)?.toInt() ?? 0;
+
+          final updatedStats = {
+            ...currentStats,
+            'totalProducts': currentCount + 1,
+          };
+
+          transaction.update(sellerRef, {
+            'stats': updatedStats,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+    } catch (e) {
+      print('Error incrementing seller product count: $e');
+      // Don't rethrow - product creation should still succeed
+    }
+  }
+
+  Future<void> updateProduct(
+    String productId,
+    Map<String, dynamic> data,
+  ) async {
     try {
       await productsCollection.doc(productId).update({
         ...data,
@@ -57,9 +98,58 @@ class FirebaseService {
 
   Future<void> deleteProduct(String productId) async {
     try {
-      await productsCollection.doc(productId).delete();
+      // Get product data first to get seller ID
+      DocumentSnapshot productDoc = await productsCollection
+          .doc(productId)
+          .get();
+      if (productDoc.exists) {
+        Map<String, dynamic> productData =
+            productDoc.data() as Map<String, dynamic>;
+        String sellerId = productData['sellerId'] ?? '';
+
+        // Delete the product
+        await productsCollection.doc(productId).delete();
+
+        // Update seller product count if seller ID exists
+        if (sellerId.isNotEmpty) {
+          await _decrementSellerProductCount(sellerId);
+        }
+      } else {
+        await productsCollection.doc(productId).delete();
+      }
     } catch (e) {
       throw Exception('Failed to delete product: $e');
+    }
+  }
+
+  /// Helper method to decrement seller product count
+  Future<void> _decrementSellerProductCount(String sellerId) async {
+    try {
+      final sellerRef = _firestore.collection('sellers').doc(sellerId);
+
+      await _firestore.runTransaction((transaction) async {
+        final sellerDoc = await transaction.get(sellerRef);
+
+        if (sellerDoc.exists) {
+          final currentStats =
+              sellerDoc.data()?['stats'] as Map<String, dynamic>? ?? {};
+          final currentCount =
+              (currentStats['totalProducts'] as num?)?.toInt() ?? 0;
+
+          // Ensure count doesn't go below 0
+          final newCount = currentCount > 0 ? currentCount - 1 : 0;
+
+          final updatedStats = {...currentStats, 'totalProducts': newCount};
+
+          transaction.update(sellerRef, {
+            'stats': updatedStats,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+    } catch (e) {
+      print('Error decrementing seller product count: $e');
+      // Don't rethrow - product deletion should still succeed
     }
   }
 
@@ -74,20 +164,30 @@ class FirebaseService {
     }
   }
 
-  Stream<List<Product>> getProducts({String? categoryId, bool activeOnly = true}) {
+  Stream<List<Product>> getProducts({
+    String? categoryId,
+    bool activeOnly = true,
+  }) {
     Query query = productsCollection.orderBy('createdAt', descending: true);
-    
+
     if (activeOnly) {
       query = query.where('isActive', isEqualTo: true);
     }
-    
+
     if (categoryId != null) {
       query = query.where('categoryId', isEqualTo: categoryId);
     }
-    
-    return query.snapshots().map((snapshot) => snapshot.docs
-        .map((doc) => Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-        .toList());
+
+    return query.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map(
+            (doc) => Product.fromFirestore(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            ),
+          )
+          .toList(),
+    );
   }
 
   Stream<List<Product>> getProductsBySeller(String sellerId) {
@@ -95,16 +195,26 @@ class FirebaseService {
         .where('sellerId', isEqualTo: sellerId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => Product.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   Future<Product?> getProduct(String productId) async {
     try {
       DocumentSnapshot doc = await productsCollection.doc(productId).get();
       if (doc.exists) {
-        return Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+        return Product.fromFirestore(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
       }
       return null;
     } catch (e) {
@@ -129,7 +239,10 @@ class FirebaseService {
     }
   }
 
-  Future<void> updateCategory(String categoryId, Map<String, dynamic> data) async {
+  Future<void> updateCategory(
+    String categoryId,
+    Map<String, dynamic> data,
+  ) async {
     try {
       await categoriesCollection.doc(categoryId).update({
         ...data,
@@ -152,16 +265,26 @@ class FirebaseService {
     return categoriesCollection
         .orderBy('name')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CategoryModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => CategoryModel.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   Future<CategoryModel?> getCategory(String categoryId) async {
     try {
       DocumentSnapshot doc = await categoriesCollection.doc(categoryId).get();
       if (doc.exists) {
-        return CategoryModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+        return CategoryModel.fromFirestore(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
       }
       return null;
     } catch (e) {
@@ -173,7 +296,7 @@ class FirebaseService {
     try {
       final callable = _functions.httpsCallable('recalculateCategoryCounts');
       final result = await callable.call();
-      
+
       if (!result.data['success']) {
         throw Exception('Failed to recalculate category counts');
       }
@@ -190,7 +313,7 @@ class FirebaseService {
     try {
       // Get FCM token for notifications
       final fcmToken = await _messaging.getToken();
-      
+
       await usersCollection.doc(currentUser?.uid).set({
         ...user.toFirestore(),
         'fcmToken': fcmToken,
@@ -231,10 +354,13 @@ class FirebaseService {
     try {
       final uid = userId ?? currentUser?.uid;
       if (uid == null) return null;
-      
+
       DocumentSnapshot doc = await usersCollection.doc(uid).get();
       if (doc.exists) {
-        return UserModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+        return UserModel.fromFirestore(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
       }
       return null;
     } catch (e) {
@@ -254,7 +380,7 @@ class FirebaseService {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
-      
+
       return orderRef.id;
     } catch (e) {
       throw Exception('Failed to create order: $e');
@@ -296,31 +422,48 @@ class FirebaseService {
         .where('userId', isEqualTo: currentUser?.uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => OrderModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => OrderModel.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   Stream<List<OrderModel>> getSellerOrders(String sellerId, {String? status}) {
-    Query query = ordersCollection
-        .where('sellerId', isEqualTo: sellerId);
-    
+    Query query = ordersCollection.where('sellerId', isEqualTo: sellerId);
+
     if (status != null) {
       query = query.where('status', isEqualTo: status);
     }
-    
-    return query.orderBy('createdAt', descending: true)
+
+    return query
+        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => OrderModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => OrderModel.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   Future<OrderModel?> getOrder(String orderId) async {
     try {
       DocumentSnapshot doc = await ordersCollection.doc(orderId).get();
       if (doc.exists) {
-        return OrderModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+        return OrderModel.fromFirestore(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
       }
       return null;
     } catch (e) {
@@ -336,11 +479,11 @@ class FirebaseService {
     try {
       // Check if item already exists in cart
       final existingItem = await getCartItemByProductId(cartItem.productId);
-      
+
       if (existingItem != null) {
         // Update quantity instead of adding new item
         await updateCartItem(existingItem.id, {
-          'quantity': existingItem.quantity + cartItem.quantity
+          'quantity': existingItem.quantity + cartItem.quantity,
         });
       } else {
         await cartCollection.add({
@@ -362,7 +505,10 @@ class FirebaseService {
     }
   }
 
-  Future<void> updateCartItem(String cartItemId, Map<String, dynamic> data) async {
+  Future<void> updateCartItem(
+    String cartItemId,
+    Map<String, dynamic> data,
+  ) async {
     try {
       await cartCollection.doc(cartItemId).update({
         ...data,
@@ -377,9 +523,16 @@ class FirebaseService {
     return cartCollection
         .where('userId', isEqualTo: currentUser?.uid)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CartModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => CartModel.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   Future<void> clearUserCart() async {
@@ -387,7 +540,7 @@ class FirebaseService {
       QuerySnapshot cartItems = await cartCollection
           .where('userId', isEqualTo: currentUser?.uid)
           .get();
-      
+
       WriteBatch batch = _firestore.batch();
       for (DocumentSnapshot item in cartItems.docs) {
         batch.delete(item.reference);
@@ -403,7 +556,7 @@ class FirebaseService {
       QuerySnapshot cartItems = await cartCollection
           .where('userId', isEqualTo: currentUser?.uid)
           .get();
-      
+
       double total = 0.0;
       for (DocumentSnapshot item in cartItems.docs) {
         Map<String, dynamic> data = item.data() as Map<String, dynamic>;
@@ -420,7 +573,7 @@ class FirebaseService {
       QuerySnapshot cartItems = await cartCollection
           .where('userId', isEqualTo: currentUser?.uid)
           .get();
-      
+
       int count = 0;
       for (DocumentSnapshot item in cartItems.docs) {
         Map<String, dynamic> data = item.data() as Map<String, dynamic>;
@@ -450,10 +603,13 @@ class FirebaseService {
           .where('userId', isEqualTo: currentUser?.uid)
           .where('productId', isEqualTo: productId)
           .get();
-      
+
       if (result.docs.isNotEmpty) {
         DocumentSnapshot doc = result.docs.first;
-        return CartModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+        return CartModel.fromFirestore(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
       }
       return null;
     } catch (e) {
@@ -472,9 +628,16 @@ class FirebaseService {
         .where('name', isLessThan: '${searchTerm.toLowerCase()}\uf8ff')
         .orderBy('name')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => Product.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   Stream<List<Product>> getProductsByCategory(String categoryId) {
@@ -483,9 +646,16 @@ class FirebaseService {
         .where('isActive', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => Product.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   Stream<List<Product>> getFilteredProducts({
@@ -496,19 +666,19 @@ class FirebaseService {
     bool descending = true,
   }) {
     Query query = productsCollection.where('isActive', isEqualTo: true);
-    
+
     if (categoryId != null) {
       query = query.where('categoryId', isEqualTo: categoryId);
     }
-    
+
     if (minPrice != null) {
       query = query.where('price', isGreaterThanOrEqualTo: minPrice);
     }
-    
+
     if (maxPrice != null) {
       query = query.where('price', isLessThanOrEqualTo: maxPrice);
     }
-    
+
     // Apply sorting
     switch (sortBy) {
       case 'price':
@@ -523,10 +693,17 @@ class FirebaseService {
       default:
         query = query.orderBy('createdAt', descending: descending);
     }
-    
-    return query.snapshots().map((snapshot) => snapshot.docs
-        .map((doc) => Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-        .toList());
+
+    return query.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map(
+            (doc) => Product.fromFirestore(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            ),
+          )
+          .toList(),
+    );
   }
 
   // ============================================
@@ -545,34 +722,43 @@ class FirebaseService {
         'startDate': startDate?.toIso8601String(),
         'endDate': endDate?.toIso8601String(),
       });
-      
+
       return result.data;
     } catch (e) {
       throw Exception('Failed to generate sales report: $e');
     }
   }
 
-  Stream<List<OrderModel>> getSalesData(String sellerId, {
-    DateTime? startDate, 
-    DateTime? endDate
+  Stream<List<OrderModel>> getSalesData(
+    String sellerId, {
+    DateTime? startDate,
+    DateTime? endDate,
   }) {
     Query query = ordersCollection
         .where('sellerId', isEqualTo: sellerId)
         .where('status', isEqualTo: 'completed');
-    
+
     if (startDate != null) {
       query = query.where('createdAt', isGreaterThanOrEqualTo: startDate);
     }
-    
+
     if (endDate != null) {
       query = query.where('createdAt', isLessThanOrEqualTo: endDate);
     }
-    
-    return query.orderBy('createdAt', descending: true)
+
+    return query
+        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => OrderModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => OrderModel.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   // ============================================
@@ -654,10 +840,12 @@ class FirebaseService {
   void dispose() {
     // Any cleanup operations if needed
   }
-  
+
   static Future<String> uploadProductImage(File imageFile) async {
     try {
-      final storageRef = FirebaseStorage.instance.ref().child('product_images/${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}');
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'product_images/${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}',
+      );
       final uploadTask = storageRef.putFile(imageFile);
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
@@ -667,6 +855,7 @@ class FirebaseService {
     }
   }
 }
+
 class CartService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -696,9 +885,9 @@ class CartService {
     try {
       // Create unique identifier for this specific product configuration
       String configId = _createConfigurationId(
-        productId, 
-        size: size, 
-        color: color, 
+        productId,
+        size: size,
+        color: color,
         variant: variant,
         selectedOptions: selectedOptions,
       );
@@ -716,10 +905,12 @@ class CartService {
         Map<String, dynamic> data = existingItem.data() as Map<String, dynamic>;
         int currentQuantity = data['quantity'] ?? 0;
         int newQuantity = currentQuantity + quantity;
-        
+
         // Check if new quantity exceeds maximum
         if (newQuantity > maxQuantity) {
-          throw Exception('Cannot add more items. Maximum quantity is $maxQuantity');
+          throw Exception(
+            'Cannot add more items. Maximum quantity is $maxQuantity',
+          );
         }
 
         await existingItem.reference.update({
@@ -754,7 +945,10 @@ class CartService {
   }
 
   // Update cart item quantity with validation
-  Future<void> updateCartItemQuantity(String cartItemId, int newQuantity) async {
+  Future<void> updateCartItemQuantity(
+    String cartItemId,
+    int newQuantity,
+  ) async {
     if (newQuantity <= 0) {
       await removeFromCart(cartItemId);
       return;
@@ -802,12 +996,16 @@ class CartService {
         .where('userId', isEqualTo: currentUser!.uid)
         .orderBy('createdAt', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CartModel.fromFirestore(
-                doc.data() as Map<String, dynamic>, 
-                doc.id
-            ))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => CartModel.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   // Get cart summary
@@ -828,7 +1026,7 @@ class CartService {
 
       for (DocumentSnapshot doc in cartItems.docs) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        
+
         int quantity = data['quantity'] ?? 0;
         double price = (data['price'] ?? 0.0).toDouble();
         bool isAvailable = data['isAvailable'] ?? true;
@@ -925,7 +1123,10 @@ class CartService {
   }
 
   // Update product availability in cart (called when product stock changes)
-  Future<void> updateProductAvailability(String productId, bool isAvailable) async {
+  Future<void> updateProductAvailability(
+    String productId,
+    bool isAvailable,
+  ) async {
     try {
       QuerySnapshot productInCarts = await cartCollection
           .where('productId', isEqualTo: productId)
@@ -953,18 +1154,18 @@ class CartService {
     Map<String, dynamic>? selectedOptions,
   }) {
     List<String> configParts = [productId];
-    
+
     if (size != null) configParts.add('size:$size');
     if (color != null) configParts.add('color:$color');
     if (variant != null) configParts.add('variant:$variant');
-    
+
     if (selectedOptions != null && selectedOptions.isNotEmpty) {
       List<String> sortedKeys = selectedOptions.keys.toList()..sort();
       for (String key in sortedKeys) {
         configParts.add('$key:${selectedOptions[key]}');
       }
     }
-    
+
     return configParts.join('|');
   }
 }
@@ -997,13 +1198,12 @@ class CartSummary {
 
   bool get isEmpty => itemCount == 0;
   bool get hasUnavailableItems => unavailableItems.isNotEmpty;
-  
+
   // Calculate tax (you can customize this based on your requirements)
   double getTax({double taxRate = 0.0}) => subtotal * taxRate;
-  
+
   // Calculate total with tax
   double getTotal({double taxRate = 0.0, double shippingCost = 0.0}) {
     return subtotal + getTax(taxRate: taxRate) + shippingCost;
   }
 }
-

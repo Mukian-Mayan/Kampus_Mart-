@@ -306,10 +306,21 @@ static Future<bool> fixProductCounts() async {
   // Sign out seller
   static Future<void> signOutSeller() async {
     try {
+      // Cancel any active streams or subscriptions before signout
+      await FirebaseFirestore.instance.terminate();
+      await FirebaseFirestore.instance.clearPersistence();
+      
+      // Sign out from Firebase Auth
       await _auth.signOut();
       
     } catch (e) {
       print('Error signing out seller: $e');
+      // Even if there's an error, still try to sign out
+      try {
+        await _auth.signOut();
+      } catch (signOutError) {
+        print('Final signout attempt failed: $signOutError');
+      }
       rethrow;
     }
   }

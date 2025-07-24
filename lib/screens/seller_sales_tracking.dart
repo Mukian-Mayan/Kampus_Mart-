@@ -4,7 +4,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../Theme/app_theme.dart';
-import '../widgets/logo_widget.dart';
 import '../models/sales_data.dart';
 
 class SellerSalesTrackingScreen extends StatefulWidget {
@@ -83,7 +82,7 @@ class _SellerSalesTrackingScreenState extends State<SellerSalesTrackingScreen>
         ),
         title: Row(
           children: [
-            const LogoWidget(),
+            //const LogoWidget(),
             const SizedBox(width: 8),
             const Text(
               'Sales Analytics',

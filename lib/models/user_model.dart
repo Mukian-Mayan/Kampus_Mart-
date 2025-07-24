@@ -24,15 +24,28 @@ class UserModel {
   });
 
   // Factory constructor to create UserModel from Firestore document
-  factory UserModel.fromFirestore(Map<String, dynamic> data, String documentId) {
+  factory UserModel.fromFirestore(
+    Map<String, dynamic> data,
+    String documentId,
+  ) {
+    // Handle both new format (displayName) and old format (firstName + lastName)
+    String? displayName = data['displayName'];
+    if (displayName == null || displayName.isEmpty) {
+      final firstName = data['firstName'] ?? '';
+      final lastName = data['lastName'] ?? '';
+      if (firstName.isNotEmpty || lastName.isNotEmpty) {
+        displayName = '$firstName $lastName'.trim();
+      }
+    }
+
     return UserModel(
       id: documentId,
       email: data['email'] ?? '',
-      displayName: data['displayName'],
+      displayName: displayName,
       phoneNumber: data['phoneNumber'],
       address: data['address'],
       profileImageUrl: data['profileImageUrl'],
-      userType: data['userType'] ?? 'buyer',
+      userType: data['userType'] ?? data['role'] ?? 'buyer',
       isEmailVerified: data['isEmailVerified'] ?? false,
       createdAt: data['createdAt']?.toDate(),
       updatedAt: data['updatedAt']?.toDate(),
@@ -78,4 +91,4 @@ class UserModel {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
-} 
+}

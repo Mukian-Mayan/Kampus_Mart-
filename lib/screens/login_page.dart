@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/home_page.dart';
-import 'package:kampusmart2/screens/sellers_dashboard.dart';
 import 'package:kampusmart2/screens/register_page.dart';
 import 'package:kampusmart2/services/auth_services.dart';
 import 'package:kampusmart2/widgets/layout1.dart';

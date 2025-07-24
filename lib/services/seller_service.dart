@@ -1,7 +1,6 @@
 // services/seller_service.dart
 // ignore_for_file: prefer_interpolation_to_compose_strings, unused_local_variable
 
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -13,25 +12,57 @@ class SellerService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static const String _collection = 'sellers';
   static final FirebaseStorage _storage = FirebaseStorage.instance;
-  static const String _profileImagesPath = 'seller_profile_images';
+  static const String _profileImagesPath = 'profile_images';
 
   /// Upload profile image to Firebase Storage
-  static Future<String?> _uploadProfileImage(XFile imageFile, String userId) async {
+  static Future<String?> _uploadProfileImage(
+    XFile imageFile,
+    String userId,
+  ) async {
     try {
+      print('SellerService: Starting image upload for userId: $userId');
+      print('SellerService: Image file path: ${imageFile.path}');
+
+      // Read image data
+      final imageData = await imageFile.readAsBytes();
+      print('SellerService: Image data size: ${imageData.length} bytes');
+
       // Create a reference to the file location
-      final Reference storageRef = _storage.ref()
-          .child('$_profileImagesPath/$userId/${DateTime.now().millisecondsSinceEpoch}');
-      
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final Reference storageRef = _storage.ref().child(
+        '$_profileImagesPath/$userId/$timestamp.jpg',
+      );
+
+      print('SellerService: Storage reference path: ${storageRef.fullPath}');
+
       // Upload the file
       final TaskSnapshot uploadTask = await storageRef.putData(
-        await imageFile.readAsBytes(),
+        imageData,
         SettableMetadata(contentType: 'image/jpeg'),
       );
-      
+
+      print('SellerService: Upload completed, getting download URL...');
+
       // Get the download URL
-      return await uploadTask.ref.getDownloadURL();
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      print('SellerService: Download URL: $downloadUrl');
+
+      return downloadUrl;
     } catch (e) {
-      print('Error uploading profile image: $e');
+      print('SellerService: Error uploading profile image: $e');
+
+      // Check if it's a permission error
+      if (e.toString().contains('unauthorized') ||
+          e.toString().contains('Permission denied')) {
+        print(
+          'SellerService: PERMISSION ERROR - Firebase Storage rules need to be updated',
+        );
+        print('SellerService: Please check Firebase Console > Storage > Rules');
+        throw Exception(
+          'Permission denied: Firebase Storage rules need to allow authenticated users to upload to profile_images/{userId}/',
+        );
+      }
+
       return null;
     }
   }
@@ -49,20 +80,15 @@ class SellerService {
   }) async {
     try {
       // Create user in Firebase Auth
-      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final String userId = userCredential.user!.uid;
       String? profileImageUrl;
 
       // Upload profile image if provided
       if (profileImage != null) {
-        profileImageUrl = await _uploadProfileImage(
-          profileImage,
-          userId,
-        );
+        profileImageUrl = await _uploadProfileImage(profileImage, userId);
       }
 
       // Create seller document
@@ -82,10 +108,7 @@ class SellerService {
       );
 
       // Save to Firestore
-      await _firestore
-          .collection(_collection)
-          .doc(userId)
-          .set(seller.toJson());
+      await _firestore.collection(_collection).doc(userId).set(seller.toJson());
 
       return seller;
     } catch (e) {
@@ -99,10 +122,8 @@ class SellerService {
     required String password,
   }) async {
     try {
-      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential userCredential = await _auth
+          .signInWithEmailAndPassword(email: email, password: password);
 
       final String userId = userCredential.user!.uid;
       return await getSellerById(userId);
@@ -157,17 +178,15 @@ class SellerService {
 
       // Upload new profile image if provided
       if (profileImage != null) {
-        profileImageUrl = await _uploadProfileImage(
-          profileImage,
-          sellerId,
-        );
+        profileImageUrl = await _uploadProfileImage(profileImage, sellerId);
       }
 
       final Seller updatedSeller = currentSeller.copyWith(
         name: name ?? currentSeller.name,
         phone: phone ?? currentSeller.phone,
         businessName: businessName ?? currentSeller.businessName,
-        businessDescription: businessDescription ?? currentSeller.businessDescription,
+        businessDescription:
+            businessDescription ?? currentSeller.businessDescription,
         businessLocation: businessLocation ?? currentSeller.businessLocation,
         profileImageUrl: profileImageUrl,
         updatedAt: DateTime.now(),
@@ -200,26 +219,28 @@ class SellerService {
   }) async {
     try {
       final Seller currentSeller = await getSellerById(sellerId);
-      
-      final SellerStats updatedStats = stats ?? currentSeller.stats.copyWith(
-        totalProducts: totalProducts ?? currentSeller.stats.totalProducts,
-        totalOrders: totalOrders ?? currentSeller.stats.totalOrders,
-        completedOrders: completedOrders ?? currentSeller.stats.completedOrders,
-        pendingOrders: pendingOrders ?? currentSeller.stats.pendingOrders,
-        cancelledOrders: cancelledOrders ?? currentSeller.stats.cancelledOrders,
-        totalRevenue: totalRevenue ?? currentSeller.stats.totalRevenue,
-        monthlyRevenue: monthlyRevenue ?? currentSeller.stats.monthlyRevenue,
-        rating: rating ?? currentSeller.stats.rating,
-        totalReviews: totalReviews ?? currentSeller.stats.totalReviews,
-      );
 
-      await _firestore
-          .collection(_collection)
-          .doc(sellerId)
-          .update({
-            'stats': updatedStats.toJson(),
-            'updatedAt': DateTime.now().toIso8601String(),
-          });
+      final SellerStats updatedStats =
+          stats ??
+          currentSeller.stats.copyWith(
+            totalProducts: totalProducts ?? currentSeller.stats.totalProducts,
+            totalOrders: totalOrders ?? currentSeller.stats.totalOrders,
+            completedOrders:
+                completedOrders ?? currentSeller.stats.completedOrders,
+            pendingOrders: pendingOrders ?? currentSeller.stats.pendingOrders,
+            cancelledOrders:
+                cancelledOrders ?? currentSeller.stats.cancelledOrders,
+            totalRevenue: totalRevenue ?? currentSeller.stats.totalRevenue,
+            monthlyRevenue:
+                monthlyRevenue ?? currentSeller.stats.monthlyRevenue,
+            rating: rating ?? currentSeller.stats.rating,
+            totalReviews: totalReviews ?? currentSeller.stats.totalReviews,
+          );
+
+      await _firestore.collection(_collection).doc(sellerId).update({
+        'stats': updatedStats.toJson(),
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
     } catch (e) {
       throw Exception('Failed to update seller stats: $e');
     }
@@ -228,13 +249,10 @@ class SellerService {
   /// Verify seller
   static Future<void> verifySeller(String sellerId) async {
     try {
-      await _firestore
-          .collection(_collection)
-          .doc(sellerId)
-          .update({
-            'isVerified': true,
-            'updatedAt': DateTime.now().toIso8601String(),
-          });
+      await _firestore.collection(_collection).doc(sellerId).update({
+        'isVerified': true,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
     } catch (e) {
       throw Exception('Failed to verify seller: $e');
     }
@@ -331,9 +349,10 @@ class SellerService {
     try {
       // Get seller data first to check for profile image
       final seller = await getSellerById(sellerId);
-      
+
       // Delete profile image from storage if exists
-      if (seller.profileImageUrl != null && seller.profileImageUrl!.isNotEmpty) {
+      if (seller.profileImageUrl != null &&
+          seller.profileImageUrl!.isNotEmpty) {
         try {
           final ref = _storage.refFromURL(seller.profileImageUrl!);
           await ref.delete();
@@ -343,10 +362,7 @@ class SellerService {
       }
 
       // Delete from Firestore
-      await _firestore
-          .collection(_collection)
-          .doc(sellerId)
-          .delete();
+      await _firestore.collection(_collection).doc(sellerId).delete();
 
       // Delete from Firebase Auth
       final User? user = _auth.currentUser;
@@ -388,18 +404,18 @@ class SellerService {
 
   /// Listen to seller changes
   static Stream<Seller?> sellerStream(String sellerId) {
-    return _firestore
-        .collection(_collection)
-        .doc(sellerId)
-        .snapshots()
-        .map((snapshot) {
-          if (!snapshot.exists) return null;
-          return Seller.fromJson(snapshot.data() as Map<String, dynamic>);
-        });
+    return _firestore.collection(_collection).doc(sellerId).snapshots().map((
+      snapshot,
+    ) {
+      if (!snapshot.exists) return null;
+      return Seller.fromJson(snapshot.data() as Map<String, dynamic>);
+    });
   }
 
   /// Get seller dashboard stats
-  static Future<Map<String, dynamic>> getSellerDashboardStats(String sellerId) async {
+  static Future<Map<String, dynamic>> getSellerDashboardStats(
+    String sellerId,
+  ) async {
     try {
       final Seller seller = await getSellerById(sellerId);
       final now = DateTime.now();
@@ -432,20 +448,18 @@ class SellerService {
   static Future<void> deleteProfileImage(String sellerId) async {
     try {
       final seller = await getSellerById(sellerId);
-      
-      if (seller.profileImageUrl != null && seller.profileImageUrl!.isNotEmpty) {
+
+      if (seller.profileImageUrl != null &&
+          seller.profileImageUrl!.isNotEmpty) {
         // Delete from storage
         final ref = _storage.refFromURL(seller.profileImageUrl!);
         await ref.delete();
-        
+
         // Update seller document to remove image URL
-        await _firestore
-            .collection(_collection)
-            .doc(sellerId)
-            .update({
-              'profileImageUrl': null,
-              'updatedAt': DateTime.now().toIso8601String(),
-            });
+        await _firestore.collection(_collection).doc(sellerId).update({
+          'profileImageUrl': null,
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
       }
     } catch (e) {
       throw Exception('Failed to delete profile image: $e');

@@ -18,7 +18,6 @@ import './product_details_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/fancy_app_bar.dart';
 import './_fancy_app_bar_sliver_delegate.dart';
-import '../widgets/my_button1.dart';
 import 'dart:ui';
 import '../services/product_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
