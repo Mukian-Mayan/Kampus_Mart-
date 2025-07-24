@@ -37,7 +37,7 @@ class ProductService {
           .collection('user_roles')
           .doc(user.uid)
           .get();
-      
+
       if (!roleDoc.exists) {
         throw Exception('User role not found');
       }
@@ -75,12 +75,15 @@ class ProductService {
       print('Product data: $productData');
 
       final docRef = await _firestore.collection('products').add(productData);
-      
+
       // Update category product count if categoryId exists
       if (category != null && category.isNotEmpty) {
         await CategoryService.incrementCategoryProductCount(category);
       }
-      
+
+      // Update seller product count
+      await _incrementSellerProductCount(user.uid);
+
       print('Product created with ID: ${docRef.id}');
       return docRef.id;
     } catch (e) {
@@ -114,7 +117,10 @@ class ProductService {
         await CategoryService.incrementCategoryProductCount(categoryId);
       }
 
-      print('Successfully added product ${productRef.id} and updated category count');
+      // Update seller product count
+      await _incrementSellerProductCount(user.uid);
+
+      print('Successfully added product ${productRef.id} and updated counts');
       return productRef.id;
     } catch (e) {
       print('Error adding product: $e');
@@ -187,7 +193,7 @@ class ProductService {
       // Firestore doesn't have full-text search, so we'll use array-contains-any
       // or implement a simple name/description search
       final List<String> searchTerms = query.toLowerCase().split(' ');
-      
+
       final QuerySnapshot snapshot = await _firestore
           .collection('products')
           .where('isActive', isEqualTo: true)
@@ -200,7 +206,8 @@ class ProductService {
 
       // Filter products based on search query
       return allProducts.where((product) {
-        final productText = '${product.name} ${product.description}'.toLowerCase();
+        final productText = '${product.name} ${product.description}'
+            .toLowerCase();
         return searchTerms.any((term) => productText.contains(term));
       }).toList();
     } catch (e) {
@@ -273,7 +280,8 @@ class ProductService {
 
       if (name != null) updateData['name'] = name;
       if (description != null) updateData['description'] = description;
-      if (priceAndDiscount != null) updateData['priceAndDiscount'] = priceAndDiscount;
+      if (priceAndDiscount != null)
+        updateData['priceAndDiscount'] = priceAndDiscount;
       if (originalPrice != null) updateData['originalPrice'] = originalPrice;
       if (condition != null) updateData['condition'] = condition;
       if (location != null) updateData['location'] = location;
@@ -295,7 +303,10 @@ class ProductService {
   }
 
   /// Update product category and adjust counts accordingly
-  static Future<void> updateProductCategory(String productId, String newCategoryId) async {
+  static Future<void> updateProductCategory(
+    String productId,
+    String newCategoryId,
+  ) async {
     try {
       // Get current product data
       final DocumentSnapshot productDoc = await _firestore
@@ -330,7 +341,9 @@ class ProductService {
           await CategoryService.incrementCategoryProductCount(newCategoryId);
         }
 
-        print('Successfully moved product $productId from category $oldCategoryId to $newCategoryId');
+        print(
+          'Successfully moved product $productId from category $oldCategoryId to $newCategoryId',
+        );
       }
     } catch (e) {
       print('Error updating product category: $e');
@@ -375,10 +388,166 @@ class ProductService {
         await CategoryService.decrementCategoryProductCount(categoryId);
       }
 
-      print('Successfully deleted product $productId and updated category count');
+      // Update seller product count
+      await _decrementSellerProductCount(user.uid);
+
+      print(
+        'Successfully deleted product $productId and updated category count',
+      );
     } catch (e) {
       print('Error deleting product: $e');
       throw Exception('Failed to delete product: $e');
+    }
+  }
+
+  /// Helper method to decrement seller product count
+  static Future<void> _decrementSellerProductCount(String sellerId) async {
+    try {
+      final sellerRef = _firestore.collection('sellers').doc(sellerId);
+
+      await _firestore.runTransaction((transaction) async {
+        final sellerDoc = await transaction.get(sellerRef);
+
+        if (sellerDoc.exists) {
+          final currentStats =
+              sellerDoc.data()?['stats'] as Map<String, dynamic>? ?? {};
+          final currentCount =
+              (currentStats['totalProducts'] as num?)?.toInt() ?? 0;
+
+          // Ensure count doesn't go below 0
+          final newCount = currentCount > 0 ? currentCount - 1 : 0;
+
+          final updatedStats = {...currentStats, 'totalProducts': newCount};
+
+          transaction.update(sellerRef, {
+            'stats': updatedStats,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+
+      print('Seller product count decremented successfully');
+    } catch (e) {
+      print('Error decrementing seller product count: $e');
+      // Don't rethrow - product deletion should still succeed
+    }
+  }
+
+  /// Helper method to increment seller product count
+  static Future<void> _incrementSellerProductCount(String sellerId) async {
+    try {
+      final sellerRef = _firestore.collection('sellers').doc(sellerId);
+
+      await _firestore.runTransaction((transaction) async {
+        final sellerDoc = await transaction.get(sellerRef);
+
+        if (sellerDoc.exists) {
+          final currentStats =
+              sellerDoc.data()?['stats'] as Map<String, dynamic>? ?? {};
+          final currentCount =
+              (currentStats['totalProducts'] as num?)?.toInt() ?? 0;
+
+          final updatedStats = {
+            ...currentStats,
+            'totalProducts': currentCount + 1,
+          };
+
+          transaction.update(sellerRef, {
+            'stats': updatedStats,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+
+      print('Seller product count incremented successfully');
+    } catch (e) {
+      print('Error incrementing seller product count: $e');
+      // Don't rethrow - product creation should still succeed
+    }
+  }
+
+  /// Utility method to recalculate seller product counts for all sellers
+  /// This can be used to fix any inconsistencies in the data
+  static Future<void> recalculateAllSellerProductCounts() async {
+    try {
+      print('Starting to recalculate all seller product counts...');
+
+      // Get all sellers
+      final sellersSnapshot = await _firestore.collection('sellers').get();
+
+      for (final sellerDoc in sellersSnapshot.docs) {
+        final sellerId = sellerDoc.id;
+
+        // Count active products for this seller
+        final productsSnapshot = await _firestore
+            .collection('products')
+            .where('sellerId', isEqualTo: sellerId)
+            .where('isActive', isEqualTo: true)
+            .get();
+
+        final actualProductCount = productsSnapshot.docs.length;
+
+        // Update seller stats with correct count
+        final currentStats =
+            sellerDoc.data()['stats'] as Map<String, dynamic>? ?? {};
+        final updatedStats = {
+          ...currentStats,
+          'totalProducts': actualProductCount,
+        };
+
+        await _firestore.collection('sellers').doc(sellerId).update({
+          'stats': updatedStats,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        print('Updated seller $sellerId: $actualProductCount products');
+      }
+
+      print('Finished recalculating all seller product counts');
+    } catch (e) {
+      print('Error recalculating seller product counts: $e');
+      throw Exception('Failed to recalculate seller product counts: $e');
+    }
+  }
+
+  /// Helper method to recalculate product count for a specific seller
+  static Future<void> recalculateSellerProductCount(String sellerId) async {
+    try {
+      // Count active products for this seller
+      final productsSnapshot = await _firestore
+          .collection('products')
+          .where('sellerId', isEqualTo: sellerId)
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      final actualProductCount = productsSnapshot.docs.length;
+
+      // Get current seller data
+      final sellerDoc = await _firestore
+          .collection('sellers')
+          .doc(sellerId)
+          .get();
+      if (!sellerDoc.exists) {
+        throw Exception('Seller not found');
+      }
+
+      // Update seller stats with correct count
+      final currentStats =
+          sellerDoc.data()?['stats'] as Map<String, dynamic>? ?? {};
+      final updatedStats = {
+        ...currentStats,
+        'totalProducts': actualProductCount,
+      };
+
+      await _firestore.collection('sellers').doc(sellerId).update({
+        'stats': updatedStats,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('Recalculated seller $sellerId product count: $actualProductCount');
+    } catch (e) {
+      print('Error recalculating seller product count: $e');
+      throw Exception('Failed to recalculate seller product count: $e');
     }
   }
 
@@ -409,7 +578,13 @@ class ProductService {
         await CategoryService.decrementCategoryProductCount(categoryId);
       }
 
-      print('Successfully soft deleted product $productId and updated category count');
+      // Update seller product count
+      final String sellerId = productData['sellerId'] as String;
+      await _decrementSellerProductCount(sellerId);
+
+      print(
+        'Successfully soft deleted product $productId and updated category count',
+      );
     } catch (e) {
       print('Error soft deleting product: $e');
       throw e;
@@ -448,7 +623,12 @@ class ProductService {
         await CategoryService.decrementCategoryProductCount(categoryId);
       }
 
-      print('Successfully permanently deleted product $productId and updated category count');
+      // Update seller product count
+      await _decrementSellerProductCount(user.uid);
+
+      print(
+        'Successfully permanently deleted product $productId and updated category count',
+      );
     } catch (e) {
       print('Error permanently deleting product: $e');
       throw Exception('Failed to permanently delete product: $e');
@@ -483,7 +663,13 @@ class ProductService {
         await CategoryService.incrementCategoryProductCount(categoryId);
       }
 
-      print('Successfully restored product $productId and updated category count');
+      // Update seller product count
+      final String sellerId = productData['sellerId'] as String;
+      await _incrementSellerProductCount(sellerId);
+
+      print(
+        'Successfully restored product $productId and updated category count',
+      );
     } catch (e) {
       print('Error restoring product: $e');
       throw e;
@@ -512,7 +698,8 @@ class ProductService {
 
           // Track category decrements
           if (categoryId != null && categoryId.isNotEmpty) {
-            categoryDecrements[categoryId] = (categoryDecrements[categoryId] ?? 0) + 1;
+            categoryDecrements[categoryId] =
+                (categoryDecrements[categoryId] ?? 0) + 1;
           }
         }
       }
@@ -523,13 +710,14 @@ class ProductService {
       // Update category counts
       for (final entry in categoryDecrements.entries) {
         final categoryId = entry.key;
-        final decrementAmount = entry.value;
-        
+        // The decrementAmount was already accounted for in the batch delete
         // Get current count and calculate new count
         await CategoryService.updateCategoryProductCount(categoryId);
       }
 
-      print('Successfully batch deleted ${productIds.length} products and updated category counts');
+      print(
+        'Successfully batch deleted ${productIds.length} products and updated category counts',
+      );
     } catch (e) {
       print('Error batch deleting products: $e');
       throw e;
@@ -563,9 +751,9 @@ class ProductService {
       if (isFavorite) {
         // Add to favorites
         await userFavoritesRef.set({
-          'productIds': FieldValue.arrayUnion([productId])
+          'productIds': FieldValue.arrayUnion([productId]),
         }, SetOptions(merge: true));
-        
+
         // Increment product favorites count
         await _firestore.collection('products').doc(productId).update({
           'favorites': FieldValue.increment(1),
@@ -573,9 +761,9 @@ class ProductService {
       } else {
         // Remove from favorites
         await userFavoritesRef.update({
-          'productIds': FieldValue.arrayRemove([productId])
+          'productIds': FieldValue.arrayRemove([productId]),
         });
-        
+
         // Decrement product favorites count
         await _firestore.collection('products').doc(productId).update({
           'favorites': FieldValue.increment(-1),
@@ -605,7 +793,7 @@ class ProductService {
       }
 
       final List<String> productIds = List<String>.from(
-        userFavoritesDoc.data()?['productIds'] ?? []
+        userFavoritesDoc.data()?['productIds'] ?? [],
       );
 
       if (productIds.isEmpty) {
@@ -614,11 +802,11 @@ class ProductService {
 
       // Fetch favorite products
       final List<Product> favoriteProducts = [];
-      
+
       // Firestore has a limit of 10 items for 'in' queries
       for (int i = 0; i < productIds.length; i += 10) {
         final batch = productIds.skip(i).take(10).toList();
-        
+
         final QuerySnapshot snapshot = await _firestore
             .collection('products')
             .where(FieldPath.documentId, whereIn: batch)
@@ -629,7 +817,7 @@ class ProductService {
           snapshot.docs.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
             return Product.fromFirestore(data, doc.id);
-          })
+          }),
         );
       }
 
@@ -658,7 +846,7 @@ class ProductService {
       }
 
       final List<String> productIds = List<String>.from(
-        userFavoritesDoc.data()?['productIds'] ?? []
+        userFavoritesDoc.data()?['productIds'] ?? [],
       );
 
       return productIds.contains(productId);
@@ -675,7 +863,8 @@ class ProductService {
     double? maxPrice,
     String? condition,
     String? location,
-    String? sortBy, // 'price_asc', 'price_desc', 'date_asc', 'date_desc', 'popularity'
+    String?
+    sortBy, // 'price_asc', 'price_desc', 'date_asc', 'date_desc', 'popularity'
     int limit = 20,
   }) async {
     try {
@@ -741,7 +930,9 @@ class ProductService {
   }
 
   // Get product statistics for seller
-  static Future<Map<String, dynamic>> getSellerProductStats(String sellerId) async {
+  static Future<Map<String, dynamic>> getSellerProductStats(
+    String sellerId,
+  ) async {
     try {
       final QuerySnapshot snapshot = await _firestore
           .collection('products')
@@ -756,11 +947,11 @@ class ProductService {
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         totalProducts++;
-        
+
         if (data['isActive'] == true) {
           activeProducts++;
         }
-        
+
         totalViews += (data['views'] as int? ?? 0);
         totalFavorites += (data['favorites'] as int? ?? 0);
       }
@@ -786,7 +977,7 @@ class ProductService {
           .get();
 
       final Set<String> categories = <String>{};
-      
+
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         final category = data['category'] as String?;
@@ -831,11 +1022,11 @@ class ProductService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return Product.fromFirestore(data, doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return Product.fromFirestore(data, doc.id);
+          }).toList();
+        });
   }
 
   // Stream seller products
@@ -847,10 +1038,10 @@ class ProductService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return Product.fromFirestore(data, doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return Product.fromFirestore(data, doc.id);
+          }).toList();
+        });
   }
 }
