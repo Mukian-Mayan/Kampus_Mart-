@@ -26,8 +26,8 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-   String? userRole;
-   int selectedIndex = 3;
+  String? userRole;
+  int selectedIndex = 3;
 
   void logoutUser() async {
     final prefs = await SharedPreferences.getInstance();
@@ -43,8 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   @override
-
-  //link up setup 
+  //link up setup
   void _onTab(int index) {
     if (selectedIndex != index) {
       setState(() {
@@ -52,13 +51,14 @@ class _SettingsPageState extends State<SettingsPage> {
       });
     }
   }
+
   //initial link up
   void initState() {
     super.initState();
     _loadUserRole();
   }
 
-   Future<void> _loadUserRole() async {
+  Future<void> _loadUserRole() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       userRole = prefs.getString('user_role');
@@ -66,20 +66,20 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   //till here guys
-  
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.tertiaryOrange,
       // Update the bottomNavigationBar section to match home_page.dart
-bottomNavigationBar: widget.userRole == UserRole.seller
-    ? BottomNavBar2(
-        selectedIndex: selectedIndex,
-        navBarColor: AppTheme.deepBlue,
-      )
-    : BottomNavBar(
-        selectedIndex: selectedIndex,
-        navBarColor: AppTheme.deepBlue,
-      ),
+      bottomNavigationBar: widget.userRole == UserRole.seller
+          ? BottomNavBar2(
+              selectedIndex: selectedIndex,
+              navBarColor: AppTheme.deepBlue,
+            )
+          : BottomNavBar(
+              selectedIndex: selectedIndex,
+              navBarColor: AppTheme.deepBlue,
+            ),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
         centerTitle: true,
@@ -93,9 +93,8 @@ bottomNavigationBar: widget.userRole == UserRole.seller
             ),
           ),
         ),
-      
       ),
-     
+
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -120,26 +119,29 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                             onTap: () {
                               // Navigate to profile edit page
                               Navigator.push(
-                                 context,
-                                 MaterialPageRoute(
-                                   builder: (context) => const UserProfilePage(),
-                                 ),
-                               );
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const UserProfilePage(),
+                                ),
+                              );
                             },
                             iconData: Icons.person,
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: ' Profile ',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const PaymentTransactions(),
+                                  builder: (context) =>
+                                      const PaymentTransactions(),
                                 ),
                               );
                             },
@@ -147,16 +149,19 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'Payment Method',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const ModeSettingsPage(),
+                                  builder: (context) =>
+                                      const ModeSettingsPage(),
                                 ),
                               );
                             },
@@ -164,10 +169,12 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'App Settings',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
@@ -181,16 +188,19 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'About Us',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const HelpAndSupportPage(),
+                                  builder: (context) =>
+                                      const HelpAndSupportPage(),
                                 ),
                               );
                             },
@@ -198,10 +208,12 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'Help And Support',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
-                          
+
                           DetailContainer(
                             onTap: () {
                               _showLogoutDialog(context);
@@ -210,8 +222,10 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                             fontColor: AppTheme.paleWhite,
                             fontSize: 20,
                             text: 'Logout',
-                            containerHeight: MediaQuery.of(context).size.height * 0.065,
-                            containerWidth: MediaQuery.of(context).size.width * 0.7,
+                            containerHeight:
+                                MediaQuery.of(context).size.height * 0.065,
+                            containerWidth:
+                                MediaQuery.of(context).size.width * 0.7,
                           ),
                         ],
                       ),
@@ -240,9 +254,7 @@ bottomNavigationBar: widget.userRole == UserRole.seller
           ),
           content: Text(
             'Are you sure you want to logout?',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-            ),
+            style: TextStyle(color: AppTheme.textPrimary),
           ),
           actions: [
             TextButton(

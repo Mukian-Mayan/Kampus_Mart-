@@ -122,10 +122,7 @@ class _HomePageState extends State<HomePage> {
                 final bool showTabs = shrinkOffset < 60;
                 final double appBarHeight = showTabs ? 170 : 140;
                 return FancyAppBar(
-                  tabs: const [
-                    'suggested for you',
-                    'trending',
-                  ],
+                  tabs: const ['Suggested for you', 'Trending'],
                   selectedIndex: isSuggestedSelected ? 0 : 1,
                   onTabChanged: (index) {
                     setState(() {
@@ -211,7 +208,11 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                          Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.red[300],
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'Error loading products',
@@ -241,7 +242,11 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.shopping_bag_outlined, size: 48, color: Colors.grey[400]),
+                          Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'No products available',
@@ -302,13 +307,14 @@ class _HomePageState extends State<HomePage> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.75,
-                      mainAxisExtent: 260,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.75,
+                          mainAxisExtent: 260,
+                        ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => const ProductCardLoading(),
                       childCount: 6, // Show 6 loading cards
@@ -316,15 +322,11 @@ class _HomePageState extends State<HomePage> {
                   );
                 } else if (snapshot.hasError) {
                   return const SliverToBoxAdapter(
-                    child: Center(
-                      child: Text('Error loading products'),
-                    ),
+                    child: Center(child: Text('Error loading products')),
                   );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const SliverToBoxAdapter(
-                    child: Center(
-                      child: Text('No products found'),
-                    ),
+                    child: Center(child: Text('No products found')),
                   );
                 }
                 final products = snapshot.data!;
@@ -336,27 +338,24 @@ class _HomePageState extends State<HomePage> {
                     childAspectRatio: 0.75,
                     mainAxisExtent: 260,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      if (index >= products.length) return null;
-                      final product = products[index];
-                      return ProductCard(
-                        product: product,
-                        onTap: () {
-                          if (mounted) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ProductDetailsPage(product: product),
-                              ),
-                            );
-                          }
-                        },
-                      );
-                    },
-                    childCount: products.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    if (index >= products.length) return null;
+                    final product = products[index];
+                    return ProductCard(
+                      product: product,
+                      onTap: () {
+                        if (mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ProductDetailsPage(product: product),
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  }, childCount: products.length),
                 );
               },
             ),

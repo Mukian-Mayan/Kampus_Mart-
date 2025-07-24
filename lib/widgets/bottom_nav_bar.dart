@@ -82,7 +82,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ),
 
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
+          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 15),
           child: GNav(
             selectedIndex: widget.selectedIndex,
             backgroundColor: widget.navBarColor,

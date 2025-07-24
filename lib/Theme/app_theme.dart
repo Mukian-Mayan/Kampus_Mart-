@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui'; // Added for ImageFilter
 
 class AppTheme {
   // Colors
@@ -84,6 +85,21 @@ class AppTheme {
           ),
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
+      ),
+    );
+  }
+
+  // Glassy effect theme for reuse
+  static const double glassyBlurSigma = 18.0;
+  static Color get glassyOrangeColor => tertiaryOrange.withOpacity(0.8);
+
+  /// Returns a BackdropFilter + Container for glassy orange effect
+  static Widget glassyOrangeBackdrop({required double height}) {
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: glassyBlurSigma, sigmaY: glassyBlurSigma),
+      child: Container(
+        height: height,
+        color: glassyOrangeColor,
       ),
     );
   }
