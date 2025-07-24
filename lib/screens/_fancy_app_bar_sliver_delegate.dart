@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/fancy_app_bar.dart';
 
 /// A SliverPersistentHeaderDelegate that wraps the FancyAppBar widget.
 class FancyAppBarSliverDelegate extends SliverPersistentHeaderDelegate {
