@@ -27,7 +27,7 @@ class SellerDashboardScreen extends StatefulWidget {
   State<SellerDashboardScreen> createState() => _SellerDashboardScreenState();
 }
 
-class _SellerDashboardScreenState extends State<SellerDashboardScreen> 
+class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     with SingleTickerProviderStateMixin {
   Seller? seller;
   Map<String, dynamic>? dashboardStats;
@@ -35,7 +35,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   String? error;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  int selectedIndex =4;
+  int selectedIndex = 4;
 
   @override
   void initState() {
@@ -56,13 +56,26 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     super.dispose();
   }
 
+  Future<void> _cleanupBeforeExit() async {
+    try {
+      // Cancel any ongoing operations
+      setState(() {
+        isLoading = true;
+      });
+      
+      // Clear Firestore cache to prevent permission errors
+      await FirebaseFirestore.instance.terminate();
+      await FirebaseFirestore.instance.clearPersistence();
+    } catch (e) {
+      print('Cleanup error: $e');
+      // Continue with logout even if cleanup fails
+    }
+  }
+
   Future<void> _verifyAuthState() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null && mounted) {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        '/login',
-        (route) => false,
-      );
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     }
   }
 
@@ -81,16 +94,17 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       // Get seller using SaleService
       Seller? currentSeller;
       int retries = 3;
-      
+
       while (retries > 0 && currentSeller == null) {
         try {
-          currentSeller = (await SaleService.getCurrentSeller()) as Seller?;
+          currentSeller = (await SaleService.getCurrentSeller());
           if (currentSeller != null) break;
         } catch (e) {
           print('Attempt failed, retries left: ${retries - 1}, error: $e');
         }
         retries--;
-        if (retries > 0) await Future.delayed(const Duration(milliseconds: 500));
+        if (retries > 0)
+          await Future.delayed(const Duration(milliseconds: 500));
       }
 
       if (currentSeller == null) {
@@ -99,7 +113,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             .collection('sellers')
             .doc(user.uid)
             .get();
-        
+
         if (!sellerDoc.exists) {
           throw Exception('Seller document not found');
         }
@@ -114,10 +128,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         stats = await SaleService.getSellerDashboardStats(currentSeller.id);
       } catch (e) {
         stats = {
-          'orderStats': {
-            'recentOrders': [],
-            'pendingOrders': 0,
-          }
+          'orderStats': {'recentOrders': [], 'pendingOrders': 0},
         };
       }
 
@@ -141,41 +152,41 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     await _loadSellerData();
   }
 
-  Widget _buildDebugButton() {
-    return IconButton(
-      icon: const Icon(Icons.bug_report, color: AppTheme.textPrimary),
-      onPressed: () async {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user == null) return;
-        
-        print('=== DEBUG INFO ===');
-        print('User ID: ${user.uid}');
-        print('Seller Data: ${seller?.toMap()}');
-        print('Dashboard Stats: $dashboardStats');
-        
-        try {
-          final sellerDoc = await FirebaseFirestore.instance
-              .collection('sellers')
-              .doc(user.uid)
-              .get();
-          print('Firestore Seller Data: ${sellerDoc.data()}');
-        } catch (e) {
-          print('Error fetching seller doc: $e');
-        }
-      },
-    );
-  }
+  // Widget _buildDebugButton() {
+  //   return IconButton(
+  //     icon: const Icon(Icons.bug_report, color: AppTheme.textPrimary),
+  //     onPressed: () async {
+  //       final user = FirebaseAuth.instance.currentUser;
+  //       if (user == null) return;
+
+  //       print('=== DEBUG INFO ===');
+  //       print('User ID: ${user.uid}');
+  //       print('Seller Data: ${seller?.toMap()}');
+  //       print('Dashboard Stats: $dashboardStats');
+
+  //       try {
+  //         final sellerDoc = await FirebaseFirestore.instance
+  //             .collection('sellers')
+  //             .doc(user.uid)
+  //             .get();
+  //         print('Firestore Seller Data: ${sellerDoc.data()}');
+  //       } catch (e) {
+  //         print('Error fetching seller doc: $e');
+  //       }
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.tertiaryOrange,
       bottomNavigationBar: BottomNavBar2(
-    selectedIndex: selectedIndex,
-    navBarColor: AppTheme.tertiaryOrange,
-  ),
+        selectedIndex: selectedIndex,
+        navBarColor: AppTheme.tertiaryOrange,
+      ),
       appBar: AppBar(
-        title: const LogoWidget(),
+        // title: const LogoWidget(),
         backgroundColor: AppTheme.tertiaryOrange,
         elevation: 0,
         leading: IconButton(
@@ -183,11 +194,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          _buildDebugButton(),
+          //_buildDebugButton(),
           IconButton(
             icon: Stack(
               children: [
-                const Icon(Icons.notifications_outlined, color: AppTheme.textPrimary),
+                const Icon(
+                  Icons.notifications_outlined,
+                  color: AppTheme.textPrimary,
+                ),
                 if (_hasNotifications())
                   Positioned(
                     right: 0,
@@ -218,8 +232,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    NotificationsScreen(userRole: UserRole.seller, userId: FirebaseAuth.instance.currentUser?.uid ?? 'Unknown',),
+                builder: (context) => NotificationsScreen(
+                  userRole: UserRole.seller,
+                  userId: FirebaseAuth.instance.currentUser?.uid ?? 'Unknown',
+                ),
               ),
             ),
           ),
@@ -231,7 +247,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             icon: const Icon(Icons.more_vert, color: AppTheme.textPrimary),
             onSelected: _handleMenuAction,
             itemBuilder: (context) => [
-              
               const PopupMenuItem(
                 value: 'settings',
                 child: Row(
@@ -239,7 +254,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     Icon(Icons.settings, color: AppTheme.textPrimary),
                     SizedBox(width: 8),
                     Text('Settings'),
-                
                   ],
                 ),
               ),
@@ -260,12 +274,44 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       body: _buildBody(),
       floatingActionButton: !isLoading && seller != null
           ? FloatingActionButton.extended(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SellerAddProductScreen(),
-                ),
-              ),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SellerAddProductScreen(),
+                  ),
+                );
+
+                // Check if product was successfully added
+                if (result == true && mounted) {
+                  // Refresh seller data to update product count
+                  await _refreshData();
+
+                  // Show success snackbar
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Product added successfully!',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: AppTheme.lightGreen,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                }
+              },
               backgroundColor: AppTheme.primaryOrange,
               icon: const Icon(Icons.add, color: Colors.white),
               label: const Text(
@@ -289,10 +335,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             SizedBox(height: 16),
             Text(
               'Loading your dashboard...',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppTheme.textSecondary,
-              ),
+              style: TextStyle(fontSize: 16, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -407,9 +450,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: seller!.isVerified ? AppTheme.lightGreen : AppTheme.textSecondary,
+                        color: seller!.isVerified
+                            ? AppTheme.lightGreen
+                            : AppTheme.textSecondary,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -422,7 +470,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            seller!.isVerified ? 'Verified' : 'Pending',
+                            seller!.isVerified ? 'Pending' : 'Verified',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.white,
@@ -435,7 +483,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     const SizedBox(width: 8),
                     if (seller!.stats.rating > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryOrange,
                           borderRadius: BorderRadius.circular(12),
@@ -472,7 +523,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
   Widget _buildStatsSection() {
     final stats = seller!.stats;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -525,7 +576,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -554,10 +610,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
           ),
         ],
       ),
@@ -568,7 +621,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     final orderStats = dashboardStats?['orderStats'] ?? {};
     final recentOrders = orderStats['recentOrders'] as List<dynamic>? ?? [];
     final pendingOrders = orderStats['pendingOrders'] as int? ?? 0;
-    
+
     if (recentOrders.isEmpty && pendingOrders == 0) {
       return const SizedBox.shrink();
     }
@@ -603,7 +656,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               ),
               if (pendingOrders > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange,
                     borderRadius: BorderRadius.circular(20),
@@ -626,10 +682,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             const Center(
               child: Text(
                 'No recent orders',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
               ),
             ),
         ],
@@ -641,10 +694,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     final status = order['status'] as String? ?? 'unknown';
     final orderId = order['id'] as String? ?? 'N/A';
     final amount = order['totalAmount'] as double? ?? 0.0;
-    
+
     Color statusColor;
     IconData statusIcon;
-    
+
     switch (status.toLowerCase()) {
       case 'pending':
         statusColor = Colors.orange;
@@ -787,7 +840,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SellerProductManagementScreen(),
+                      builder: (context) =>
+                          const SellerProductManagementScreen(),
                     ),
                   ),
                 ),
@@ -819,7 +873,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SettingsPage(userRole: UserRole.seller,),
+                      builder: (context) =>
+                          const SettingsPage(userRole: UserRole.seller),
                     ),
                   ),
                 ),
@@ -831,7 +886,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
-  Widget _buildActionCard(String title, IconData icon, Color color, VoidCallback onPressed) {
+  Widget _buildActionCard(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onPressed,
+  ) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
@@ -889,11 +949,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         );
         break;
       case 'settings':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Settings coming soon'),
-          
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Settings coming soon')));
         break;
       case 'logout':
         _handleLogout();
@@ -902,74 +960,75 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   }
 
   void _handleLogout() {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Logout'),
-      content: const Text('Are you sure you want to logout?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () async {
-            Navigator.pop(context); // Close dialog first
-            
-            // Show loading indicator
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => const AlertDialog(
-                content: Row(
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(width: 20),
-                    Text('Logging out...'),
-                  ],
-                ),
-              ),
-            );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog first
 
-            try {
-              await SaleService.signOutSeller();
-              
-              if (mounted) {
-                Navigator.pop(context); // Close loading dialog
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/login',
-                  (route) => false,
-                );
-              }
-            } catch (e) {
-              if (mounted) {
-                Navigator.pop(context); // Close loading dialog
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Logout failed: ${e.toString()}'),
-                    backgroundColor: Colors.red,
-                    action: SnackBarAction(
-                      label: 'Retry',
-                      textColor: Colors.white,
-                      onPressed: _handleLogout,
-                    ),
+              // Show loading indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const AlertDialog(
+                  content: Row(
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(width: 20),
+                      Text('Logging out...'),
+                    ],
                   ),
-                );
+                ),
+              );
+
+              try {
+                // Clean up before logout
+                await _cleanupBeforeExit();
+                
+                // Sign out
+                await SaleService.signOutSeller();
+
+                if (mounted) {
+                  Navigator.pop(context); // Close loading dialog
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context); // Close loading dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Logout failed: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                      action: SnackBarAction(
+                        label: 'Retry',
+                        textColor: Colors.white,
+                        onPressed: _handleLogout,
+                      ),
+                    ),
+                  );
+                }
               }
-            }
-          },
-          child: const Text('Logout', style: TextStyle(color: Colors.red)),
-        ),
-      ],
-    ),
-  );
-}
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _handleProfilePictureChange() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile picture update coming soon'),
-      ),
+      const SnackBar(content: Text('Profile picture update coming soon')),
     );
   }
 }
