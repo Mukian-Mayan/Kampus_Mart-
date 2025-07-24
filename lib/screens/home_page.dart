@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/models/user_role.dart';
-import 'package:kampusmart2/screens/register_page.dart' ;
 import '../models/product.dart';
 import './notification_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -16,7 +15,6 @@ import './product_details_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/fancy_app_bar.dart';
 import './_fancy_app_bar_sliver_delegate.dart';
-import '../widgets/my_button1.dart';
 import 'dart:ui';
 import '../services/product_service.dart';
 
