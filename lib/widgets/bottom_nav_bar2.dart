@@ -7,10 +7,8 @@ import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/cart_page.dart';
 import 'package:kampusmart2/screens/chats_screen.dart';
 import 'package:kampusmart2/screens/home_page.dart';
-import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/screens/sellers_dashboard.dart';
 import 'package:kampusmart2/screens/settings_page.dart';
-import 'package:kampusmart2/screens/user_profile_page.dart';
 
 class BottomNavBar2 extends StatefulWidget {
   final Color navBarColor;
