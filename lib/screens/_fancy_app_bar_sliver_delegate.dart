@@ -5,14 +5,19 @@ import '../widgets/fancy_app_bar.dart';
 class FancyAppBarSliverDelegate extends SliverPersistentHeaderDelegate {
   final double _minExtent;
   final double _maxExtent;
-  final Widget Function(BuildContext context, double shrinkOffset, bool overlapsContent) builder;
+  final Widget Function(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  )
+  builder;
 
   FancyAppBarSliverDelegate({
     required double minExtent,
     required double maxExtent,
     required this.builder,
-  })  : _minExtent = minExtent,
-        _maxExtent = maxExtent;
+  }) : _minExtent = minExtent,
+       _maxExtent = maxExtent;
 
   @override
   double get minExtent => _minExtent;
@@ -21,7 +26,11 @@ class FancyAppBarSliverDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _maxExtent;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return builder(context, shrinkOffset, overlapsContent);
   }
 
@@ -31,4 +40,4 @@ class FancyAppBarSliverDelegate extends SliverPersistentHeaderDelegate {
         _maxExtent != oldDelegate._maxExtent ||
         builder != oldDelegate.builder;
   }
-} 
+}

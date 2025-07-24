@@ -3,7 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Product {
-  final String id; // Add this field - it's required for CRUD operations
+  final String id;
   final String name;
   final String description;
   final String ownerId;
@@ -17,12 +17,13 @@ class Product {
   final bool bestOffer;
   final String? category;
   final double? price;
+  final double? discountPercentage;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final int? stock;
 
   Product({
-    required this.id, // Add this to constructor
+    required this.id,
     required this.name,
     required this.description,
     required this.ownerId,
@@ -36,6 +37,7 @@ class Product {
     this.bestOffer = false,
     this.category,
     this.price,
+    this.discountPercentage,
     this.createdAt,
     this.updatedAt,
     this.stock,
@@ -56,7 +58,11 @@ class Product {
 
   static double? _toDouble(dynamic value) {
     if (value is num) return value.toDouble();
-    if (value is String && value.isNotEmpty) return double.tryParse(value);
+    if (value is String && value.isNotEmpty) {
+      // Try to parse numeric string
+      String numStr = value.replaceAll(RegExp(r'[^0-9.]'), '');
+      return double.tryParse(numStr);
+    }
     return null;
   }
 
@@ -66,15 +72,75 @@ class Product {
     return null;
   }
 
+  // Get formatted original price
+  String get formattedOriginalPrice {
+    if (price != null) {
+      return 'UGX ${price!.toStringAsFixed(0)}';
+    }
+    return originalPrice;
+  }
+
+  // Get formatted discounted price
+  String get formattedDiscountedPrice {
+    if (price != null && discountPercentage != null) {
+      final discountAmount = price! * (discountPercentage! / 100);
+      final discountedPrice = price! - discountAmount;
+      return 'UGX ${discountedPrice.toStringAsFixed(0)}';
+    }
+    // If no numeric price/discount, use the string-based price
+    return priceAndDiscount;
+  }
+
+  // Get formatted discount percentage
+  String get formattedDiscount {
+    if (discountPercentage != null) {
+      return '(${discountPercentage!.toStringAsFixed(0)}% off)';
+    }
+    // Try to calculate discount from string prices
+    try {
+      final originalNum = _toDouble(originalPrice);
+      final discountedNum = _toDouble(priceAndDiscount);
+      if (originalNum != null && discountedNum != null && originalNum > 0) {
+        final discount = ((originalNum - discountedNum) / originalNum * 100).round();
+        return '($discount% off)';
+      }
+    } catch (_) {}
+    return '';
+  }
+
   // Factory constructor to create Product from Firestore document
   factory Product.fromFirestore(Map<String, dynamic> data, String documentId) {
+    // Try to extract numeric values from string prices
+    final originalPriceStr = _toString(data['originalPrice']);
+    final discountedPriceStr = _toString(data['priceAndDiscount']);
+    
+    double? price = _toDouble(data['price']);
+    if (price == null) {
+      // Try to get price from originalPrice string
+      price = _toDouble(originalPriceStr);
+    }
+
+    double? discountPercentage = _toDouble(data['discountPercentage']);
+    if (discountPercentage == null && price != null) {
+      // Try to calculate discount percentage from prices
+      final discountedPrice = _toDouble(discountedPriceStr);
+      if (discountedPrice != null && price > 0) {
+        discountPercentage = ((price - discountedPrice) / price * 100);
+      }
+    }
+
+    // Use sellerId if available, otherwise use ownerId
+    final String sellerId = _getId(data['sellerId'] ?? '');
+    final String ownerId = _getId(data['ownerId'] ?? '');
+    final String effectiveId = sellerId.isNotEmpty ? sellerId : ownerId;
+
     return Product(
-      id: documentId, // Set the document ID as the product ID
+      id: documentId,
       name: _toString(data['name']),
       description: _toString(data['description']),
-      ownerId: _getId(data['ownerId'] ?? data['sellerId']), // Handle both field names and DocumentReference
-      priceAndDiscount: _toString(data['priceAndDiscount']),
-      originalPrice: _toString(data['originalPrice']),
+      ownerId: effectiveId,
+      priceAndDiscount: discountedPriceStr,
+      originalPrice: originalPriceStr,
       condition: _toString(data['condition']),
       location: _toString(data['location']),
       rating: _toDouble(data['rating']) ?? 0.0,
@@ -84,7 +150,8 @@ class Product {
           : null,
       bestOffer: data['bestOffer'] ?? false,
       category: data['category'],
-      price: _toDouble(data['price']),
+      price: price,
+      discountPercentage: discountPercentage,
       createdAt: data['createdAt']?.toDate(),
       updatedAt: data['updatedAt']?.toDate(),
       stock: _toInt(data['stock']),
@@ -107,6 +174,7 @@ class Product {
       'bestOffer': bestOffer,
       'category': category,
       'price': price,
+      'discountPercentage': discountPercentage,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       'stock': stock,
@@ -119,7 +187,7 @@ class Product {
       'name': name,
       'description': description,
       'ownerId': ownerId,
-      'sellerId': ownerId, // Add sellerId for compatibility
+      'sellerId': ownerId,
       'priceAndDiscount': priceAndDiscount,
       'originalPrice': originalPrice,
       'condition': condition,
@@ -130,7 +198,7 @@ class Product {
       'bestOffer': bestOffer,
       'category': category,
       'price': price,
-      // Note: createdAt and updatedAt will be set by Firestore timestamps
+      'discountPercentage': discountPercentage,
     };
   }
 
@@ -150,6 +218,7 @@ class Product {
     bool? bestOffer,
     String? category,
     double? price,
+    double? discountPercentage,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -168,6 +237,7 @@ class Product {
       bestOffer: bestOffer ?? this.bestOffer,
       category: category ?? this.category,
       price: price ?? this.price,
+      discountPercentage: discountPercentage ?? this.discountPercentage,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

@@ -2,211 +2,143 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class CommentService {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static final FirebaseAuth _auth = FirebaseAuth.instance;
+class Comment {
+  final String id;
+  final String productId;
+  final String userId;
+  final String userName;
+  final String userEmail;
+  final String text;
+  final DateTime timestamp;
 
-  // Add a comment to a product
-  static Future<void> addComment(String productId, String comment) async {
+  Comment({
+    required this.id,
+    required this.productId,
+    required this.userId,
+    required this.userName,
+    required this.userEmail,
+    required this.text,
+    required this.timestamp,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'productId': productId,
+      'userId': userId,
+      'userName': userName,
+      'userEmail': userEmail,
+      'text': text,
+      'timestamp': Timestamp.fromDate(timestamp),
+    };
+  }
+
+  factory Comment.fromMap(Map<String, dynamic> map) {
+    return Comment(
+      id: map['id'] ?? '',
+      productId: map['productId'] ?? '',
+      userId: map['userId'] ?? '',
+      userName: map['userName'] ?? '',
+      userEmail: map['userEmail'] ?? '',
+      text: map['text'] ?? '',
+      timestamp: (map['timestamp'] as Timestamp).toDate(),
+    );
+  }
+
+  String get displayName {
+    if (userName.isNotEmpty) return userName;
+    if (userEmail.isNotEmpty) {
+      // Extract name from email (e.g., "john.doe@email.com" -> "John Doe")
+      final emailName = userEmail.split('@')[0];
+      return emailName.split('.').map((word) => 
+        word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : ''
+      ).join(' ');
+    }
+    return 'User';
+  }
+}
+
+class CommentService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Add a new comment
+  Future<Comment?> addComment(String productId, String text) async {
     try {
       final user = _auth.currentUser;
-      if (user == null) throw Exception('User not authenticated');
+      if (user == null) {
+        throw Exception('User must be logged in to comment');
+      }
 
-      await _firestore
-          .collection('products')
-          .doc(productId)
-          .collection('comments')
-          .add({
-        'comment': comment,
-        'userId': user.uid,
-        'userEmail': user.email,
-        'timestamp': FieldValue.serverTimestamp(),
-        'likes': 0,
-        'likedBy': [],
-      });
+      final docRef = _firestore.collection('comments').doc();
+      final now = DateTime.now();
+
+      // Get user display name or email
+      String userName = user.displayName ?? '';
+      String userEmail = user.email ?? '';
+
+      final comment = Comment(
+        id: docRef.id,
+        productId: productId,
+        userId: user.uid,
+        userName: userName,
+        userEmail: userEmail,
+        text: text,
+        timestamp: now,
+      );
+
+      await docRef.set(comment.toMap());
+      return comment;
     } catch (e) {
-      throw Exception('Failed to add comment: $e');
+      print('Error adding comment: $e');
+      return null;
     }
   }
 
   // Get comments for a product
-  static Stream<List<ProductComment>> getComments(String productId) {
+  Stream<List<Comment>> getCommentsForProduct(String productId) {
     return _firestore
-        .collection('products')
-        .doc(productId)
         .collection('comments')
-        .orderBy('timestamp', descending: true)
+        .where('productId', isEqualTo: productId)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return ProductComment.fromFirestore(doc);
-      }).toList();
-    });
+          final comments = snapshot.docs
+              .map((doc) => Comment.fromMap(doc.data()))
+              .toList();
+          
+          // Sort comments by timestamp in memory
+          comments.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          return comments;
+        });
   }
 
-  // Like/Unlike a comment
-  static Future<void> toggleCommentLike(String productId, String commentId) async {
+  // Delete a comment
+  Future<bool> deleteComment(String commentId) async {
     try {
       final user = _auth.currentUser;
-      if (user == null) throw Exception('User not authenticated');
+      if (user == null) {
+        throw Exception('User must be logged in to delete comments');
+      }
 
-      final commentRef = _firestore
-          .collection('products')
-          .doc(productId)
-          .collection('comments')
-          .doc(commentId);
-
-      await _firestore.runTransaction((transaction) async {
-        final commentDoc = await transaction.get(commentRef);
-        if (!commentDoc.exists) throw Exception('Comment not found');
-
-        final data = commentDoc.data()!;
-        final likedBy = List<String>.from(data['likedBy'] ?? []);
-        final currentLikes = data['likes'] ?? 0;
-
-        if (likedBy.contains(user.uid)) {
-          // Unlike
-          likedBy.remove(user.uid);
-          transaction.update(commentRef, {
-            'likes': currentLikes - 1,
-            'likedBy': likedBy,
-          });
-        } else {
-          // Like
-          likedBy.add(user.uid);
-          transaction.update(commentRef, {
-            'likes': currentLikes + 1,
-            'likedBy': likedBy,
-          });
-        }
-      });
-    } catch (e) {
-      throw Exception('Failed to toggle like: $e');
-    }
-  }
-
-  // Delete a comment (only by owner)
-  static Future<void> deleteComment(String productId, String commentId) async {
-    try {
-      final user = _auth.currentUser;
-      if (user == null) throw Exception('User not authenticated');
-
-      await _firestore
-          .collection('products')
-          .doc(productId)
+      final commentDoc = await _firestore
           .collection('comments')
           .doc(commentId)
-          .delete();
-    } catch (e) {
-      throw Exception('Failed to delete comment: $e');
-    }
-  }
-
-  // Add rating to a product
-  static Future<void> addRating(String productId, double rating) async {
-    try {
-      final user = _auth.currentUser;
-      if (user == null) throw Exception('User not authenticated');
-
-      await _firestore
-          .collection('products')
-          .doc(productId)
-          .collection('ratings')
-          .doc(user.uid)
-          .set({
-        'rating': rating,
-        'userId': user.uid,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      // Update product average rating
-      await _updateProductAverageRating(productId);
-    } catch (e) {
-      throw Exception('Failed to add rating: $e');
-    }
-  }
-
-  // Update product average rating
-  static Future<void> _updateProductAverageRating(String productId) async {
-    try {
-      final ratingsSnapshot = await _firestore
-          .collection('products')
-          .doc(productId)
-          .collection('ratings')
           .get();
 
-      if (ratingsSnapshot.docs.isEmpty) return;
-
-      double totalRating = 0;
-      for (final doc in ratingsSnapshot.docs) {
-        totalRating += doc.data()['rating'] ?? 0;
+      if (!commentDoc.exists) {
+        return false;
       }
 
-      final averageRating = totalRating / ratingsSnapshot.docs.length;
-      final totalRatings = ratingsSnapshot.docs.length;
-
-      await _firestore.collection('products').doc(productId).update({
-        'averageRating': averageRating,
-        'totalRatings': totalRatings,
-      });
-    } catch (e) {
-      throw Exception('Failed to update average rating: $e');
-    }
-  }
-
-  // Get user's rating for a product
-  static Future<double?> getUserRating(String productId) async {
-    try {
-      final user = _auth.currentUser;
-      if (user == null) return null;
-
-      final doc = await _firestore
-          .collection('products')
-          .doc(productId)
-          .collection('ratings')
-          .doc(user.uid)
-          .get();
-
-      if (doc.exists) {
-        return doc.data()?['rating']?.toDouble();
+      final comment = Comment.fromMap(commentDoc.data()!);
+      if (comment.userId != user.uid) {
+        throw Exception('Users can only delete their own comments');
       }
-      return null;
+
+      await _firestore.collection('comments').doc(commentId).delete();
+      return true;
     } catch (e) {
-      return null;
+      print('Error deleting comment: $e');
+      return false;
     }
-  }
-}
-
-// Comment model
-class ProductComment {
-  final String id;
-  final String comment;
-  final String userId;
-  final String userEmail;
-  final DateTime timestamp;
-  final int likes;
-  final List<String> likedBy;
-
-  ProductComment({
-    required this.id,
-    required this.comment,
-    required this.userId,
-    required this.userEmail,
-    required this.timestamp,
-    required this.likes,
-    required this.likedBy,
-  });
-
-  factory ProductComment.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return ProductComment(
-      id: doc.id,
-      comment: data['comment'] ?? '',
-      userId: data['userId'] ?? '',
-      userEmail: data['userEmail'] ?? '',
-      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      likes: data['likes'] ?? 0,
-      likedBy: List<String>.from(data['likedBy'] ?? []),
-    );
   }
 }
