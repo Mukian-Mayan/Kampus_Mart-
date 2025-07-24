@@ -144,7 +144,7 @@ class SellerService {
         throw Exception('Seller not found');
       }
 
-      return Seller.fromJson(doc.data() as Map<String, dynamic>);
+      return Seller.fromDocument(doc);
     } catch (e) {
       throw Exception('Failed to get seller: $e');
     }

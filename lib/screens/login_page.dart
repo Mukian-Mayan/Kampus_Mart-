@@ -22,43 +22,36 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // Optional - if null, detect from database
   final TextEditingController pwController = TextEditingController();
-
   final TextEditingController emailController = TextEditingController();
   bool obscureText = true;
+
   void signInUser(BuildContext context) async {
-  // Show loading indicator
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
-
-  try {
-    UserCredential userCredential = await FirebaseAuth.instance
-        .signInWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: pwController.text,
-        );
-
-    // Get user role
-    UserRole userRole = await _getUserRole(userCredential.user!.uid);
-
-    // Close loading indicator
-    Navigator.of(context).pop();
-
-    // Navigate to home with the correct bottom nav bar
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HomePage(userRole: userRole),
-      ),
-      (route) => false,
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
-  
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: pwController.text,
+      );
+
+      UserRole userRole = await _getUserRole(userCredential.user!.uid);
+
+      Navigator.of(context).pop();
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(userRole: userRole),
+        ),
+        (route) => false,
+      );
     } on FirebaseAuthException catch (e) {
-      // Close the loading indicator FIRST
       Navigator.of(context).pop();
 
       String errorMessage;
@@ -88,7 +81,6 @@ class _LoginPageState extends State<LoginPage> {
           errorMessage = 'An unknown error occurred. Please try again.';
       }
 
-      // Show snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -108,32 +100,30 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Update the _getUserRole method in login_page.dart
-Future<UserRole> _getUserRole(String userId) async {
-  try {
-    // First check user_roles collection
-    DocumentSnapshot roleDoc = await FirebaseFirestore.instance
-        .collection('user_roles')
-        .doc(userId)
-        .get();
+  Future<UserRole> _getUserRole(String userId) async {
+    try {
+      DocumentSnapshot roleDoc = await FirebaseFirestore.instance
+          .collection('user_roles')
+          .doc(userId)
+          .get();
 
-    if (roleDoc.exists) {
-      String role = (roleDoc.data() as Map<String, dynamic>)['role'] ?? 'buyer';
-      return role == 'seller' ? UserRole.seller : UserRole.buyer;
+      if (roleDoc.exists) {
+        String role =
+            (roleDoc.data() as Map<String, dynamic>)['role'] ?? 'buyer';
+        return role == 'seller' ? UserRole.seller : UserRole.buyer;
+      }
+
+      DocumentSnapshot sellerDoc = await FirebaseFirestore.instance
+          .collection('sellers')
+          .doc(userId)
+          .get();
+
+      return sellerDoc.exists ? UserRole.seller : UserRole.buyer;
+    } catch (e) {
+      debugPrint('Error getting user role: $e');
+      return UserRole.buyer;
     }
-
-    // Fallback: check if user exists in sellers collection
-    DocumentSnapshot sellerDoc = await FirebaseFirestore.instance
-        .collection('sellers')
-        .doc(userId)
-        .get();
-
-    return sellerDoc.exists ? UserRole.seller : UserRole.buyer;
-  } catch (e) {
-    debugPrint('Error getting user role: $e');
-    return UserRole.buyer; // Default fallback
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -145,158 +135,178 @@ Future<UserRole> _getUserRole(String userId) async {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_ios),
         ),
-        /*title: Text(
-          widget.userRole == UserRole.seller
-              ? 'Seller Login'
-              : 'Customer Login',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),*/
       ),
-      body: Stack(
-        children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: const Text(
-              'Kampus Mart',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 58, fontFamily: 'Keania One'),
-            ),
-          ),
-          Layout1(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 19),
-                  Text('Welcome Back, We missed you',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'KG Red Hands',
-                      color: AppTheme.paleWhite,
-                      shadows: [
-                        Shadow(
-                          offset: const Offset(2, 2),
-                          blurRadius: 4.0,
-                          color: AppTheme.taleBlack.withOpacity(0.7),
-                        ),
-                      ],
-                    ),
-                  ),
-                  MyTextField(
-                    maxLength: null,
-                    focusedColor: AppTheme.deepOrange,
-                    enabledColor: AppTheme.taleBlack,
-                    controller: emailController,
-                    hintText: 'Enter your email',
-                    obscureText: false,
-                  ),
-                  MyTextField(
-                    maxLength: 16,
-                    focusedColor: AppTheme.deepOrange,
-                    enabledColor: AppTheme.taleBlack,
-                    controller: pwController,
-                    hintText: 'Enter your password',
-                    obscureText: obscureText,
-                    prefix: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          obscureText = !obscureText;
-                        });
-                      },
-                      icon: Icon(
-                        obscureText ? Icons.visibility : Icons.visibility_off,
-                        color: AppTheme.borderGrey,
-                      ),
-                    ),
-                  ),
-                  MyButton1(
-                    height: MediaQuery.of(context).size.height * 0.07,
-                    width: MediaQuery.of(context).size.width * 0.7,
-                    fontSize: 20,
-                    text: 'Login',
-                    onTap: () => signInUser(context),
-                    pad: 25,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Not a member? ',
-                        style: TextStyle(
-                          color: AppTheme.paleWhite,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RegisterPage(
-                              userRole: widget.userRole ?? UserRole.buyer,
-                            ),
-                          ),
-                        ),
-                        child: const Text(
-                          'Register Now',
-                          style: TextStyle(
-                            color: AppTheme.lightGreen,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 17,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Social login options
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            thickness: 2,
-                            color: AppTheme.deepOrange,
-                          ),
-                        ),
-                        const Text(
-                          '\t or continue with \t',
-                          style: TextStyle(
-                            color: AppTheme.paleWhite,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            thickness: 2,
-                            color: AppTheme.deepOrange,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      MySquareTile(
-                        onTap: () => AuthService().signInWithGoogle(),
-                        imagePath: 'lib/images/Icon-google.png',
-                      ),
-                      SizedBox(width: MediaQuery.of(context).size.width * 0.1),
-                      MySquareTile(
-                        onTap: () {}, // Apple sign-in implementation
-                        imagePath: 'lib/images/apple_icon.png',
-                      ),
-                    ],
-                  ),
-                ],
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-            ),
-          ),
-        ],
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: IntrinsicHeight(
+                  child: Stack(
+                    children: [
+                      Align(
+                        alignment: Alignment.topCenter,
+                        child: const Text(
+                          'Kampus Mart',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 58,
+                            fontFamily: 'Keania One',
+                          ),
+                        ),
+                      ),
+                      Layout1(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            const SizedBox(height: 19),
+                            Text(
+                              'Welcome Back, We missed you',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'KG Red Hands',
+                                color: AppTheme.paleWhite,
+                                shadows: [
+                                  Shadow(
+                                    offset: const Offset(2, 2),
+                                    blurRadius: 4.0,
+                                    color:
+                                        AppTheme.taleBlack.withOpacity(0.7),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            MyTextField(
+                              maxLength: null,
+                              focusedColor: AppTheme.deepOrange,
+                              enabledColor: AppTheme.taleBlack,
+                              controller: emailController,
+                              hintText: 'Enter your email',
+                              obscureText: false,
+                            ),
+                            MyTextField(
+                              maxLength: 16,
+                              focusedColor: AppTheme.deepOrange,
+                              enabledColor: AppTheme.taleBlack,
+                              controller: pwController,
+                              hintText: 'Enter your password',
+                              obscureText: obscureText,
+                              prefix: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    obscureText = !obscureText;
+                                  });
+                                },
+                                icon: Icon(
+                                  obscureText
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: AppTheme.borderGrey,
+                                ),
+                              ),
+                            ),
+                            MyButton1(
+                              height: MediaQuery.of(context).size.height * 0.07,
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              fontSize: 20,
+                              text: 'Login',
+                              onTap: () => signInUser(context),
+                              pad: 25,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  'Not a member? ',
+                                  style: TextStyle(
+                                    color: AppTheme.paleWhite,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => RegisterPage(
+                                        userRole:
+                                            widget.userRole ?? UserRole.buyer,
+                                      ),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Register Now',
+                                    style: TextStyle(
+                                      color: AppTheme.lightGreen,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 17,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Divider(
+                                      thickness: 2,
+                                      color: AppTheme.deepOrange,
+                                    ),
+                                  ),
+                                  const Text(
+                                    '\t or continue with \t',
+                                    style: TextStyle(
+                                      color: AppTheme.paleWhite,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Divider(
+                                      thickness: 2,
+                                      color: AppTheme.deepOrange,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                MySquareTile(
+                                  onTap: () =>
+                                      AuthService().signInWithGoogle(),
+                                  imagePath: 'lib/images/Icon-google.png',
+                                ),
+                                SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.1),
+                                MySquareTile(
+                                  onTap: () {},
+                                  imagePath: 'lib/images/apple_icon.png',
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

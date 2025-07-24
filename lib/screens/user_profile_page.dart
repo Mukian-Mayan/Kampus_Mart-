@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/about_us.dart';
+import 'package:kampusmart2/screens/favorite_page.dart';
 import 'package:kampusmart2/screens/help_&_support_page.dart';
 import 'package:kampusmart2/screens/history_page.dart';
 import 'package:kampusmart2/screens/login_or_register_page.dart';
@@ -107,7 +108,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       backgroundColor: AppTheme.paleWhite,
       appBar: AppBar(
         backgroundColor: AppTheme.deepBlue,
-        //leading: IconButton( icon:Icon(Icons.arrow_back_ios_new) ,onPressed: (){}, color: AppTheme.paleWhite,),
+        leading: IconButton( icon:Icon(Icons.arrow_back_ios_new) ,onPressed: (){}, color: AppTheme.paleWhite,),
         title: Center(
           child: Text(
             'Profile',
@@ -182,31 +183,23 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     MaterialPageRoute(builder: (context) => HistoryPage()),
                   ),
                 ),
-                DetailContainer(
+                  /*DetailContainer(
                   fontColor: AppTheme.deepBlue,
                   fontSize: 20,
                   text: 'Help & Support',
                   containerHeight: MediaQuery.of(context).size.height * 0.065,
                   containerWidth: MediaQuery.of(context).size.width * 0.7,
                   iconData: Icons.support_agent_outlined,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => HelpAndSupportPage(),
-                    ),
-                  ),
-                ),
-                DetailContainer(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HelpAndSupportPage(),),),
+                ),*/
+                  DetailContainer(
                   fontColor: AppTheme.selectedBlue,
                   fontSize: 20,
-                  text: 'About Us',
+                  text: 'favorites',
                   containerHeight: MediaQuery.of(context).size.height * 0.065,
                   containerWidth: MediaQuery.of(context).size.width * 0.7,
-                  iconData: Icons.group_sharp,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AboutUsPage()),
-                  ),
+                  iconData: Icons.favorite,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => FavoritePage(),),),
                 ),
                 DetailContainer(
                   fontColor: AppTheme.red,
