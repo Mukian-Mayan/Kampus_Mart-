@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
-import 'package:kampusmart2/services/notificaations_service.dart' show NotificationService;
+import 'package:kampusmart2/services/notificaations_service.dart'
+    show NotificationService;
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import '../models/product.dart';
@@ -13,6 +14,8 @@ import '../Theme/app_theme.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../screens/message_screen.dart'; // Added import for MessageScreen
 import '../screens/chats_screen.dart'; // Added import for ChatsScreen
+import '../services/chats_service.dart'; // Added import for ChatService
+import '../models/chat_models.dart'; // Added import for UserProfile
 
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
@@ -35,6 +38,38 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     'Would buy again.',
   ];
   final TextEditingController _commentController = TextEditingController();
+  
+  // Seller information
+  String _sellerName = 'Loading...';
+  String? _sellerImageUrl;
+  bool _isLoadingSeller = true;
+  final ChatService _chatService = ChatService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSellerInfo();
+  }
+
+  Future<void> _loadSellerInfo() async {
+    try {
+      UserProfile? sellerProfile = await _chatService.getUserProfile(widget.product.ownerId);
+      if (mounted) {
+        setState(() {
+          _sellerName = sellerProfile?.name ?? 'Unknown Seller';
+          _sellerImageUrl = sellerProfile?.imageUrl;
+          _isLoadingSeller = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _sellerName = 'Seller ${widget.product.ownerId.substring(0, 8)}...';
+          _isLoadingSeller = false;
+        });
+      }
+    }
+  }
 
   void _updateQuantity(bool increment) {
     setState(() {
@@ -60,6 +95,58 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       });
       // Removed Navigator.pop(context); so the input stays open
     }
+  }
+
+  Widget _buildInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: color,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: AppTheme.chipTextStyle.copyWith(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: AppTheme.subtitleStyle.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
   }
 
   void _showComments(BuildContext context) {
@@ -233,8 +320,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    NotificationsScreen(userRole: UserRole.buyer, userId: FirebaseAuth.instance.currentUser?.uid ?? '',),
+                builder: (context) => NotificationsScreen(
+                  userRole: UserRole.buyer,
+                  userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                ),
               ),
             ),
           ),
@@ -373,13 +462,135 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         style: AppTheme.subtitleStyle,
                       ),
                       const SizedBox(height: 10),
-                      // Cost
-                      Text(
-                        widget.product.priceAndDiscount,
-                        style: AppTheme.titleStyle.copyWith(
-                          fontSize: 18,
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
+                      // Price Section
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Current Price
+                          Text(
+                            widget.product.priceAndDiscount,
+                            style: AppTheme.titleStyle.copyWith(
+                              fontSize: 20,
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          // Original Price (if different and available)
+                          if (widget.product.originalPrice.isNotEmpty && 
+                              widget.product.originalPrice != widget.product.priceAndDiscount)
+                            Text(
+                              'Original: ${widget.product.originalPrice}',
+                              style: AppTheme.subtitleStyle.copyWith(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          // Numeric price if available
+                          if (widget.product.price != null && widget.product.price! > 0)
+                            Text(
+                              'UGX ${widget.product.price!.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                              style: AppTheme.subtitleStyle.copyWith(
+                                fontSize: 16,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Product Information Grid
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            // Condition and Location Row
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildInfoItem(
+                                    icon: Icons.verified_outlined,
+                                    label: 'Condition',
+                                    value: widget.product.condition,
+                                    color: widget.product.condition.toLowerCase() == 'new' 
+                                        ? Colors.green 
+                                        : Colors.orange,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildInfoItem(
+                                    icon: Icons.location_on_outlined,
+                                    label: 'Location',
+                                    value: widget.product.location,
+                                    color: AppTheme.primaryOrange,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            // Category and Stock Row
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildInfoItem(
+                                    icon: Icons.category_outlined,
+                                    label: 'Category',
+                                    value: widget.product.category ?? 'General',
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildInfoItem(
+                                    icon: Icons.inventory_outlined,
+                                    label: 'Stock',
+                                    value: widget.product.stock != null 
+                                        ? '${widget.product.stock} available'
+                                        : 'In stock',
+                                    color: (widget.product.stock ?? 1) > 0 
+                                        ? Colors.green 
+                                        : Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Best Offer Badge
+                            if (widget.product.bestOffer)
+                              Container(
+                                margin: const EdgeInsets.only(top: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryOrange,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.local_offer,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Best Offer Available',
+                                      style: AppTheme.chipTextStyle.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -387,7 +598,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       Row(
                         children: [
                           ProfilePicWidget(
-                            imageUrl: null,
+                            imageUrl: _sellerImageUrl,
                             radius: 14,
                             height: 28,
                             width: 28,
@@ -395,13 +606,31 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Text(
-                              'Seller: ${widget.product.ownerId}',
-                              style: AppTheme.subtitleStyle.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _isLoadingSeller ? 'Loading seller...' : _sellerName,
+                                  style: AppTheme.subtitleStyle.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  'Tap to view seller profile',
+                                  style: AppTheme.subtitleStyle.copyWith(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
                             ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.grey[400],
                           ),
                         ],
                       ),
@@ -444,9 +673,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   ProductDetailsPage.cart.add(widget.product);
                                   // Send notification
                                   NotificationService.sendCartReminder(
-                                      userId: FirebaseAuth.instance.currentUser?.uid ?? "", // Pass the actual user ID
-                                      itemCount: ProductDetailsPage.cart.length,
-          );
+                                    userId:
+                                        FirebaseAuth
+                                            .instance
+                                            .currentUser
+                                            ?.uid ??
+                                        "", // Pass the actual user ID
+                                    itemCount: ProductDetailsPage.cart.length,
+                                  );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
@@ -488,26 +722,92 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           const SizedBox(width: 16),
                           Expanded(
                             child: ElevatedButton.icon(
-                              onPressed: () {
-                                final currentUser = FirebaseAuth.instance.currentUser;
+                              onPressed: () async {
+                                final currentUser =
+                                    FirebaseAuth.instance.currentUser;
                                 if (currentUser == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Please log in to chat')),
-                                   );
-                                return;
+                                    const SnackBar(
+                                      content: Text('Please log in to chat'),
+                                    ),
+                                  );
+                                  return;
                                 }
 
-                                 // Generate chat room ID (sorted to ensure consistency)
-                                final participants = [currentUser.uid, widget.product.ownerId]..sort();
-                                final chatRoomId = participants.join('_');
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => MessageScreen(
-                                      userName: widget.product.ownerId, chatRoomId: chatRoomId, otherParticipantName: widget.product.ownerId, otherParticipantId: widget.product.ownerId, productName: widget.product.name,
+                                // Check if user is trying to chat with their own product
+                                if (currentUser.uid == widget.product.ownerId) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'You cannot start a chat with yourself',
+                                      ),
+                                      backgroundColor: Colors.orange,
                                     ),
+                                  );
+                                  return;
+                                }
+
+                                // Show loading indicator
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => const Center(
+                                    child: CircularProgressIndicator(),
                                   ),
                                 );
+
+                                try {
+                                  // Create or get chat room using proper ChatService method
+                                  final chatService = ChatService();
+                                  final chatRoomId = await chatService
+                                      .createOrGetChatRoom(
+                                        sellerId: widget.product.ownerId,
+                                        buyerId: currentUser.uid,
+                                        productId: widget.product.id,
+                                        productName: widget.product.name,
+                                        productImageUrl:
+                                            widget.product.imageUrl,
+                                        productPrice: widget.product.price
+                                            .toString(),
+                                        productDescription:
+                                            widget.product.description,
+                                        sellerName: _sellerName,
+                                        buyerName:
+                                            currentUser.displayName ??
+                                            'Unknown User',
+                                      );
+
+                                  Navigator.pop(
+                                    context,
+                                  ); // Close loading dialog
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => MessageScreen(
+                                        chatRoomId: chatRoomId,
+                                        otherParticipantName: _sellerName,
+                                        otherParticipantId:
+                                            widget.product.ownerId,
+                                        productName: widget.product.name,
+                                        productImageUrl:
+                                            widget.product.imageUrl,
+                                        userName:
+                                            currentUser.displayName ??
+                                            'Unknown User',
+                                      ),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  Navigator.pop(
+                                    context,
+                                  ); // Close loading dialog
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Failed to start chat: $e'),
+                                    ),
+                                  );
+                                }
                               },
                               icon: const Icon(Icons.chat_bubble_outline),
                               label: Text(
@@ -666,7 +966,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(selectedIndex: 0, navBarColor: AppTheme.tertiaryOrange),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: 0,
+        navBarColor: AppTheme.tertiaryOrange,
+      ),
     );
   }
 
