@@ -2,14 +2,10 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
-import 'package:kampusmart2/models/sales_data.dart';
 import 'package:kampusmart2/screens/home_page.dart';
 import 'package:kampusmart2/screens/login_page.dart';
-import 'package:kampusmart2/screens/sellers_dashboard.dart';
-import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
