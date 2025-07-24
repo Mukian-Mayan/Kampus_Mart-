@@ -121,7 +121,7 @@ class _SellerOrderManagementScreenState extends State<SellerOrderManagementScree
       ),
       backgroundColor: AppTheme.tertiaryOrange,
       appBar: AppBar(
-        title: const LogoWidget(),
+        //title: const LogoWidget(),
         backgroundColor: AppTheme.tertiaryOrange,
         elevation: 0,
         leading: IconButton(
