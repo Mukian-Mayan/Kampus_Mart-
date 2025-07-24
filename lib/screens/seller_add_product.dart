@@ -62,6 +62,20 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    
+    // Add listeners to price controllers for real-time discount calculation
+    _priceController.addListener(() {
+      setState(() {}); // Trigger rebuild to update discount display
+    });
+    
+    _originalPriceController.addListener(() {
+      setState(() {}); // Trigger rebuild to update discount display
+    });
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _priceController.dispose();
@@ -176,19 +190,19 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
         }
 
         // Create price and discount string
-        String priceAndDiscount = _priceController.text.trim();
-        if (_originalPriceController.text.trim().isNotEmpty) {
+        String priceAndDiscount = _originalPriceController.text.trim();
+        if (_priceController.text.trim().isNotEmpty) {
           final originalPrice = double.tryParse(_originalPriceController.text.trim()) ?? 0;
           final currentPrice = double.tryParse(_priceController.text.trim()) ?? 0;
           
-          if (originalPrice > currentPrice && originalPrice > 0) {
+          if (originalPrice > currentPrice && currentPrice > 0) {
             final discountPercent = ((originalPrice - currentPrice) / originalPrice * 100).round();
             priceAndDiscount = 'UGX ${_priceController.text} ($discountPercent% off)';
           } else {
-            priceAndDiscount = 'UGX ${_priceController.text}';
+            priceAndDiscount = 'UGX ${_originalPriceController.text}';
           }
         } else {
-          priceAndDiscount = 'UGX ${_priceController.text}';
+          priceAndDiscount = 'UGX ${_originalPriceController.text}';
         }
 
         // Create product data matching your Product model exactly
@@ -197,9 +211,7 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
           'description': _descriptionController.text.trim(),
           'ownerId': currentUser.uid, // Your model uses ownerId
           'priceAndDiscount': priceAndDiscount,
-          'originalPrice': _originalPriceController.text.trim().isEmpty 
-              ? 'UGX ${_priceController.text}' 
-              : 'UGX ${_originalPriceController.text}',
+          'originalPrice': 'UGX ${_originalPriceController.text}',
           'condition': _selectedCondition,
           'location': _locationController.text.trim(),
           'rating': 0.0,
@@ -207,7 +219,9 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
           'imageUrls': imageUrls,
           'bestOffer': _bestOffer,
           'category': _selectedCategory,
-          'price': double.tryParse(_priceController.text.trim()),
+          'price': _priceController.text.trim().isNotEmpty 
+              ? double.tryParse(_priceController.text.trim())
+              : double.tryParse(_originalPriceController.text.trim()),
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
           
@@ -370,11 +384,12 @@ bool _validateCurrentStep() {
     case 0:
       return _nameController.text.isNotEmpty &&
              _selectedCategory != null &&
-             _originalPriceController.text.isNotEmpty && // Changed from _priceController
+             _originalPriceController.text.isNotEmpty && // Original price is required
              _locationController.text.isNotEmpty &&
              _descriptionController.text.isNotEmpty &&
              _descriptionController.text.length >= 20 &&
-             double.tryParse(_originalPriceController.text) != null; // Changed from _priceController
+             double.tryParse(_originalPriceController.text) != null && // Validate original price
+             double.tryParse(_originalPriceController.text)! > 0; // Ensure price is positive
     case 1:
       return true; // Images are optional
     case 2:
@@ -757,36 +772,89 @@ bool _validateCurrentStep() {
       
       Row(
         children: [
-          // Expanded(
-          //   child: _buildFloatingTextField(
-          //     controller: _priceController,
-          //     label: 'Current Price (UGX)*',
-          //     icon: Icons.attach_money,
-          //     hint: 'Enter current price',
-          //     keyboardType: TextInputType.number,
-          //     validator: (value) {
-          //       if (value == null || value.isEmpty) {
-          //         return 'Please enter price';
-          //       }
-          //       if (double.tryParse(value) == null) {
-          //         return 'Enter valid price';
-          //       }
-          //       return null;
-          //     },
-          //   ),
-          //),
-          const SizedBox(width: 16),
           Expanded(
             child: _buildFloatingTextField(
               controller: _originalPriceController,
-              label: 'PRICE (UGX)',
-              icon: Icons.money_off,
-              hint: '',
+              label: 'Original Price (UGX)*',
+              icon: Icons.attach_money,
+              hint: 'Enter original selling price',
               keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter original price';
+                }
+                if (double.tryParse(value) == null) {
+                  return 'Enter valid price';
+                }
+                if (double.tryParse(value)! <= 0) {
+                  return 'Price must be greater than 0';
+                }
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildFloatingTextField(
+              controller: _priceController,
+              label: 'Current Price (UGX)',
+              icon: Icons.money_off,
+              hint: 'Enter discounted price (optional)',
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value != null && value.isNotEmpty) {
+                  final currentPrice = double.tryParse(value);
+                  final originalPrice = double.tryParse(_originalPriceController.text);
+                  
+                  if (currentPrice == null) {
+                    return 'Enter valid price';
+                  }
+                  if (originalPrice != null && currentPrice >= originalPrice) {
+                    return 'Should be lower than original price';
+                  }
+                }
+                return null;
+              },
             ),
           ),
         ],
       ),
+      const SizedBox(height: 8),
+      // Discount display
+      if (_priceController.text.isNotEmpty && _originalPriceController.text.isNotEmpty)
+        _buildDiscountDisplay(),
+      
+      // Helper text for pricing
+      if (_priceController.text.isNotEmpty || _originalPriceController.text.isNotEmpty)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppTheme.selectedBlue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: AppTheme.selectedBlue,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _priceController.text.isNotEmpty 
+                      ? 'Current price shows the discounted price customers will pay'
+                      : 'Add a current price to offer a discount from the original price',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.selectedBlue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      
       const SizedBox(height: 20),
       
       _buildConditionSelector(),
@@ -1127,10 +1195,10 @@ bool _validateCurrentStep() {
             const SizedBox(height: 12),
             _buildReviewRow('Category', _selectedCategory ?? 'Not selected'),
             const SizedBox(height: 8),
-            _buildReviewRow('Current Price', 'UGX ${_priceController.text.isNotEmpty ? _priceController.text : '0'}'),
+            _buildReviewRow('Original Price', 'UGX ${_originalPriceController.text.isNotEmpty ? _originalPriceController.text : '0'}'),
             const SizedBox(height: 8),
-            if (_originalPriceController.text.isNotEmpty)
-              _buildReviewRow('Original Price', 'UGX ${_originalPriceController.text}'),
+            if (_priceController.text.isNotEmpty)
+              _buildReviewRow('Current Price', 'UGX ${_priceController.text}'),
             const SizedBox(height: 8),
             _buildReviewRow('Condition', _selectedCondition),
             const SizedBox(height: 8),
@@ -1195,6 +1263,77 @@ bool _validateCurrentStep() {
         ),
       ),
     ];
+  }
+
+  Widget _buildDiscountDisplay() {
+    final currentPrice = double.tryParse(_priceController.text);
+    final originalPrice = double.tryParse(_originalPriceController.text);
+    
+    if (currentPrice != null && originalPrice != null && originalPrice > currentPrice) {
+      final discountPercent = ((originalPrice - currentPrice) / originalPrice * 100).round();
+      final savingsAmount = originalPrice - currentPrice;
+      
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.lightGreen.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.lightGreen,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.local_offer,
+              color: AppTheme.lightGreen,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$discountPercent% OFF',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.lightGreen,
+                    ),
+                  ),
+                  Text(
+                    'Customers save UGX ${savingsAmount.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.lightGreen,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'DISCOUNT',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return const SizedBox.shrink();
   }
 
   Widget _buildReviewRow(String label, String value) {
