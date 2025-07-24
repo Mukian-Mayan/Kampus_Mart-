@@ -3,28 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kampusmart2/models/user_role.dart';
 
 // Enums
-enum MessageType {
-  text,
-  image,
-  voice,
-  file,
-  system,
-}
+enum MessageType { text, image, voice, file, system }
 
-enum DeliveryStatus {
-  sent,
-  delivered,
-  read,
-  failed,
-}
+enum DeliveryStatus { sent, delivered, read, failed }
 
-enum ChatRoomStatus {
-  active,
-  blocked,
-  archived,
-  deleted,
-}
-
+enum ChatRoomStatus { active, blocked, archived, deleted }
 
 // ChatMessage model specifically for MessageScreen compatibility
 class ChatMessage {
@@ -41,7 +24,7 @@ class ChatMessage {
   final String? fileUrl;
   final String? participants;
 
-  ChatMessage( {
+  ChatMessage({
     required this.id,
     required this.senderId,
     required this.senderName,
@@ -63,7 +46,7 @@ class ChatMessage {
       'senderName': senderName,
       'message': message,
       'timestamp': Timestamp.fromDate(timestamp),
-      'messageType': messageType.toString(),
+      'messageType': messageType.name, // Use .name instead of .toString()
       'isRead': isRead,
       'imageUrl': imageUrl,
       'voiceUrl': voiceUrl,
@@ -86,30 +69,36 @@ class ChatMessage {
       voiceUrl: map['voiceUrl'],
       fileName: map['fileName'],
       fileUrl: map['fileUrl'],
-      participants: map['participants']
+      participants: map['participants'],
     );
   }
 
   static MessageType _parseMessageType(dynamic messageType) {
     if (messageType == null) return MessageType.text;
-    
+
     if (messageType is String) {
+      // Handle both enum.name format and toString() format for backward compatibility
       switch (messageType) {
+        case 'text':
         case 'MessageType.text':
           return MessageType.text;
+        case 'image':
         case 'MessageType.image':
           return MessageType.image;
+        case 'voice':
         case 'MessageType.voice':
           return MessageType.voice;
+        case 'file':
         case 'MessageType.file':
           return MessageType.file;
+        case 'system':
         case 'MessageType.system':
           return MessageType.system;
         default:
           return MessageType.text;
       }
     }
-    
+
     return MessageType.text;
   }
 }
@@ -137,7 +126,7 @@ class UserProfile {
       'id': id,
       'name': name,
       'imageUrl': imageUrl,
-      'role': role.toString(),
+      'role': role.name, // Use .name instead of .toString()
       'isOnline': isOnline,
       'lastSeen': lastSeen != null ? Timestamp.fromDate(lastSeen!) : null,
     };
@@ -156,20 +145,21 @@ class UserProfile {
 
   static UserRole _parseUserRole(dynamic role) {
     if (role == null) return UserRole.buyer;
-    
+
     if (role is String) {
+      // Handle both enum.name format and toString() format for backward compatibility
       switch (role) {
-        case 'UserRole.buyer':
         case 'buyer':
+        case 'UserRole.buyer':
           return UserRole.buyer;
-        case 'UserRole.seller':
         case 'seller':
+        case 'UserRole.seller':
           return UserRole.seller;
         default:
           return UserRole.buyer;
       }
     }
-    
+
     return UserRole.buyer;
   }
 }
@@ -213,9 +203,9 @@ class Message {
       'senderName': senderName,
       'message': message,
       'timestamp': timestamp,
-      'messageType': messageType.toString(),
+      'messageType': messageType.name, // Use .name instead of .toString()
       'isRead': isRead,
-      'deliveryStatus': deliveryStatus.toString(),
+      'deliveryStatus': deliveryStatus.name, // Use .name instead of .toString()
       'imageUrl': imageUrl,
       'voiceUrl': voiceUrl,
       'fileName': fileName,
@@ -244,45 +234,56 @@ class Message {
 
   static MessageType _parseMessageType(dynamic messageType) {
     if (messageType == null) return MessageType.text;
-    
+
     if (messageType is String) {
+      // Handle both enum.name format and toString() format for backward compatibility
       switch (messageType) {
+        case 'text':
         case 'MessageType.text':
           return MessageType.text;
+        case 'image':
         case 'MessageType.image':
           return MessageType.image;
+        case 'voice':
         case 'MessageType.voice':
           return MessageType.voice;
+        case 'file':
         case 'MessageType.file':
           return MessageType.file;
+        case 'system':
         case 'MessageType.system':
           return MessageType.system;
         default:
           return MessageType.text;
       }
     }
-    
+
     return MessageType.text;
   }
 
   static DeliveryStatus _parseDeliveryStatus(dynamic status) {
     if (status == null) return DeliveryStatus.sent;
-    
+
     if (status is String) {
+      // Handle both enum.name format and toString() format for backward compatibility
       switch (status) {
+        case 'sent':
         case 'DeliveryStatus.sent':
           return DeliveryStatus.sent;
+        case 'delivered':
         case 'DeliveryStatus.delivered':
           return DeliveryStatus.delivered;
+        case 'read':
         case 'DeliveryStatus.read':
           return DeliveryStatus.read;
+        case 'failed':
         case 'DeliveryStatus.failed':
           return DeliveryStatus.failed;
         default:
           return DeliveryStatus.sent;
       }
     }
-    
+
     return DeliveryStatus.sent;
   }
 }
@@ -358,8 +359,8 @@ class ChatRoom {
       'buyerName': buyerName,
       'sellerImageUrl': sellerImageUrl,
       'buyerImageUrl': buyerImageUrl,
-      'sellerRole': sellerRole.toString(),
-      'buyerRole': buyerRole.toString(),
+      'sellerRole': sellerRole.name, // Use .name instead of .toString()
+      'buyerRole': buyerRole.name, // Use .name instead of .toString()
       'productId': productId,
       'productName': productName,
       'productImageUrl': productImageUrl,
@@ -368,12 +369,13 @@ class ChatRoom {
       'lastMessage': lastMessage,
       'lastMessageTime': lastMessageTime,
       'lastMessageSenderId': lastMessageSenderId,
-      'lastMessageType': lastMessageType.toString(),
+      'lastMessageType':
+          lastMessageType.name, // Use .name instead of .toString()
       'unreadCountSeller': unreadCountSeller,
       'unreadCountBuyer': unreadCountBuyer,
       'isActiveForSeller': isActiveForSeller,
       'isActiveForBuyer': isActiveForBuyer,
-      'status': status.toString(),
+      'status': status.name, // Use .name instead of .toString()
       'participants': participants,
       'blockedBy': blockedBy,
       'isGroupChat': isGroupChat,
@@ -417,22 +419,27 @@ class ChatRoom {
 
   static ChatRoomStatus _parseChatRoomStatus(dynamic status) {
     if (status == null) return ChatRoomStatus.active;
-    
+
     if (status is String) {
+      // Handle both enum.name format and toString() format for backward compatibility
       switch (status) {
+        case 'active':
         case 'ChatRoomStatus.active':
           return ChatRoomStatus.active;
+        case 'blocked':
         case 'ChatRoomStatus.blocked':
           return ChatRoomStatus.blocked;
+        case 'archived':
         case 'ChatRoomStatus.archived':
           return ChatRoomStatus.archived;
+        case 'deleted':
         case 'ChatRoomStatus.deleted':
           return ChatRoomStatus.deleted;
         default:
           return ChatRoomStatus.active;
       }
     }
-    
+
     return ChatRoomStatus.active;
   }
 }
