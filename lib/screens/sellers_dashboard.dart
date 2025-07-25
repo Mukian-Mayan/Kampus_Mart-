@@ -470,7 +470,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            seller!.isVerified ? 'Pending' : 'Verified',
+                            seller!.isVerified ? 'verified' : 'Pending',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.white,
