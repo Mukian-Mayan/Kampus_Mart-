@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/widgets/profile_card.dart';
 
 class AboutUsPage extends StatelessWidget {
   const AboutUsPage({super.key});
@@ -120,7 +121,7 @@ class AboutUsPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 15),
                       Text(
-                        'KampuSmart is your ultimate campus companion, designed to make student life easier and more efficient. Our platform connects students with everything they need on campus- easying connection between freshers, continuing students and finalists.',
+                        'Kampus Mart is your ultimate campus companion, designed to make student life easier and more efficient. Our platform connects students with everything they need on campus- easying connection between freshers, continuing students and finalists.',
                         style: TextStyle(
                           fontSize: 16,
                           color: AppTheme.textPrimary,
@@ -187,6 +188,32 @@ class AboutUsPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 25),
+
+                // Use SizedBox with enough height + padding + decoration wrapping horizontal scroll
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ProfileCard(
+                        name: 'Kalio Baaf',
+                        developerImage: 'assets/dp_1.jpeg',
+                        majorRole: 'Backend Guru',
+                        developerDescription:
+                            'A complete specialist in backend. cloud computing and all cloud bassed and local hub based concerns',
+                        developerLocation: 'Kikoni - Makerere',
+                        developerSkill1: 'Python',
+                        developerSkill2: 'C, C+, C++',
+                        developerSkill3: 'Firebase',
+                        developerSkill4: 'SupperBase',
+                        githubLink: 'https://github.com/yourprofile',
+                        instagramLink: 'https://instagram.com/yourprofile',
+                      ),
+                      // Add horizontal spacing if you add more ProfileCards
+                      const SizedBox(width: 16),
+                    ],
+                  ),
+                ),
+                         const SizedBox(height: 25,),
 
                 // Contact Info
                 Container(
