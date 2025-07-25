@@ -298,7 +298,7 @@ class _ProfilePicWidgetState extends State<ProfilePicWidget> {
                         errorBuilder: (context, error, stackTrace) {
                           print('Error loading profile image: $error');
                           return Image.asset(
-                            'assets/default_profile.png',
+                            'assets/dp_4.jpeg',
                             width: widget.width,
                             height: widget.height,
                             fit: BoxFit.cover,
@@ -307,7 +307,7 @@ class _ProfilePicWidgetState extends State<ProfilePicWidget> {
                       ),
                     )
                   : Image.asset(
-                      'assets/default_profile.png',
+                      'assets/dp_5.jpeg',
                       width: widget.width,
                       height: widget.height,
                       fit: BoxFit.cover,

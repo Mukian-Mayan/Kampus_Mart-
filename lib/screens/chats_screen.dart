@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:kampusmart2/models/user_role.dart';
+import 'package:kampusmart2/screens/login_page.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -661,13 +662,15 @@ class _ChatsScreenState extends State<ChatsScreen> {
             Text(
               'Please log in to view chats',
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-            ),
+            ), 
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                // Navigate to login screen
-                Navigator.pushReplacementNamed(context, '/login');
-              },
+              onPressed: () { Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                    (route) => false, // Remove all previous routes
+                  );
+                },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryOrange,
                 foregroundColor: Colors.white,

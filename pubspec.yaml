@@ -92,6 +92,7 @@ flutter:
   assets:
     - lib/images/
     - lib/products/
+    - assets/dp_4.jpeg
     
    
    
