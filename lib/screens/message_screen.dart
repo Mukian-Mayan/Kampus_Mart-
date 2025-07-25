@@ -419,7 +419,7 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
                   Text(
                     message.message,
                     style: TextStyle(
-                      color: isCurrentUser ? Colors.white : Colors.black87,
+                      color: isCurrentUser ? Colors.black87 : Colors.black87,
                       fontSize: 16,
                     ),
                   ),
