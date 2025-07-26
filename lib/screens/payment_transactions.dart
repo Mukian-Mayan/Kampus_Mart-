@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/payment_processing.dart';
-import 'package:kampusmart2/momo_service.dart'; // Add this import
+import 'package:kampusmart2/momo_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:kampusmart2/models/cart_model.dart';
 import 'package:kampusmart2/models/product.dart';
@@ -9,6 +9,8 @@ import 'package:kampusmart2/services/order_service.dart';
 import 'package:kampusmart2/services/cart_service.dart';
 import 'package:kampusmart2/services/product_service.dart';
 import 'package:kampusmart2/services/notifications_service.dart';
+import 'package:kampusmart2/theme/app_theme.dart';
+import 'package:kampusmart2/widgets/layout2.dart';
 
 class PaymentTransactions extends StatefulWidget {
   final double? totalAmount;
@@ -49,20 +51,21 @@ class _PaymentScreenState extends State<PaymentTransactions> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5E6A8),
+      backgroundColor: AppTheme.tertiaryOrange,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5E6A8),
+        backgroundColor: AppTheme.deepBlue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.paleWhite),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Payment',
           style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            color: AppTheme.paleWhite,
+            fontSize: 25,
+            fontWeight: FontWeight.w900,
+            fontFamily: 'KG Penmanship',
           ),
         ),
         centerTitle: true,
@@ -71,133 +74,122 @@ class _PaymentScreenState extends State<PaymentTransactions> {
         children: [
           // Total amount section
           Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Total amount due: UGX ${widget.totalAmount?.toStringAsFixed(0) ?? '0'}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-          ),
-
-          // Curved section with payment methods
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFFF5E6A8),
-                    const Color(0xFFE8A317),
-                    const Color(0xFF2C3E50),
-                  ],
-                  stops: const [0.0, 0.3, 0.7],
-                ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    height: 60,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(60),
-                        bottomRight: Radius.circular(60),
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Layout2(
+              child: Center(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 18),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  const Text(
-                    'Choose Payment Method',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'Total amount due: ',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                            color: AppTheme.paleWhite,
+                          ),
                           children: [
-                            _buildPaymentOption(
-                              'Payment on delivery',
-                              selectedPaymentMethod == 'Payment on delivery',
-                            ),
-                            const SizedBox(height: 15),
-                            _buildPaymentOption(
-                              'Mobile Money',
-                              selectedPaymentMethod == 'Mobile Money',
-                            ),
-
-                            if (selectedPaymentMethod == 'Mobile Money') ...[
-                              const SizedBox(height: 20),
-                              _buildMobileMoneyProviders(),
-                              const SizedBox(height: 20),
-                              _buildPhoneNumberInput(),
-                            ],
-
-                            const SizedBox(height: 15),
-                            _buildPaymentOption(
-                              'Other',
-                              selectedPaymentMethod == 'Other',
+                            TextSpan(
+                              text: 'UGX ${widget.totalAmount?.toStringAsFixed(0) ?? '0'}',
+                              style: const TextStyle(
+                                color: AppTheme.lightGreen,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'KG Red Hands',
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: _canProceed()
-                            ? () => _processPayment()
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _canProceed()
-                              ? const Color(0xFFE8A317)
-                              : Colors.grey,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+          // Payment methods section
+          Expanded(
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+                const Text(
+                  'Choose Payment Method',
+                  style: TextStyle(
+                    fontSize: 25,
+                    fontFamily: 'TypoGraphica',
+                    color: AppTheme.taleBlack,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          _buildPaymentOption(
+                            'Payment on delivery',
+                            selectedPaymentMethod == 'Payment on delivery',
                           ),
-                          elevation: 0,
+                          const SizedBox(height: 15),
+                          _buildPaymentOption(
+                            'Mobile Money',
+                            selectedPaymentMethod == 'Mobile Money',
+                          ),
+                          if (selectedPaymentMethod == 'Mobile Money') ...[
+                            const SizedBox(height: 20),
+                            _buildMobileMoneyProviders(),
+                            const SizedBox(height: 20),
+                            _buildPhoneNumberInput(),
+                          ],
+                          const SizedBox(height: 15),
+                          _buildPaymentOption(
+                            'Other',
+                            selectedPaymentMethod == 'Other',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: _canProceed()
+                          ? () => _processPayment()
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _canProceed()
+                            ? AppTheme.deepOrange
+                            : AppTheme.borderGrey,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
                         ),
-                        child: Text(
-                          selectedPaymentMethod == 'Mobile Money'
-                              ? 'Pay Now'
-                              : 'Add',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        selectedPaymentMethod == 'Mobile Money'
+                            ? 'Pay Now'
+                            : 'Add',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'KG Red Hands',
+                          color: AppTheme.taleBlack,
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -210,7 +202,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.transparent,
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: AppTheme.deepBlue.withOpacity(0.8), width: 1.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
@@ -220,7 +212,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.white,
+            color: AppTheme.deepBlue,
           ),
         ),
         trailing: Container(
@@ -228,11 +220,11 @@ class _PaymentScreenState extends State<PaymentTransactions> {
           height: 24,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            color: isSelected ? Colors.white : Colors.transparent,
+            border: Border.all(color: AppTheme.paleWhite, width: 2),
+            color: isSelected ? AppTheme.deepBlue : Colors.transparent,
           ),
           child: isSelected
-              ? const Icon(Icons.check, size: 16, color: Color(0xFF2C3E50))
+              ? const Icon(Icons.check, size: 20, color: AppTheme.lightGreen)
               : null,
         ),
         onTap: () {
@@ -257,7 +249,8 @@ class _PaymentScreenState extends State<PaymentTransactions> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.white,
+            fontFamily: 'KG Red Hands',
+            color: AppTheme.taleBlack,
           ),
         ),
         const SizedBox(height: 15),
@@ -349,16 +342,21 @@ class _PaymentScreenState extends State<PaymentTransactions> {
       child: TextField(
         controller: phoneController,
         keyboardType: TextInputType.phone,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(
+          fontFamily: 'KG Red Hands',
+          color: AppTheme.taleBlack,
+        ),
         decoration: InputDecoration(
           hintText: selectedMobileMoneyProvider == 'MTN'
               ? 'Enter phone number (e.g., 0772123456)'
               : selectedMobileMoneyProvider == 'Airtel'
-              ? 'Enter Airtel number (e.g., 0702123456)'
-              : 'Enter phone number',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  ? 'Enter Airtel number (e.g., 0702123456)'
+                  : 'Enter phone number',
+          hintStyle: TextStyle(
+            fontFamily: 'KG Red Hands',
+            color: AppTheme.taleBlack.withOpacity(0.7)),
           border: InputBorder.none,
-          prefixIcon: Icon(Icons.phone, color: Colors.white.withOpacity(0.7)),
+          prefixIcon: Icon(Icons.phone, color: AppTheme.taleBlack.withOpacity(0.7)),
         ),
       ),
     );
@@ -374,11 +372,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
   }
 
   bool _isValidPhoneNumber(String phone) {
-    // Remove any non-numeric characters
     String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-
-    // Accept any phone number that has at least 9 digits and at most 15 digits
-    // This covers most international phone number formats
     return cleanPhone.length >= 9 && cleanPhone.length <= 15;
   }
 
@@ -386,23 +380,19 @@ class _PaymentScreenState extends State<PaymentTransactions> {
     if (selectedPaymentMethod == 'Mobile Money') {
       _processMobileMoneyPayment();
     } else {
-      // For cash on delivery, create order directly
       _createOrderAndNavigate();
     }
   }
 
-  // Updated method to use actual MTN MoMo API
   void _processMobileMoneyPayment() async {
     if (selectedMobileMoneyProvider == 'MTN') {
       await _processMTNPayment();
     } else {
-      // Keep existing Airtel simulation for now
       _processAirtelPayment();
     }
   }
 
   Future<void> _processMTNPayment() async {
-    // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -420,51 +410,34 @@ class _PaymentScreenState extends State<PaymentTransactions> {
     );
 
     try {
-      // Format phone number for MTN API (should be in format 256XXXXXXXXX)
       String formattedPhone = _formatPhoneForAPI(phoneController.text);
-
-      // Make actual MTN MoMo API call
       final result = await MtnMomoService.requestToPay(
-        amount: (widget.totalAmount ?? 0).toStringAsFixed(
-          0,
-        ), // Convert to string as required by API
-        currency: 'UGX', // Changed from EUR to UGX for Uganda
+        amount: (widget.totalAmount ?? 0).toStringAsFixed(0),
+        currency: 'UGX',
         phoneNumber: formattedPhone,
         payerMessage: 'Payment for Kampus Mart order',
-        payeeNote:
-            'Order payment - UGX ${(widget.totalAmount ?? 0).toStringAsFixed(0)}',
+        payeeNote: 'Order payment - UGX ${(widget.totalAmount ?? 0).toStringAsFixed(0)}',
       );
 
-      Navigator.pop(context); // Close loading dialog
-
+      Navigator.pop(context);
       if (result['success']) {
-        // Payment request sent successfully
         _showMTNPaymentSuccess(result['referenceId']);
       } else {
-        // Payment request failed
         _showPaymentError(result['message']);
       }
     } catch (e) {
-      Navigator.pop(context); // Close loading dialog
-      _showPaymentError(
-        'Network error: Please check your connection and try again.',
-      );
+      Navigator.pop(context);
+      _showPaymentError('Network error: Please check your connection and try again.');
     }
   }
 
   String _formatPhoneForAPI(String phone) {
-    // Remove any non-numeric characters
     String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-
-    // Convert from local format (0XXXXXXXXX) to international (256XXXXXXXXX)
     if (cleanPhone.startsWith('0')) {
       cleanPhone = '256' + cleanPhone.substring(1);
-    }
-    // If it doesn't start with country code, assume it's a Ugandan number
-    else if (!cleanPhone.startsWith('256')) {
+    } else if (!cleanPhone.startsWith('256')) {
       cleanPhone = '256' + cleanPhone;
     }
-
     return cleanPhone;
   }
 
@@ -486,7 +459,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // You can add payment status checking here
               _checkPaymentStatus(referenceId);
             },
             child: const Text('Check Payment Status'),
@@ -498,7 +470,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => PaymentProcessingScreen(
-                    cartItems: [],
+                    cartItems: _convertCartItems(widget.cartItems ?? []),
                     totalAmount: widget.totalAmount ?? 0.0,
                   ),
                 ),
@@ -545,15 +517,12 @@ class _PaymentScreenState extends State<PaymentTransactions> {
 
     try {
       final result = await MtnMomoService.checkPaymentStatus(referenceId);
-      Navigator.pop(context); // Close loading dialog
-
+      Navigator.pop(context);
       if (result['success']) {
         String status = result['status'];
         _showPaymentStatusResult(status, referenceId);
       } else {
-        _showPaymentError(
-          'Failed to check payment status: ${result['message']}',
-        );
+        _showPaymentError('Failed to check payment status: ${result['message']}');
       }
     } catch (e) {
       Navigator.pop(context);
@@ -571,8 +540,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
         isSuccess = true;
         break;
       case 'pending':
-        message =
-            'Payment is still pending. Please complete the payment on your phone.';
+        message = 'Payment is still pending. Please complete the payment on your phone.';
         break;
       case 'failed':
         message = 'Payment failed. Please try again.';
@@ -591,7 +559,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _checkPaymentStatus(referenceId); // Check again
+                _checkPaymentStatus(referenceId);
               },
               child: const Text('Check Again'),
             ),
@@ -610,7 +578,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
   }
 
   void _processAirtelPayment() {
-    // Keep existing Airtel simulation
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -661,6 +628,16 @@ class _PaymentScreenState extends State<PaymentTransactions> {
     );
   }
 
+  // Helper method to convert CartModel to CartItem
+  List<CartItem> _convertCartItems(List<CartModel> cartModels) {
+    return cartModels.map((cartModel) => CartItem(
+      name: cartModel.productName,
+      quantity: cartModel.quantity,
+      price: cartModel.price,
+      imageUrl: cartModel.productImage,
+    )).toList();
+  }
+
   Future<void> _createOrderAndNavigate() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
@@ -674,7 +651,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
     }
 
     try {
-      // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -690,26 +666,21 @@ class _PaymentScreenState extends State<PaymentTransactions> {
         ),
       );
 
-      // Create the order
       await _createSingleOrder(currentUser, selectedPaymentMethod);
-
-      // Complete the order process (update stock, clear cart, etc.)
       await _completeOrderProcess();
 
-      Navigator.pop(context); // Close loading dialog
-
-      // Navigate to payment processing screen with success
+      Navigator.pop(context);
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => PaymentProcessingScreen(
-            cartItems: [],
+            cartItems: _convertCartItems(widget.cartItems ?? []),
             totalAmount: widget.totalAmount ?? 0.0,
           ),
         ),
       );
     } catch (e) {
-      Navigator.pop(context); // Close loading dialog
+      Navigator.pop(context);
       _showPaymentError('Failed to create order: $e');
     }
   }
@@ -718,7 +689,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
     User currentUser,
     String paymentMethod,
   ) async {
-    // Group cart items by seller and take the first seller for now
     Map<String, List<CartModel>> itemsBySeller = {};
     for (var cartItem in widget.cartItems!) {
       final product = widget.productsMap?[cartItem.productId];
@@ -731,12 +701,10 @@ class _PaymentScreenState extends State<PaymentTransactions> {
       }
     }
 
-    // For now, create order with the first seller's items
     final firstSeller = itemsBySeller.entries.first;
     final sellerId = firstSeller.key;
     final sellerItems = firstSeller.value;
 
-    // Convert cart items to order items
     List<OrderItem> orderItems = sellerItems.map((cartItem) {
       return OrderItem(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -750,9 +718,8 @@ class _PaymentScreenState extends State<PaymentTransactions> {
     }).toList();
 
     double subtotal = orderItems.fold(0.0, (sum, item) => sum + item.subtotal);
-    double deliveryFee = 5000.0; // Fixed delivery fee
+    double deliveryFee = 5000.0;
 
-    // Create delivery address (placeholder)
     DeliveryAddress deliveryAddress = DeliveryAddress(
       street: 'Default Street',
       city: 'Kampala',
@@ -779,7 +746,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
   }
 
   Future<void> _completeOrderProcess() async {
-    // Update product stock and send notifications
     for (var cartItem in widget.cartItems!) {
       final product = widget.productsMap?[cartItem.productId];
       if (product != null && product.stock != null) {
@@ -792,7 +758,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
             newStock: newStock,
           );
 
-          // Send low stock alert if needed
           if (newStock <= 5 && newStock > 0) {
             await NotificationService.sendLowStockAlert(
               sellerId: product.ownerId,
@@ -806,7 +771,6 @@ class _PaymentScreenState extends State<PaymentTransactions> {
       }
     }
 
-    // Clear the cart
     await _cartService.clearCart();
   }
 }

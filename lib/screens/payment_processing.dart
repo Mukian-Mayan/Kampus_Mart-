@@ -9,7 +9,6 @@ import 'package:kampusmart2/screens/notification_screen.dart';
 import 'package:kampusmart2/services/notifications_service.dart' hide NotificationsScreen, UserRole;
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 
-
 // Cart item model
 class CartItem {
   final String name;
@@ -65,7 +64,10 @@ class PaymentProcessingScreen extends StatelessWidget {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NotificationsScreen(userRole: UserRole.buyer, userId: FirebaseAuth.instance.currentUser?.uid ?? '',),
+                builder: (context) => NotificationsScreen(
+                  userRole: UserRole.buyer,
+                  userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                ),
               ),
             ),
           ),
@@ -295,7 +297,7 @@ class PaymentProcessingScreen extends StatelessWidget {
             ),
           ),
           // Bottom navigation
-          BottomNavBar(selectedIndex: currentNavIndex,navBarColor: AppTheme.tertiaryOrange),
+          BottomNavBar(selectedIndex: currentNavIndex, navBarColor: AppTheme.tertiaryOrange),
         ],
       ),
     );
@@ -340,11 +342,19 @@ class PaymentProcessingScreen extends StatelessWidget {
     );
 
     // Simulate payment processing
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.of(context).pop(); // Close processing dialog
+      _showPaymentSuccess(context);
+    });
+
+    // Send payment success notification
     NotificationService.sendPaymentSuccess(
-  userId: FirebaseAuth.instance.currentUser?.uid ?? "", // You need to pass the actual user ID here
-  orderId: 'order_id', // Pass the actual order ID if available
-  amount: totalAmount,
-);
+      userId: FirebaseAuth.instance.currentUser?.uid ?? "",
+      orderId: 'order_${DateTime.now().millisecondsSinceEpoch}',
+      amount: totalAmount,
+    );
+  }
+
   void _showPaymentSuccess(BuildContext context) {
     showDialog(
       context: context,
@@ -401,22 +411,3 @@ class PaymentProcessingScreen extends StatelessWidget {
   }
 }
 
-// Example usage from CartPage:
-/*
-// In your cart page, when user clicks proceed to payment:
-Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => PaymentProcessingScreen(
-      cartItems: [
-        CartItem(name: 'MacBook Pro', quantity: 1, price: 2500000),
-        CartItem(name: 'iPhone 14', quantity: 2, price: 1200000),
-        CartItem(name: 'AirPods', quantity: 1, price: 300000),
-      ],
-      totalAmount: 5200000,
-      currentNavIndex: 1, // Cart tab
-    ),
-  ),
-);
-*/
-}
