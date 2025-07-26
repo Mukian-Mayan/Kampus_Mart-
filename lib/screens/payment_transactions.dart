@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/payment_processing.dart';
-import 'package:kampusmart2/momo_service.dart'; // Add this import
+import 'package:kampusmart2/momo_service.dart';
+import 'package:kampusmart2/theme/app_theme.dart';
+import 'package:kampusmart2/widgets/layout2.dart'; // Add this import
 
 class PaymentTransactions extends StatefulWidget {
   const PaymentTransactions({super.key});
@@ -31,20 +33,21 @@ class _PaymentScreenState extends State<PaymentTransactions> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5E6A8),
+      backgroundColor: AppTheme.tertiaryOrange,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5E6A8),
+        backgroundColor:AppTheme.deepBlue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.paleWhite),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Payment',
           style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            color: AppTheme.paleWhite,
+            fontSize: 25 ,
+            fontWeight: FontWeight.w900,
+            fontFamily: 'KG Penmanship',
           ),
         ),
         centerTitle: true,
@@ -53,20 +56,40 @@ class _PaymentScreenState extends State<PaymentTransactions> {
         children: [
           // Total amount section
           Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'Total amount due: Shs 52,000',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Layout2(
+              child: Center(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 18,),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      decoration: BoxDecoration(
+                        //color: AppTheme.tertiaryOrange,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Text.rich(
+                        TextSpan(
+                          text: 'Total amount due: ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                            color: AppTheme.paleWhite,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Shs 52,000',
+                              style: TextStyle(
+                                color: AppTheme.lightGreen,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'KG Red Hands',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -74,112 +97,100 @@ class _PaymentScreenState extends State<PaymentTransactions> {
 
           // Curved section with payment methods
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFFF5E6A8),
-                    const Color(0xFFE8A317),
-                    const Color(0xFF2C3E50),
-                  ],
-                  stops: const [0.0, 0.3, 0.7],
+            child: Column(
+              children: [
+                /*Container(
+                  height: 60,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(60),
+                      bottomRight: Radius.circular(60),
+                    ),
+                  ),
+                ), */
+            
+                const SizedBox(height: 40),
+            
+                const Text(
+                  'Choose Payment Method',
+                  style: TextStyle(
+                    fontSize: 25,
+                    //fontWeight: FontWeight.w600,
+                    fontFamily: 'TypoGraphica',
+                    color: AppTheme.taleBlack,
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    height: 60,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(60),
-                        bottomRight: Radius.circular(60),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  const Text(
-                    'Choose Payment Method',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          children: [
-                            _buildPaymentOption(
-                              'Payment on delivery',
-                              selectedPaymentMethod == 'Payment on delivery',
-                            ),
-                            const SizedBox(height: 15),
-                            _buildPaymentOption(
-                              'Mobile Money',
-                              selectedPaymentMethod == 'Mobile Money',
-                            ),
-
-                            if (selectedPaymentMethod == 'Mobile Money') ...[
-                              const SizedBox(height: 20),
-                              _buildMobileMoneyProviders(),
-                              const SizedBox(height: 20),
-                              _buildPhoneNumberInput(),
-                            ],
-
-                            const SizedBox(height: 15),
-                            _buildPaymentOption(
-                              'Other',
-                              selectedPaymentMethod == 'Other',
-                            ),
+            
+                const SizedBox(height: 30),
+            
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          _buildPaymentOption(
+                            'Payment on delivery',
+                            selectedPaymentMethod == 'Payment on delivery',
+                          ),
+                          const SizedBox(height: 15),
+                          _buildPaymentOption(
+                            'Mobile Money',
+                            selectedPaymentMethod == 'Mobile Money',
+                          ),
+            
+                          if (selectedPaymentMethod == 'Mobile Money') ...[
+                            const SizedBox(height: 20),
+                            _buildMobileMoneyProviders(),
+                            const SizedBox(height: 20),
+                            _buildPhoneNumberInput(),
                           ],
+            
+                          const SizedBox(height: 15),
+                          _buildPaymentOption(
+                            'Other',
+                            selectedPaymentMethod == 'Other',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: _canProceed()
+                          ? () => _processPayment()
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _canProceed()
+                            ? AppTheme.deepOrange
+                            : AppTheme.borderGrey,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        selectedPaymentMethod == 'Mobile Money'
+                            ? 'Pay Now'
+                            : 'Add',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'KG Red Hands',
+                          color: AppTheme.taleBlack,
                         ),
                       ),
                     ),
                   ),
-
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: _canProceed()
-                            ? () => _processPayment()
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _canProceed()
-                              ? const Color(0xFFE8A317)
-                              : Colors.grey,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          selectedPaymentMethod == 'Mobile Money'
-                              ? 'Pay Now'
-                              : 'Add',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -192,7 +203,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.transparent,
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: AppTheme.deepBlue.withOpacity(0.8), width: 1.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
@@ -202,7 +213,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.white,
+            color: AppTheme.deepBlue,
           ),
         ),
         trailing: Container(
@@ -210,11 +221,11 @@ class _PaymentScreenState extends State<PaymentTransactions> {
           height: 24,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            color: isSelected ? Colors.white : Colors.transparent,
+            border: Border.all(color: AppTheme.paleWhite, width: 2),
+            color: isSelected ? AppTheme.deepBlue : Colors.transparent,
           ),
           child: isSelected
-              ? const Icon(Icons.check, size: 16, color: Color(0xFF2C3E50))
+              ? const Icon(Icons.check, size: 20, color: AppTheme.lightGreen)
               : null,
         ),
         onTap: () {
@@ -239,7 +250,8 @@ class _PaymentScreenState extends State<PaymentTransactions> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.white,
+            fontFamily: 'KG Red Hands',
+            color: AppTheme.taleBlack,
           ),
         ),
         const SizedBox(height: 15),
@@ -331,16 +343,20 @@ class _PaymentScreenState extends State<PaymentTransactions> {
       child: TextField(
         controller: phoneController,
         keyboardType: TextInputType.phone,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(
+            fontFamily: 'KG Red Hands',
+            color: AppTheme.taleBlack,),
         decoration: InputDecoration(
           hintText: selectedMobileMoneyProvider == 'MTN'
               ? 'Enter phone number (e.g., 0772123456)'
               : selectedMobileMoneyProvider == 'Airtel'
               ? 'Enter Airtel number (e.g., 0702123456)'
               : 'Enter phone number',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+          hintStyle: TextStyle(
+            fontFamily: 'KG Red Hands',
+            color: AppTheme.taleBlack.withOpacity(0.7)),
           border: InputBorder.none,
-          prefixIcon: Icon(Icons.phone, color: Colors.white.withOpacity(0.7)),
+          prefixIcon: Icon(Icons.phone, color: AppTheme.taleBlack.withOpacity(0.7)),
         ),
       ),
     );

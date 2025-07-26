@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/widgets/layout2.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
@@ -32,17 +33,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: _PaymentWavePainter(),
-                  ),
+                  child: CustomPaint(painter: _PaymentWavePainter()),
                 ),
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 22),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 22,
+                          ),
                           onPressed: () => Navigator.of(context).maybePop(),
                         ),
                         const Spacer(),
@@ -67,22 +72,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
             child: Column(
               children: [
                 // Amount due
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: yellow,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: const Text.rich(
-                    TextSpan(
-                      text: 'Total amount due: ',
-                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16, color: Colors.black87),
-                      children: [
-                        TextSpan(
-                          text: 'Shs 52,000',
-                          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                Layout2(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: yellow,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Text.rich(
+                      TextSpan(
+                        text: 'Total amount due: ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          color: Colors.black87,
                         ),
-                      ],
+                        children: [
+                          TextSpan(
+                            text: 'Shs 52,000',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -122,10 +139,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               padding: const EdgeInsets.only(bottom: 16),
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
-                                onTap: () => setState(() => _selectedMethod = i),
+                                onTap: () =>
+                                    setState(() => _selectedMethod = i),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.white, width: 2),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                     color: darkBlue,
                                   ),
@@ -133,15 +154,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     children: [
                                       Expanded(
                                         child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 16,
+                                          ),
                                           child: Text(
                                             _methods[i],
-                                            style: const TextStyle(color: Colors.white, fontSize: 15),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 15,
+                                            ),
                                           ),
                                         ),
                                       ),
                                       Padding(
-                                        padding: const EdgeInsets.only(right: 12),
+                                        padding: const EdgeInsets.only(
+                                          right: 12,
+                                        ),
                                         child: Icon(
                                           _selectedMethod == i
                                               ? Icons.radio_button_checked
@@ -164,7 +193,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(28),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 elevation: 2,
                               ),
                               onPressed: () {},
@@ -264,4 +295,4 @@ class _PaymentWavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-} 
+}
