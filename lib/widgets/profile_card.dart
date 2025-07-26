@@ -75,7 +75,7 @@ class ProfileCard extends StatelessWidget {
                     backgroundColor: AppTheme.deepOrange,
                     child: CircleAvatar(
                       radius: 70,
-                      backgroundImage: NetworkImage(developerImage),
+                      backgroundImage: AssetImage(developerImage),
                     ),
                   ),
                 ),
@@ -159,7 +159,7 @@ class ProfileCard extends StatelessWidget {
                         runSpacing: 8,
                         alignment: WrapAlignment.center,
                         children: [
-                          _buildSkillChip('Flutter', AppTheme.deepBlue),
+                          //_buildSkillChip('Flutter', AppTheme.deepBlue),
                           _buildSkillChip(developerSkill1, AppTheme.lightGreen),
                           _buildSkillChip(developerSkill2, AppTheme.deepOrange),
                           _buildSkillChip(developerSkill3, AppTheme.deepBlue),
@@ -178,14 +178,16 @@ class ProfileCard extends StatelessWidget {
                         children: [
                           _buildActionButton(
                             'GitHub',
-                            Icons.code,
-                            AppTheme.deepBlue,
+                            'assets/gitHub.png',
+                            //Icons.code,
+                            AppTheme.tertiaryOrange,
                             url: githubLink,
                           ),
                           _buildActionButton(
-                            'Portfolio',
-                            Icons.launch,
-                            AppTheme.coffeeBrown,
+                            'Instagram',
+                            'assets/instagram.png',
+                            //Icons.launch,
+                            AppTheme.deepOrange,
                             isOutlined: true,
                             url: instagramLink,
                           ),
@@ -240,7 +242,7 @@ class ProfileCard extends StatelessWidget {
 
   Widget _buildActionButton(
     String text,
-    IconData icon,
+    String assetPath,
     Color color, {
     bool isOutlined = false,
     required String url,
@@ -252,11 +254,11 @@ class ProfileCard extends StatelessWidget {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         }
       },
-      icon: Icon(icon, size: 16),
+      icon: Image.asset(assetPath, width: 22, height: 22),
       label: Text(text),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isOutlined ? Colors.transparent : color,
-        foregroundColor: isOutlined ? color : Colors.white,
+        backgroundColor: isOutlined ? AppTheme.deepBlue : color,
+        foregroundColor: isOutlined ? color : AppTheme.taleBlack,
         side: isOutlined ? BorderSide(color: color) : null,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
       ),

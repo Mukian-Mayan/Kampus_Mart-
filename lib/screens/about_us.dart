@@ -129,7 +129,7 @@ class AboutUsPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Features
                       Text(
                         'Key Features:',
@@ -189,31 +189,215 @@ class AboutUsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 25),
 
-                // Use SizedBox with enough height + padding + decoration wrapping horizontal scroll
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      ProfileCard(
-                        name: 'Kalio Baaf',
-                        developerImage: 'assets/dp_1.jpeg',
-                        majorRole: 'Backend Guru',
-                        developerDescription:
-                            'A complete specialist in backend. cloud computing and all cloud bassed and local hub based concerns',
-                        developerLocation: 'Kikoni - Makerere',
-                        developerSkill1: 'Python',
-                        developerSkill2: 'C, C+, C++',
-                        developerSkill3: 'Firebase',
-                        developerSkill4: 'SupperBase',
-                        githubLink: 'https://github.com/yourprofile',
-                        instagramLink: 'https://instagram.com/yourprofile',
-                      ),
-                      // Add horizontal spacing if you add more ProfileCards
-                      const SizedBox(width: 16),
-                    ],
+                Center(
+                  child: Text(
+                    'Developer Team',
+                    style: TextStyle(
+                      color: AppTheme.taleBlack,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'DreamOrphans-Bold',
+                    ),
                   ),
                 ),
-                         const SizedBox(height: 25,),
+
+                // Developer Cards - Expandable Dropdowns
+                ExpansionTile(
+                  title: Center(
+                    child: Text(
+                      'Nagawa Sandra RobinahBackend Specialist',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.deepBlue,
+                        fontFamily: 'DreamOrphans-Bold',
+                        fontSize: 22,
+                      ),
+                    ),
+                  ),
+                  leading: Text(
+                    'Nagawa Sandra Robinah',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.deepBlue,
+                      fontFamily: 'DreamOrphans-Bold',
+                      fontSize: 22,
+                    ),
+                  ),
+                  children: [
+                    ProfileCard(
+                      name: 'Nagawa Sama Sandra',
+                      developerImage: 'assets/developers/sama.jpg',
+                      majorRole: 'Backend Specialist',
+                      developerDescription:
+                          'Expert in cloud systems, APIs, and scalable server architecture using modern backend frameworks.',
+                      developerLocation: 'Kikoni - Makerere',
+                      developerSkill1: 'Dart',
+                      developerSkill2: 'SupaBase',
+                      developerSkill3: 'Firebase',
+                      developerSkill4: 'SupperBase',
+                      githubLink: 'https://github.com/nagawasandrarobinah',
+                      instagramLink: 'https://instagram.com/nagawasandra30',
+                    ),
+                  ],
+                ),
+                ExpansionTile(
+                  title: Center(
+                    child: Text(
+                      'DevOps & QA Engineer',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.deepBlue,
+                        fontFamily: 'DreamOrphans-Bold',
+                        fontSize: 22,
+                      ),
+                    ),
+                  ),
+                  leading: Text(
+                    'Nakimuli Jollyne',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.deepBlue,
+                      fontFamily: 'DreamOrphans-Bold',
+                      fontSize: 22,
+                    ),
+                  ),
+                  children: [
+                    ProfileCard(
+                      name: 'Nakimuli Jollyne ',
+                      developerImage: 'assets/developers/jollyne2.png',
+                      majorRole: '	DevOps & QA Engineer',
+                      developerDescription:
+                          'Automates builds, deploys infrastructure, and writes robust test coverage for CI/CD pipelines.',
+                      developerLocation: 'Wandegeya - Makerere',
+                      developerSkill1: 'Firebase',
+                      developerSkill2: 'Dart',
+                      developerSkill3: 'Flutter',
+                      developerSkill4: 'React Native',
+                      githubLink: 'https://github.com/Jollyneflavia',
+                      instagramLink: 'https://www.instagram.com/jo_lly_ne/',
+                    ),
+                  ],
+                ),
+                ExpansionTile(
+                  title: Center(
+                    child: Text(
+                      'Flutter Lead Engineer',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.deepBlue,
+                        fontFamily: 'DreamOrphans-Bold',
+                        fontSize: 22,
+                      ),
+                    ),
+                  ),
+                  leading: Text(
+                    'Nambirige Eron',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.deepBlue,
+                      fontFamily: 'DreamOrphans-Bold',
+                      fontSize: 22,
+                    ),
+                  ),
+                  children: [
+                    ProfileCard(
+                      name: 'Nambirige Eron',
+                      developerImage: 'assets/developers/eron.jpg',
+                      majorRole: 'Flutter Lead Engineer',
+                      developerDescription:
+                          'Leads architecture and feature planning for enterprise-grade mobile applications across platforms',
+                      developerLocation: 'Uganda - Kampala',
+                      developerSkill1: 'Html',
+                      developerSkill2: 'Dart',
+                      developerSkill3: 'CSS',
+                      developerSkill4: 'flutter',
+                      githubLink: 'https://github.com/Nambirige-Eron',
+                      instagramLink:
+                          'https://www.instagram.com/chosen8094?utm_source=ig_web_button_share_sheet&igsh=M2hqeGdjOWtzMWRx',
+                    ),
+                  ],
+                ),
+                ExpansionTile(
+                  title: Center(
+                    child: Text(
+                      'Data Scientist & full stack',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.deepBlue,
+                        fontFamily: 'DreamOrphans-Bold',
+                        fontSize: 22,
+                      ),
+                    ),
+                  ),
+                  leading: Text(
+                    'Malual Martin Biar',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.deepBlue,
+                      fontFamily: 'DreamOrphans-Bold',
+                      fontSize: 22,
+                    ),
+                  ),
+                  children: [
+                    ProfileCard(
+                      name: 'Malual Martin Biar',
+                      developerImage: 'assets/developers/martin.jpg',
+                      majorRole: 'Machine Learning Engineer & full stack',
+                      developerDescription:
+                          'Bridges frontend and backend with solid code structure, REST/GraphQL APIs, and UI component systems',
+                      developerLocation: 'Kikoni - Makerere',
+                      developerSkill1: 'Python',
+                      developerSkill2: 'dart',
+                      developerSkill3: 'React Native',
+                      developerSkill4: 'SQL',
+                      githubLink: 'https://github.com/Priez211',
+                      instagramLink:
+                          'https://www.instagram.com/preiz_biaralier?igsh=cnFnajF3MzhscG03&utm_source=qr',
+                    ),
+                  ],
+                ),
+                ExpansionTile(
+                  title: Center(
+                    child: Text(
+                      'Data Scientist',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.deepBlue,
+                        fontFamily: 'DreamOrphans-Bold',
+                        fontSize: 22,
+                      ),
+                    ),
+                  ),
+                  leading: Text(
+                    'Mayanja Joel Stephen',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.deepBlue,
+                      fontFamily: 'DreamOrphans-Bold',
+                      fontSize: 22,
+                    ),
+                  ),
+                  children: [
+                    ProfileCard(
+                      name: 'Mayanja Joel Stephen',
+                      developerImage: 'assets/dp_1.jpeg',
+                      majorRole: 'Data Scientist',
+                      developerDescription:
+                          '	A hands-on Flutter developer who transforms ideas into scalable mobile solutions. Skilled in UI/UX design, API integration, and app logic.',
+                      developerLocation: 'Kampala - Uganda',
+                      developerSkill1: 'Dart',
+                      developerSkill2: 'Flutter',
+                      developerSkill3: 'Firebase ',
+                      developerSkill4: 'UI/UX Specialist',
+                      githubLink: 'https://github.com/Mukian-Mayan',
+                      instagramLink:
+                          'https://www.instagram.com/_its_moen_?igsh=MXdtNmVxdnJwbnJlag==',
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+                const SizedBox(height: 25),
 
                 // Contact Info
                 Container(
@@ -244,7 +428,10 @@ class AboutUsPage extends StatelessWidget {
                       const SizedBox(height: 15),
                       _buildContactItem(Icons.email, 'support@kampusmart.com'),
                       _buildContactItem(Icons.phone, '+256 709 101  171'),
-                      _buildContactItem(Icons.location_on, 'Makerere,Kampala, Uganda'),
+                      _buildContactItem(
+                        Icons.location_on,
+                        'Makerere,Kampala, Uganda',
+                      ),
                       _buildContactItem(Icons.web, 'www.kampusmart.com'),
                     ],
                   ),
@@ -276,17 +463,11 @@ class AboutUsPage extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         children: [
-          Text(
-            emoji,
-            style: TextStyle(fontSize: 20),
-          ),
+          Text(emoji, style: TextStyle(fontSize: 20)),
           const SizedBox(width: 10),
           Text(
             feature,
-            style: TextStyle(
-              fontSize: 16,
-              color: AppTheme.textPrimary,
-            ),
+            style: TextStyle(fontSize: 16, color: AppTheme.textPrimary),
           ),
         ],
       ),
@@ -298,21 +479,95 @@ class AboutUsPage extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: AppTheme.deepBlue,
-            size: 20,
-          ),
+          Icon(icon, color: AppTheme.deepBlue, size: 20),
           const SizedBox(width: 12),
           Text(
             text,
-            style: TextStyle(
-              fontSize: 16,
-              color: AppTheme.textPrimary,
-            ),
+            style: TextStyle(fontSize: 16, color: AppTheme.textPrimary),
           ),
         ],
       ),
     );
   }
 }
+
+
+
+
+
+
+
+
+/*
+                      ProfileCard(
+                        name: 'Nagawa Sama Sandra',
+                        developerImage: 'assets/developers/sama.jpg',
+                        majorRole: 'Backend Specialist',
+                        developerDescription:
+                            'Expert in cloud systems, APIs, and scalable server architecture using modern backend frameworks.',
+                        developerLocation: 'Kikoni - Makerere',
+                        developerSkill1: 'Dart',
+                        developerSkill2: 'SupaBase',
+                        developerSkill3: 'Firebase',
+                        developerSkill4: 'SupperBase',
+                        githubLink: 'https://github.com/nagawasandrarobinah',
+                        instagramLink: 'https://instagram.com/nagawasandra30',
+                      ),
+                      ProfileCard(
+                        name: 'Nakimuli Jollyne ',
+                        developerImage: 'assets/developers/jollyne2.png',
+                        majorRole: '	DevOps & QA Engineer',
+                        developerDescription:
+                            'Automates builds, deploys infrastructure, and writes robust test coverage for CI/CD pipelines.',
+                        developerLocation: 'Wandegeya - Makerere',
+                        developerSkill1: 'Firebase',
+                        developerSkill2: 'Dart',
+                        developerSkill3: 'Flutter',
+                        developerSkill4: 'React Native',
+                        githubLink: 'https://github.com/Jollyneflavia',
+                        instagramLink: 'https://www.instagram.com/jo_lly_ne/',
+                      ),
+                      ProfileCard(
+                        name: 'Nambirige Eron',
+                        developerImage: 'assets/developers/eron.jpg',
+                        majorRole: 'Flutter Lead Engineer',
+                        developerDescription:
+                            'Leads architecture and feature planning for enterprise-grade mobile applications across platforms',
+                        developerLocation: 'Uganda - Kampala',
+                        developerSkill1: 'Html',
+                        developerSkill2: 'Dart',
+                        developerSkill3: 'CSS',
+                        developerSkill4: 'flutter',
+                        githubLink: 'https://github.com/Nambirige-Eron',
+                        instagramLink: 'https://www.instagram.com/chosen8094?utm_source=ig_web_button_share_sheet&igsh=M2hqeGdjOWtzMWRx',
+                      ),
+                      ProfileCard(
+                        name: 'Malual Martin Biar',
+                        developerImage: 'assets/developers/martin.jpg',
+                        majorRole: 'Data Scientist & full stack',
+                        developerDescription:
+                            'Bridges frontend and backend with solid code structure, REST/GraphQL APIs, and UI component systems',
+                        developerLocation: 'Kikoni - Makerere',
+                        developerSkill1: 'Python',
+                        developerSkill2: 'dart',
+                        developerSkill3: 'React Native',
+                        developerSkill4: 'SQL',
+                        githubLink: 'https://github.com/Priez211',
+                        instagramLink: 'https://www.instagram.com/preiz_biaralier?igsh=cnFnajF3MzhscG03&utm_source=qr',
+                      ),
+                      ProfileCard(
+                        name: 'Kalio Baaf',
+                        developerImage: 'assets/dp_1.jpeg',
+                        majorRole: 'Backend Guru',
+                        developerDescription:
+                            '	A hands-on Flutter developer who transforms ideas into scalable mobile solutions. Skilled in UI/UX design, API integration, and app logic.',
+                        developerLocation: 'Kampala - Uganda',
+                        developerSkill1: 'Dart',
+                        developerSkill2: 'Flutter',
+                        developerSkill3: 'Firebase ',
+                        developerSkill4: 'UI/UX Specialist',
+                        githubLink: 'https://github.com/Mukian-Mayan',
+                        instagramLink: 'https://www.instagram.com/_its_moen_?igsh=MXdtNmVxdnJwbnJlag==',
+                      ),
+
+*/
