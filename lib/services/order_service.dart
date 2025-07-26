@@ -24,10 +24,10 @@ class OrderService {
     try {
       // Get seller info
       final seller = await SellerService.getSellerById(sellerId);
-      
+
       final String orderId = _firestore.collection(_collection).doc().id;
       final double totalAmount = subtotal + deliveryFee;
-      
+
       final Order order = Order(
         id: orderId,
         buyerId: buyerId,
@@ -50,10 +50,7 @@ class OrderService {
       );
 
       // Save to Firestore
-      await _firestore
-          .collection(_collection)
-          .doc(orderId)
-          .set(order.toJson());
+      await _firestore.collection(_collection).doc(orderId).set(order.toJson());
 
       // Update seller stats
       await SellerService.updateSellerStats(
@@ -61,7 +58,7 @@ class OrderService {
         pendingOrders: seller.stats.pendingOrders + 1,
         totalOrders: seller.stats.totalOrders + 1,
         cancelledOrders: 0,
-        totalRevenue: seller.stats.totalRevenue + totalAmount
+        totalRevenue: seller.stats.totalRevenue + totalAmount,
       );
 
       return order;
@@ -108,36 +105,50 @@ class OrderService {
   /// Get orders by seller ID
   static Future<List<Order>> getOrdersBySellerId(String sellerId) async {
     try {
+      print('🔍 Fetching orders for seller: $sellerId');
+
       final QuerySnapshot querySnapshot = await _firestore
           .collection(_collection)
           .where('sellerId', isEqualTo: sellerId)
           .orderBy('createdAt', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Order.fromJson(doc.data() as Map<String, dynamic>))
-          .toList();
+      print(
+        '📦 Found ${querySnapshot.docs.length} orders for seller: $sellerId',
+      );
+
+      final orders = querySnapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        print(
+          '📋 Order data: ${data['id']} - Status: ${data['status']} - Total: ${data['totalAmount']}',
+        );
+        return Order.fromJson(data);
+      }).toList();
+
+      print('✅ Successfully parsed ${orders.length} orders');
+      return orders;
     } catch (e) {
+      print('❌ Error fetching seller orders: $e');
       throw Exception('Failed to get seller orders: $e');
     }
   }
 
   /// Update order status
-  static Future<void> updateOrderStatus(String orderId, OrderStatus status) async {
+  static Future<void> updateOrderStatus(
+    String orderId,
+    OrderStatus status,
+  ) async {
     try {
-      await _firestore
-          .collection(_collection)
-          .doc(orderId)
-          .update({
-            'status': status.toString().split('.').last,
-            'updatedAt': DateTime.now().toIso8601String(),
-          });
+      await _firestore.collection(_collection).doc(orderId).update({
+        'status': status.toString().split('.').last,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
 
       // Update seller stats if order is completed or cancelled
       if (status == OrderStatus.completed || status == OrderStatus.cancelled) {
         final order = await getOrderById(orderId);
         final seller = await SellerService.getSellerById(order.sellerId);
-        
+
         int pendingOrders = seller.stats.pendingOrders - 1;
         int completedOrders = seller.stats.completedOrders;
         int cancelledOrders = seller.stats.cancelledOrders;
@@ -164,15 +175,15 @@ class OrderService {
   }
 
   /// Update payment status
-  static Future<void> updatePaymentStatus(String orderId, PaymentStatus paymentStatus) async {
+  static Future<void> updatePaymentStatus(
+    String orderId,
+    PaymentStatus paymentStatus,
+  ) async {
     try {
-      await _firestore
-          .collection(_collection)
-          .doc(orderId)
-          .update({
-            'paymentStatus': paymentStatus.toString().split('.').last,
-            'updatedAt': DateTime.now().toIso8601String(),
-          });
+      await _firestore.collection(_collection).doc(orderId).update({
+        'paymentStatus': paymentStatus.toString().split('.').last,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
     } catch (e) {
       throw Exception('Failed to update payment status: $e');
     }
@@ -198,13 +209,10 @@ class OrderService {
   /// Delete order (soft delete by updating status)
   static Future<void> deleteOrder(String orderId) async {
     try {
-      await _firestore
-          .collection(_collection)
-          .doc(orderId)
-          .update({
-            'status': 'deleted',
-            'updatedAt': DateTime.now().toIso8601String(),
-          });
+      await _firestore.collection(_collection).doc(orderId).update({
+        'status': 'deleted',
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
     } catch (e) {
       throw Exception('Failed to delete order: $e');
     }
@@ -260,9 +268,10 @@ class OrderService {
         .collection(_collection)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Order.fromJson(doc.data()))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Order.fromJson(doc.data())).toList(),
+        );
   }
 
   /// Stream orders by customer ID
@@ -272,9 +281,10 @@ class OrderService {
         .where('customerId', isEqualTo: customerId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Order.fromJson(doc.data()))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Order.fromJson(doc.data())).toList(),
+        );
   }
 
   /// Stream orders by seller ID
@@ -284,8 +294,9 @@ class OrderService {
         .where('sellerId', isEqualTo: sellerId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Order.fromJson(doc.data()))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Order.fromJson(doc.data())).toList(),
+        );
   }
 }

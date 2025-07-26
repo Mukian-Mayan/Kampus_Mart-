@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:kampusmart2/widgets/layout2.dart';
+import 'package:kampusmart2/models/cart_model.dart';
+import 'package:kampusmart2/models/product.dart';
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({super.key});
+  final List<CartModel>? cartItems;
+  final double? totalAmount;
+  final Map<String, Product>? productsMap;
+
+  const PaymentScreen({
+    super.key,
+    this.cartItems,
+    this.totalAmount,
+    this.productsMap,
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -72,34 +82,33 @@ class _PaymentScreenState extends State<PaymentScreen> {
             child: Column(
               children: [
                 // Amount due
-                Layout2(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: yellow,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Text.rich(
-                      TextSpan(
-                        text: 'Total amount due: ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                          color: Colors.black87,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: 'Shs 52,000',
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: yellow,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text.rich(
+                    TextSpan(
+                      text: 'Total amount due: ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        color: Colors.black87,
                       ),
+                      children: [
+                        TextSpan(
+                          text:
+                              'UGX ${widget.totalAmount?.toStringAsFixed(0) ?? '0'}',
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

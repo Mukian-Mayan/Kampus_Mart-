@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart'; // Import for kDebugMode
 
 import '../models/chat_models.dart';
-import '../services/notificaations_service.dart';
+import 'notifications_service.dart';
 import '../models/user_role.dart';
 
 class ChatService {

@@ -62,7 +62,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       setState(() {
         isLoading = true;
       });
-      
+
       // Clear Firestore cache to prevent permission errors
       await FirebaseFirestore.instance.terminate();
       await FirebaseFirestore.instance.clearPersistence();
@@ -522,7 +522,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   }
 
   Widget _buildStatsSection() {
-    final stats = seller!.stats;
+    // Use real-time stats from dashboardStats instead of cached seller.stats
+    final sellerStats = dashboardStats?['sellerStats'] ?? {};
+    final orderStats = dashboardStats?['orderStats'] ?? {};
+
+    final totalProducts = orderStats['totalProducts'] as int? ?? 0;
+    final totalOrders = sellerStats['totalOrders'] as int? ?? 0;
+    final totalRevenue = sellerStats['totalRevenue'] as num? ?? 0.0;
+    final totalReviews = sellerStats['totalReviews'] as int? ?? 0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -533,7 +540,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               Expanded(
                 child: _buildStatCard(
                   'Products',
-                  stats.totalProducts.toString(),
+                  totalProducts.toString(),
                   Icons.inventory_2,
                   AppTheme.selectedBlue,
                 ),
@@ -542,7 +549,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               Expanded(
                 child: _buildStatCard(
                   'Orders',
-                  stats.totalOrders.toString(),
+                  totalOrders.toString(),
                   Icons.receipt_long,
                   AppTheme.lightGreen,
                 ),
@@ -555,7 +562,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               Expanded(
                 child: _buildStatCard(
                   'Revenue',
-                  'UGX ${_formatCurrency(stats.totalRevenue)}',
+                  'UGX ${_formatCurrency(totalRevenue.toDouble())}',
                   Icons.attach_money,
                   AppTheme.primaryOrange,
                 ),
@@ -564,7 +571,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               Expanded(
                 child: _buildStatCard(
                   'Reviews',
-                  '${stats.totalReviews}',
+                  totalReviews.toString(),
                   Icons.star_rate,
                   AppTheme.coffeeBrown,
                 ),
@@ -992,7 +999,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               try {
                 // Clean up before logout
                 await _cleanupBeforeExit();
-                
+
                 // Sign out
                 await SaleService.signOutSeller();
 

@@ -5,15 +5,13 @@ enum OrderStatus {
   preparing,
   ready,
   delivered,
-  cancelled, completedOrders, completed, processing,
+  cancelled,
+  completedOrders,
+  completed,
+  processing,
 }
 
-enum PaymentStatus {
-  pending,
-  paid,
-  failed,
-  refunded,
-}
+enum PaymentStatus { pending, paid, failed, refunded }
 
 class Order {
   final String id;
@@ -91,7 +89,9 @@ class Order {
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: json['id'],
-      buyerId: json['buyerId'],
+      buyerId:
+          json['customerId'] ??
+          json['buyerId'], // Handle both field names for compatibility
       name: json['customerName'],
       email: json['customerEmail'],
       phone: json['customerPhone'],
@@ -116,11 +116,11 @@ class Order {
       notes: json['notes'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
-      acceptedAt: json['acceptedAt'] != null 
-          ? DateTime.parse(json['acceptedAt']) 
+      acceptedAt: json['acceptedAt'] != null
+          ? DateTime.parse(json['acceptedAt'])
           : null,
-      deliveredAt: json['deliveredAt'] != null 
-          ? DateTime.parse(json['deliveredAt']) 
+      deliveredAt: json['deliveredAt'] != null
+          ? DateTime.parse(json['deliveredAt'])
           : null,
       cancellationReason: json['cancellationReason'],
     );

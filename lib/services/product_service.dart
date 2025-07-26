@@ -1044,4 +1044,21 @@ class ProductService {
           }).toList();
         });
   }
+
+  /// Update product stock during order processing (system operation)
+  /// This bypasses ownership checks as it's called during legitimate order processing
+  static Future<void> updateProductStockForOrder({
+    required String productId,
+    required int newStock,
+  }) async {
+    try {
+      await _firestore.collection('products').doc(productId).update({
+        'stock': newStock,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error updating product stock: $e');
+      throw Exception('Failed to update product stock: $e');
+    }
+  }
 }
