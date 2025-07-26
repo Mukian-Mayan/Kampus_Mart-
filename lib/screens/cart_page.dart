@@ -463,7 +463,7 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                 );
               },
               child: Text(
-                'Check out',
+                'Order Now',
                 style: AppTheme.titleStyle.copyWith(
                   color: AppTheme.paleWhite,
                   fontSize: 16,
