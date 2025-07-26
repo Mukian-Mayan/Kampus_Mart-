@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/screens/notification_screen.dart';
-import 'package:kampusmart2/services/notificaations_service.dart'
+import 'package:kampusmart2/services/notifications_service.dart'
     show NotificationService;
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/profile_pic_widget.dart';
@@ -20,16 +20,15 @@ import '../models/seller.dart';
 import '../services/seller_service.dart';
 import '../services/firebase_comment.dart';
 import '../services/firebase_rating.dart';
+import '../services/cart_service.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
-  const ProductDetailsPage({super.key, required this.product});
 
-  // Simple in-memory cart for demo (public static)
-  static final List<Product> cart = [];
+  const ProductDetailsPage({Key? key, required this.product}) : super(key: key);
 
   @override
-  State<ProductDetailsPage> createState() => _ProductDetailsPageState();
+  _ProductDetailsPageState createState() => _ProductDetailsPageState();
 }
 
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
@@ -39,13 +38,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   final TextEditingController _commentController = TextEditingController();
   final CommentService _commentService = CommentService();
   final RatingService _ratingService = RatingService();
+  final CartService _cartService = CartService();
   Seller? seller;
   bool isLoadingSeller = true;
+  bool _isAddingToCart = false;
   final ChatService _chatService = ChatService();
 
   @override
   void initState() {
     super.initState();
+    print('Product Details - Product: ${widget.product.name}');
+    print('Product Details - Stock: ${widget.product.stock}');
+    print('Product Details - Initial quantity: $quantity');
     _loadSellerInfo();
     _loadUserRating();
   }
@@ -167,13 +171,87 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   }
 
   void _updateQuantity(bool increment) {
+    print(
+      '_updateQuantity called: increment=$increment, current quantity=$quantity, stock=${widget.product.stock}',
+    );
     setState(() {
-      if (increment) {
+      if (increment && quantity < (widget.product.stock ?? 0)) {
         quantity++;
+        print('Quantity increased to: $quantity');
+      } else if (!increment && quantity > 1) {
+        quantity--;
+        print('Quantity decreased to: $quantity');
       } else {
-        if (quantity > 1) quantity--;
+        print('Quantity not changed - out of bounds');
       }
     });
+  }
+
+  Future<void> _addToCart() async {
+    if (_isAddingToCart) return;
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to add items to cart'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // Check stock availability first
+    if (quantity > (widget.product.stock ?? 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Cannot add ${widget.product.name}. Only ${widget.product.stock} items available',
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isAddingToCart = true;
+    });
+
+    try {
+      // Add item to cart using the CartService
+      await _cartService.addToCart(
+        productId: widget.product.id,
+        productName: widget.product.name,
+        productImage: widget.product.imageUrl,
+        price: widget.product.price ?? 0.0,
+        quantity: quantity,
+        sellerId: widget.product.ownerId,
+        sellerName: 'Seller', // Product model doesn't have seller name
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added ${widget.product.name} to cart!'),
+          backgroundColor: AppTheme.primaryOrange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error adding to cart: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isAddingToCart = false;
+      });
+    }
   }
 
   void _addComment() async {
@@ -406,21 +484,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                size: 16,
-                color: color,
-              ),
+              Icon(icon, size: 16, color: color),
               const SizedBox(width: 4),
               Text(
                 label,
@@ -620,8 +691,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (widget.product.originalPrice.isNotEmpty && 
-                              widget.product.originalPrice != widget.product.priceAndDiscount)
+                          if (widget.product.originalPrice.isNotEmpty &&
+                              widget.product.originalPrice !=
+                                  widget.product.priceAndDiscount)
                             Text(
                               'Original: ${widget.product.originalPrice}',
                               style: AppTheme.subtitleStyle.copyWith(
@@ -630,7 +702,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 decoration: TextDecoration.lineThrough,
                               ),
                             ),
-                          if (widget.product.price != null && widget.product.price! > 0)
+                          if (widget.product.price != null &&
+                              widget.product.price! > 0)
                             Text(
                               'UGX ${widget.product.price!.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                               style: AppTheme.subtitleStyle.copyWith(
@@ -657,8 +730,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     icon: Icons.verified_outlined,
                                     label: 'Condition',
                                     value: widget.product.condition,
-                                    color: widget.product.condition.toLowerCase() == 'new' 
-                                        ? Colors.green 
+                                    color:
+                                        widget.product.condition
+                                                .toLowerCase() ==
+                                            'new'
+                                        ? Colors.green
                                         : Colors.orange,
                                   ),
                                 ),
@@ -689,11 +765,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   child: _buildInfoItem(
                                     icon: Icons.inventory_outlined,
                                     label: 'Stock',
-                                    value: widget.product.stock != null 
+                                    value: widget.product.stock != null
                                         ? '${widget.product.stock} available'
                                         : 'In stock',
-                                    color: (widget.product.stock ?? 1) > 0 
-                                        ? Colors.green 
+                                    color: (widget.product.stock ?? 1) > 0
+                                        ? Colors.green
                                         : Colors.red,
                                   ),
                                 ),
@@ -729,6 +805,85 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   ],
                                 ),
                               ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      // Quantity Selector
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppTheme.lightGrey),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Quantity:',
+                              style: AppTheme.subtitleStyle.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Spacer(),
+                            Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: AppTheme.lightGrey,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: IconButton(
+                                    onPressed: quantity > 1
+                                        ? () => _updateQuantity(false)
+                                        : null,
+                                    icon: const Icon(Icons.remove),
+                                    iconSize: 18,
+                                    color: quantity > 1
+                                        ? AppTheme.primaryOrange
+                                        : AppTheme.lightGrey,
+                                  ),
+                                ),
+                                Container(
+                                  width: 60,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '$quantity',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: AppTheme.lightGrey,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: IconButton(
+                                    onPressed:
+                                        quantity < (widget.product.stock ?? 0)
+                                        ? () => _updateQuantity(true)
+                                        : null,
+                                    icon: const Icon(Icons.add),
+                                    iconSize: 18,
+                                    color:
+                                        quantity < (widget.product.stock ?? 0)
+                                        ? AppTheme.primaryOrange
+                                        : AppTheme.lightGrey,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -799,41 +954,22 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         children: [
                           Expanded(
                             child: ElevatedButton.icon(
-                              onPressed: () {
-                                if (!ProductDetailsPage.cart.contains(
-                                  widget.product,
-                                )) {
-                                  ProductDetailsPage.cart.add(widget.product);
-                                  NotificationService.sendCartReminder(
-                                    userId:
-                                        FirebaseAuth.instance.currentUser?.uid ??
-                                            "",
-                                    itemCount: ProductDetailsPage.cart.length,
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Added ${widget.product.name} to cart!',
+                              onPressed: _isAddingToCart ? null : _addToCart,
+                              icon: _isAddingToCart
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
                                       ),
-                                      backgroundColor: AppTheme.primaryOrange,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        '${widget.product.name} is already in your cart.',
-                                      ),
-                                      backgroundColor: Colors.red,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              },
-                              icon: const Icon(Icons.shopping_cart_outlined),
+                                    )
+                                  : const Icon(Icons.shopping_cart_outlined),
                               label: Text(
-                                'Add to Cart',
+                                _isAddingToCart ? 'Adding...' : 'Add to Cart',
                                 style: AppTheme.buttonTextStyle,
                               ),
                               style: ElevatedButton.styleFrom(
@@ -900,7 +1036,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                         sellerName: seller?.name ?? 'Seller',
                                         buyerName:
                                             currentUser.displayName ??
-                                                'Unknown User',
+                                            'Unknown User',
                                       );
 
                                   Navigator.pop(context);
@@ -910,7 +1046,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     MaterialPageRoute(
                                       builder: (context) => MessageScreen(
                                         chatRoomId: chatRoomId,
-                                        otherParticipantName: seller?.name ?? 'Seller',
+                                        otherParticipantName:
+                                            seller?.name ?? 'Seller',
                                         otherParticipantId:
                                             widget.product.ownerId,
                                         productName: widget.product.name,
@@ -918,7 +1055,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                             widget.product.imageUrl,
                                         userName:
                                             currentUser.displayName ??
-                                                'Unknown User',
+                                            'Unknown User',
                                       ),
                                     ),
                                   );

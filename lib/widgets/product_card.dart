@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
 import '../theme/app_theme.dart';
-import '../screens/product_details_page.dart';
+import '../services/cart_service.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -13,15 +14,36 @@ class ProductCard extends StatefulWidget {
   State<ProductCard> createState() => _ProductCardState();
 }
 
-class _ProductCardState extends State<ProductCard> with SingleTickerProviderStateMixin {
+class _ProductCardState extends State<ProductCard>
+    with SingleTickerProviderStateMixin {
   bool isFavorite = false;
+  bool isInCart = false;
+  bool _isAddingToCart = false;
   AnimationController? _controller;
   Animation<double>? _scaleAnimation;
+  final CartService _cartService = CartService();
 
   @override
   void initState() {
     super.initState();
     _initializeAnimation();
+    _checkCartStatus();
+  }
+
+  void _checkCartStatus() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      try {
+        final cartItems = await _cartService.getUserCart().first;
+        setState(() {
+          isInCart = cartItems.any(
+            (item) => item.productId == widget.product.id,
+          );
+        });
+      } catch (e) {
+        // Handle error silently for now
+      }
+    }
   }
 
   void _initializeAnimation() {
@@ -29,9 +51,10 @@ class _ProductCardState extends State<ProductCard> with SingleTickerProviderStat
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.8).animate(
-      CurvedAnimation(parent: _controller!, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.8,
+    ).animate(CurvedAnimation(parent: _controller!, curve: Curves.easeInOut));
   }
 
   @override
@@ -41,34 +64,34 @@ class _ProductCardState extends State<ProductCard> with SingleTickerProviderStat
   }
 
   Future<void> _addToCart(BuildContext context) async {
+    if (_isAddingToCart) return;
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please log in to add items to cart'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+            margin: EdgeInsets.all(16),
+          ),
+        );
+      }
+      return;
+    }
+
     // Start the animation
     await _controller?.forward();
     await _controller?.reverse();
 
-    if (!ProductDetailsPage.cart.contains(widget.product)) {
-      setState(() {
-        ProductDetailsPage.cart.add(widget.product);
-      });
+    // Check stock availability
+    if ((widget.product.stock ?? 0) <= 0) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Added ${widget.product.name} to cart!',
-            ),
-            backgroundColor: AppTheme.primaryOrange,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${widget.product.name} is already in your cart.',
-            ),
+            content: Text('${widget.product.name} is out of stock'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 2),
@@ -76,6 +99,61 @@ class _ProductCardState extends State<ProductCard> with SingleTickerProviderStat
           ),
         );
       }
+      return;
+    }
+
+    setState(() {
+      _isAddingToCart = true;
+    });
+
+    try {
+      // Add item to cart using CartService
+      await _cartService.addToCart(
+        productId: widget.product.id,
+        productName: widget.product.name,
+        productImage: widget.product.imageUrl,
+        price: widget.product.price ?? 0.0,
+        quantity: 1,
+        sellerId: widget.product.ownerId,
+        sellerName: 'Seller',
+      );
+
+      setState(() {
+        isInCart = true;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added ${widget.product.name} to cart!'),
+            backgroundColor: AppTheme.primaryOrange,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = 'Failed to add to cart';
+        if (e.toString().contains('already exists')) {
+          errorMessage = '${widget.product.name} is already in your cart';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isAddingToCart = false;
+      });
     }
   }
 
@@ -139,8 +217,6 @@ class _ProductCardState extends State<ProductCard> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final bool isInCart = ProductDetailsPage.cart.contains(widget.product);
-
     return GestureDetector(
       onTap: widget.onTap,
       child: Card(
@@ -239,17 +315,35 @@ class _ProductCardState extends State<ProductCard> with SingleTickerProviderStat
                               ),
                             ),
                             child: IconButton(
-                              icon: Icon(
-                                isInCart ? Icons.shopping_cart : Icons.shopping_cart_outlined,
-                                color: isInCart ? AppTheme.primaryOrange : Colors.grey,
-                                size: 20,
-                              ),
+                              icon: _isAddingToCart
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppTheme.primaryOrange,
+                                            ),
+                                      ),
+                                    )
+                                  : Icon(
+                                      isInCart
+                                          ? Icons.shopping_cart
+                                          : Icons.shopping_cart_outlined,
+                                      color: isInCart
+                                          ? AppTheme.primaryOrange
+                                          : Colors.grey,
+                                      size: 20,
+                                    ),
                               constraints: const BoxConstraints(
                                 minWidth: 24,
                                 minHeight: 24,
                               ),
                               padding: EdgeInsets.zero,
-                              onPressed: () => _addToCart(context),
+                              onPressed: _isAddingToCart
+                                  ? null
+                                  : () => _addToCart(context),
                             ),
                           ),
                         ),

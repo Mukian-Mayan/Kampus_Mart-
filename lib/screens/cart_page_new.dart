@@ -7,7 +7,6 @@ import 'package:kampusmart2/models/user_role.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/screens/notification_screen.dart'
     as notification_screen;
-import 'package:kampusmart2/screens/payment_transactions.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/product.dart';
@@ -189,25 +188,6 @@ class _CartPageState extends State<CartPage> {
       return;
     }
 
-    // Validate stock availability before placing order
-    for (var cartItem in cartItems) {
-      final product = productsMap[cartItem.productId];
-      if (product != null && product.stock != null) {
-        if (cartItem.quantity > product.stock!) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${cartItem.productName} has only ${product.stock} items in stock. Please update your cart.',
-              ),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-          return;
-        }
-      }
-    }
-
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -219,301 +199,178 @@ class _CartPageState extends State<CartPage> {
       return;
     }
 
-    // Navigate directly to payment screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentTransactions(
-          totalAmount: totalAmount,
-          cartItems: cartItems,
-          productsMap: productsMap,
-        ),
-      ),
-    );
-  }
-
-  Future<Order> _createSingleOrder(
-    User currentUser,
-    String paymentMethod,
-  ) async {
-    // Group cart items by seller and take the first seller for now
-    // (You might want to handle multiple sellers differently)
-    Map<String, List<CartModel>> itemsBySeller = {};
-    for (var cartItem in cartItems) {
-      final product = productsMap[cartItem.productId];
-      if (product != null) {
-        final sellerId = product.ownerId;
-        if (!itemsBySeller.containsKey(sellerId)) {
-          itemsBySeller[sellerId] = [];
-        }
-        itemsBySeller[sellerId]!.add(cartItem);
-      }
-    }
-
-    // For now, create order with the first seller's items
-    // TODO: Handle multiple sellers properly
-    final firstSeller = itemsBySeller.entries.first;
-    final sellerId = firstSeller.key;
-    final sellerItems = firstSeller.value;
-
-    // Convert cart items to order items
-    List<OrderItem> orderItems = sellerItems.map((cartItem) {
-      return OrderItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        productId: cartItem.productId,
-        productName: cartItem.productName,
-        productImage: cartItem.productImage ?? '',
-        price: cartItem.price,
-        quantity: cartItem.quantity,
-        subtotal: cartItem.price * cartItem.quantity,
-      );
-    }).toList();
-
-    double subtotal = orderItems.fold(0.0, (sum, item) => sum + item.subtotal);
-    double deliveryFee = 5000.0; // Fixed delivery fee
-
-    // Create delivery address (placeholder - you might want to get this from user)
-    DeliveryAddress deliveryAddress = DeliveryAddress(
-      street: 'Default Street',
-      city: 'Kampala',
-      state: 'Central',
-      postalCode: '00000',
-      country: 'Uganda',
-    );
-
-    final order = await OrderService.createOrder(
-      buyerId: currentUser.uid,
-      name: currentUser.displayName ?? 'Customer',
-      email: currentUser.email ?? '',
-      phone: currentUser.phoneNumber ?? '',
-      sellerId: sellerId,
-      items: orderItems,
-      subtotal: subtotal,
-      deliveryFee: deliveryFee,
-      deliveryAddress: deliveryAddress,
-      paymentMethod: paymentMethod,
-      notes: 'Order placed from app',
-    );
-
-    return order;
-  }
-
-  Future<void> _completeOrderProcess() async {
-    // Update product stock and send notifications
-    for (var cartItem in cartItems) {
-      final product = productsMap[cartItem.productId];
-      if (product != null && product.stock != null) {
-        final newStock = (product.stock! - cartItem.quantity)
-            .clamp(0, double.infinity)
-            .toInt();
-        try {
-          await ProductService.updateProductStockForOrder(
-            productId: cartItem.productId,
-            newStock: newStock,
-          );
-
-          // Send low stock alert if needed
-          if (newStock <= 5 && newStock > 0) {
-            await NotificationService.sendLowStockAlert(
-              sellerId: product.ownerId,
-              productName: cartItem.productName,
-              remainingStock: newStock,
-            );
-          }
-        } catch (e) {
-          print('Error updating product stock: $e');
-        }
-      }
-    }
-
-    // Clear the cart
-    await _cartService.clearCart();
-
-    Navigator.of(context).pop(); // Close loading dialog
-
-    // Show success dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 60),
-            const SizedBox(height: 16),
-            const Text(
-              'Order Placed Successfully!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Your order has been placed successfully. You will receive notifications about the status.',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop(); // Go back to previous screen
-            },
-            child: const Text(
-              'OK',
-              style: TextStyle(
-                color: AppTheme.primaryOrange,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Placing your order...'),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      );
 
-    // Clear local cart state
-    setState(() {
-      cartItems.clear();
-      totalAmount = 0.0;
-    });
-  }
+      // Group cart items by seller
+      Map<String, List<CartModel>> itemsBySeller = {};
+      for (var cartItem in cartItems) {
+        final product = productsMap[cartItem.productId];
+        if (product != null) {
+          final sellerId = product.ownerId;
+          if (!itemsBySeller.containsKey(sellerId)) {
+            itemsBySeller[sellerId] = [];
+          }
+          itemsBySeller[sellerId]!.add(cartItem);
+        }
+      }
 
-  void _onOrderPaymentSuccess() {
-    // Clear the cart and show success
-    _cartService.clearCart();
+      // Create separate orders for each seller
+      List<String> orderIds = [];
+      for (var entry in itemsBySeller.entries) {
+        final sellerId = entry.key;
+        final sellerItems = entry.value;
 
-    // Clear local cart state
-    setState(() {
-      cartItems.clear();
-      totalAmount = 0.0;
-    });
+        // Convert cart items to order items
+        List<OrderItem> orderItems = sellerItems.map((cartItem) {
+          return OrderItem(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            productId: cartItem.productId,
+            productName: cartItem.productName,
+            productImage: cartItem.productImage ?? '',
+            price: cartItem.price,
+            quantity: cartItem.quantity,
+            subtotal: cartItem.price * cartItem.quantity,
+          );
+        }).toList();
 
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Order placed and payment processed successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
+        double subtotal = orderItems.fold(
+          0.0,
+          (sum, item) => sum + item.subtotal,
+        );
+        double deliveryFee = 5000.0; // Fixed delivery fee
 
-  Future<String?> _showPaymentMethodDialog() async {
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
+        // Create delivery address (placeholder - you might want to get this from user)
+        DeliveryAddress deliveryAddress = DeliveryAddress(
+          street: 'Default Street',
+          city: 'Kampala',
+          state: 'Central',
+          postalCode: '00000',
+          country: 'Uganda',
+        );
+
+        final order = await OrderService.createOrder(
+          buyerId: currentUser.uid,
+          name: currentUser.displayName ?? 'Customer',
+          email: currentUser.email ?? '',
+          phone: currentUser.phoneNumber ?? '',
+          sellerId: sellerId,
+          items: orderItems,
+          subtotal: subtotal,
+          deliveryFee: deliveryFee,
+          deliveryAddress: deliveryAddress,
+          paymentMethod: 'Cash on Delivery',
+          notes: 'Order placed from app',
+        );
+
+        orderIds.add(order.id);
+
+        // Send notification to seller
+        await NotificationService.sendNewOrderToSeller(
+          sellerId: sellerId,
+          orderId: order.id,
+          amount: order.totalAmount,
+        );
+
+        // Update product stock
+        for (var cartItem in sellerItems) {
+          final product = productsMap[cartItem.productId];
+          if (product != null && product.stock != null) {
+            final newStock = product.stock! - cartItem.quantity;
+            await ProductService.updateProduct(
+              productId: cartItem.productId,
+              stock: newStock,
+            );
+
+            // Send low stock alert if needed
+            if (newStock <= 5 && newStock > 0) {
+              await NotificationService.sendLowStockAlert(
+                sellerId: sellerId,
+                productName: cartItem.productName,
+                remainingStock: newStock,
+              );
+            }
+          }
+        }
+      }
+
+      // Clear the cart
+      await _cartService.clearCart();
+
+      // Send order confirmation to buyer
+      for (var orderId in orderIds) {
+        await NotificationService.sendOrderConfirmation(
+          userId: currentUser.uid,
+          orderId: orderId,
+          amount: totalAmount / orderIds.length, // Split total across orders
+        );
+      }
+
+      Navigator.of(context).pop(); // Close loading dialog
+
+      // Show success dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.payment, color: AppTheme.primaryOrange),
-              SizedBox(width: 8),
-              Text(
-                'Select Payment Method',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Icon(Icons.check_circle, color: Colors.green, size: 60),
+              const SizedBox(height: 16),
               const Text(
-                'Choose how you would like to pay for your order:',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                'Order Placed Successfully!',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 20),
-              _buildPaymentOption(
-                'Cash on Delivery',
-                Icons.money,
-                'Pay when your order is delivered',
-                () => Navigator.of(context).pop('Cash on Delivery'),
-              ),
-              const SizedBox(height: 12),
-              _buildPaymentOption(
-                'Mobile Money',
-                Icons.phone_android,
-                'Pay via MTN Mobile Money or Airtel Money',
-                () => Navigator.of(context).pop('Mobile Money'),
-              ),
-              const SizedBox(height: 12),
-              _buildPaymentOption(
-                'Bank Transfer',
-                Icons.account_balance,
-                'Transfer money directly to seller account',
-                () => Navigator.of(context).pop('Bank Transfer'),
-              ),
-              const SizedBox(height: 12),
-              _buildPaymentOption(
-                'Card Payment',
-                Icons.credit_card,
-                'Pay with your debit or credit card',
-                () => Navigator.of(context).pop('Card Payment'),
+              const SizedBox(height: 8),
+              Text(
+                'Your ${orderIds.length > 1 ? 'orders have' : 'order has'} been placed successfully. You will receive notifications about the status.',
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildPaymentOption(
-    String title,
-    IconData icon,
-    String description,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryOrange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: AppTheme.primaryOrange),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Go back to previous screen
+              },
+              child: const Text(
+                'OK',
+                style: TextStyle(
+                  color: AppTheme.primaryOrange,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
           ],
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      Navigator.of(context).pop(); // Close loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error placing order: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override

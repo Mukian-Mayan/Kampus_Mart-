@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/screens/payment_processing.dart';
 import 'package:kampusmart2/momo_service.dart'; // Add this import
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:kampusmart2/models/cart_model.dart';
+import 'package:kampusmart2/models/product.dart';
+import 'package:kampusmart2/models/order.dart';
+import 'package:kampusmart2/services/order_service.dart';
+import 'package:kampusmart2/services/cart_service.dart';
+import 'package:kampusmart2/services/product_service.dart';
+import 'package:kampusmart2/services/notifications_service.dart';
 
 class PaymentTransactions extends StatefulWidget {
-  const PaymentTransactions({super.key});
+  final double? totalAmount;
+  final List<CartModel>? cartItems;
+  final Map<String, Product>? productsMap;
+
+  const PaymentTransactions({
+    super.key,
+    this.totalAmount,
+    this.cartItems,
+    this.productsMap,
+  });
 
   @override
   _PaymentScreenState createState() => _PaymentScreenState();
@@ -13,6 +30,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
   String selectedPaymentMethod = 'Payment on delivery';
   String selectedMobileMoneyProvider = '';
   final TextEditingController phoneController = TextEditingController();
+  final CartService _cartService = CartService();
 
   @override
   void initState() {
@@ -61,9 +79,9 @@ class _PaymentScreenState extends State<PaymentTransactions> {
                 color: Colors.white.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
-                'Total amount due: Shs 52,000',
-                style: TextStyle(
+              child: Text(
+                'Total amount due: UGX ${widget.totalAmount?.toStringAsFixed(0) ?? '0'}',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: Colors.black87,
@@ -368,13 +386,8 @@ class _PaymentScreenState extends State<PaymentTransactions> {
     if (selectedPaymentMethod == 'Mobile Money') {
       _processMobileMoneyPayment();
     } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              PaymentProcessingScreen(cartItems: [], totalAmount: 0.0),
-        ),
-      );
+      // For cash on delivery, create order directly
+      _createOrderAndNavigate();
     }
   }
 
@@ -412,11 +425,14 @@ class _PaymentScreenState extends State<PaymentTransactions> {
 
       // Make actual MTN MoMo API call
       final result = await MtnMomoService.requestToPay(
-        amount: '52000', // Convert to string as required by API
+        amount: (widget.totalAmount ?? 0).toStringAsFixed(
+          0,
+        ), // Convert to string as required by API
         currency: 'UGX', // Changed from EUR to UGX for Uganda
         phoneNumber: formattedPhone,
         payerMessage: 'Payment for Kampus Mart order',
-        payeeNote: 'Order payment - Shs 52,000',
+        payeeNote:
+            'Order payment - UGX ${(widget.totalAmount ?? 0).toStringAsFixed(0)}',
       );
 
       Navigator.pop(context); // Close loading dialog
@@ -463,7 +479,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
           'Please:\n'
           '1. Check your phone for the payment prompt\n'
           '2. Enter your MTN Mobile Money PIN\n'
-          '3. Confirm the payment of Shs 52,000\n\n'
+          '3. Confirm the payment of UGX ${(widget.totalAmount ?? 0).toStringAsFixed(0)}\n\n'
           'The payment will be verified automatically.',
         ),
         actions: [
@@ -483,7 +499,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
                 MaterialPageRoute(
                   builder: (context) => PaymentProcessingScreen(
                     cartItems: [],
-                    totalAmount: 52000.0,
+                    totalAmount: widget.totalAmount ?? 0.0,
                   ),
                 ),
               );
@@ -583,15 +599,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
             onPressed: () {
               Navigator.pop(context);
               if (isSuccess) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PaymentProcessingScreen(
-                      cartItems: [],
-                      totalAmount: 52000.0,
-                    ),
-                  ),
-                );
+                _createOrderAndNavigate();
               }
             },
             child: Text(isSuccess ? 'Continue' : 'OK'),
@@ -632,7 +640,7 @@ class _PaymentScreenState extends State<PaymentTransactions> {
         'Please:\n'
         '1. Check your phone for the payment prompt\n'
         '2. Enter your Airtel Money PIN\n'
-        '3. Confirm the payment of Shs 52,000\n\n'
+        '3. Confirm the payment of UGX ${(widget.totalAmount ?? 0).toStringAsFixed(0)}\n\n'
         'Or dial *185*9# and follow the prompts to complete payment.';
 
     showDialog(
@@ -644,20 +652,161 @@ class _PaymentScreenState extends State<PaymentTransactions> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PaymentProcessingScreen(
-                    cartItems: [],
-                    totalAmount: 52000.0,
-                  ),
-                ),
-              );
+              _createOrderAndNavigate();
             },
             child: const Text('Continue'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _createOrderAndNavigate() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      _showPaymentError('Please log in to place an order');
+      return;
+    }
+
+    if (widget.cartItems == null || widget.cartItems!.isEmpty) {
+      _showPaymentError('No items in cart');
+      return;
+    }
+
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Creating your order...'),
+            ],
+          ),
+        ),
+      );
+
+      // Create the order
+      await _createSingleOrder(currentUser, selectedPaymentMethod);
+
+      // Complete the order process (update stock, clear cart, etc.)
+      await _completeOrderProcess();
+
+      Navigator.pop(context); // Close loading dialog
+
+      // Navigate to payment processing screen with success
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentProcessingScreen(
+            cartItems: [],
+            totalAmount: widget.totalAmount ?? 0.0,
+          ),
+        ),
+      );
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog
+      _showPaymentError('Failed to create order: $e');
+    }
+  }
+
+  Future<Order> _createSingleOrder(
+    User currentUser,
+    String paymentMethod,
+  ) async {
+    // Group cart items by seller and take the first seller for now
+    Map<String, List<CartModel>> itemsBySeller = {};
+    for (var cartItem in widget.cartItems!) {
+      final product = widget.productsMap?[cartItem.productId];
+      if (product != null) {
+        final sellerId = product.ownerId;
+        if (!itemsBySeller.containsKey(sellerId)) {
+          itemsBySeller[sellerId] = [];
+        }
+        itemsBySeller[sellerId]!.add(cartItem);
+      }
+    }
+
+    // For now, create order with the first seller's items
+    final firstSeller = itemsBySeller.entries.first;
+    final sellerId = firstSeller.key;
+    final sellerItems = firstSeller.value;
+
+    // Convert cart items to order items
+    List<OrderItem> orderItems = sellerItems.map((cartItem) {
+      return OrderItem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        productId: cartItem.productId,
+        productName: cartItem.productName,
+        productImage: cartItem.productImage ?? '',
+        price: cartItem.price,
+        quantity: cartItem.quantity,
+        subtotal: cartItem.price * cartItem.quantity,
+      );
+    }).toList();
+
+    double subtotal = orderItems.fold(0.0, (sum, item) => sum + item.subtotal);
+    double deliveryFee = 5000.0; // Fixed delivery fee
+
+    // Create delivery address (placeholder)
+    DeliveryAddress deliveryAddress = DeliveryAddress(
+      street: 'Default Street',
+      city: 'Kampala',
+      state: 'Central',
+      postalCode: '00000',
+      country: 'Uganda',
+    );
+
+    final order = await OrderService.createOrder(
+      buyerId: currentUser.uid,
+      name: currentUser.displayName ?? 'Customer',
+      email: currentUser.email ?? '',
+      phone: currentUser.phoneNumber ?? '',
+      sellerId: sellerId,
+      items: orderItems,
+      subtotal: subtotal,
+      deliveryFee: deliveryFee,
+      deliveryAddress: deliveryAddress,
+      paymentMethod: paymentMethod,
+      notes: 'Order placed from app',
+    );
+
+    return order;
+  }
+
+  Future<void> _completeOrderProcess() async {
+    // Update product stock and send notifications
+    for (var cartItem in widget.cartItems!) {
+      final product = widget.productsMap?[cartItem.productId];
+      if (product != null && product.stock != null) {
+        final newStock = (product.stock! - cartItem.quantity)
+            .clamp(0, double.infinity)
+            .toInt();
+        try {
+          await ProductService.updateProductStockForOrder(
+            productId: cartItem.productId,
+            newStock: newStock,
+          );
+
+          // Send low stock alert if needed
+          if (newStock <= 5 && newStock > 0) {
+            await NotificationService.sendLowStockAlert(
+              sellerId: product.ownerId,
+              productName: cartItem.productName,
+              remainingStock: newStock,
+            );
+          }
+        } catch (e) {
+          print('Error updating product stock: $e');
+        }
+      }
+    }
+
+    // Clear the cart
+    await _cartService.clearCart();
   }
 }
