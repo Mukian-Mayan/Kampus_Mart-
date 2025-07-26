@@ -463,7 +463,7 @@ bottomNavigationBar: widget.userRole == UserRole.seller
                 );
               },
               child: Text(
-                'Proceed to Payment',
+                'Check out',
                 style: AppTheme.titleStyle.copyWith(
                   color: AppTheme.paleWhite,
                   fontSize: 16,
