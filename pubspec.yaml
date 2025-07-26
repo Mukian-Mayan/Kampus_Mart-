@@ -93,7 +93,11 @@ flutter:
   assets:
     - lib/images/
     - lib/products/
+    - assets/dp_1.jpeg
+    - assets/dp_2.jpeg
+    - assets/dp_3.jpeg
     - assets/dp_4.jpeg
+    - assets/dp_5.jpeg
     
    
    
