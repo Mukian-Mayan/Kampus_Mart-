@@ -10,6 +10,7 @@ import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
 import 'package:kampusmart2/models/user_role.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegisterPage extends StatefulWidget {
   final UserRole userRole; // Add this parameter
@@ -22,7 +23,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   // All controllers declared at the top
-  final TextEditingController pwController = TextEditingController();
+  final  pwController = TextEditingController();
   final TextEditingController confirmPwController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController firstNameController = TextEditingController();
@@ -71,6 +72,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
       // Store user data in Firestore and WAIT for completion
       await _storeUserData(userCredential.user!);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString(
+        'user_role', widget.userRole == UserRole.seller ? 'seller' : 'buyer');
+
 
       // IMPORTANT: Add a small delay to ensure Firestore consistency
       await Future.delayed(const Duration(milliseconds: 500));
