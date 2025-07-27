@@ -53,9 +53,19 @@ dependencies:
   provider: ^6.1.5
   cloud_functions: ^5.6.2
   supabase_flutter: ^2.9.1
-  #url_launcher: ^6.2.5
-  
-  
+  flutter_native_splash: ^2.2.10
+
+
+flutter_native_splash:
+  color: "#EEAE2A"                       
+  image: assets/native_splash_screen.png 
+  fullscreen: true                       
+  android_gravity: center               
+  ios_content_mode: center               
+
+
+
+
 
 
 
@@ -105,6 +115,7 @@ flutter:
     - assets/developers/martin.jpg
     - assets/instagram.png
     - assets/gitHub.png
+    - assets/kmart_logo.png
     
    
    
