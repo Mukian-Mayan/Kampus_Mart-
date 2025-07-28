@@ -31,37 +31,35 @@ class DetailContainer extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          constraints: BoxConstraints(
-            minHeight: containerHeight,
-            minWidth: containerWidth,
-          ),
-          //height: containerHeight,
-          //width: containerWidth,
+          height: 40,
+          width: MediaQuery.of(context).size.width*0.8,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: AppTheme.borderGrey.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(8),
+            color: AppTheme.deepBlue.withOpacity(0.6),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              //mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                //const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    text,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: fontColor, fontSize: fontSize, fontWeight: FontWeight.w900, fontFamily: 'League Spartan'),
+          child: Row(
+            //mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              //const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  text,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: fontColor,
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'DreamOrphans-Bold',
                   ),
                 ),
-                if (iconData != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(right: 10.0),
-                    child: Icon(iconData, color: fontColor, size: fontSize + 2),
-                  ),
-                ],
+              ),
+              if (iconData != null) ...[
+                Padding(
+                  padding: const EdgeInsets.only(right: 10.0),
+                  child: Icon(iconData, color: fontColor, size: fontSize + 2),
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
