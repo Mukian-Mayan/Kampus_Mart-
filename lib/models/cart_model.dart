@@ -31,7 +31,7 @@ class CartModel {
       productId: data['productId'] ?? '',
       productName: data['productName'] ?? '',
       productImage: data['productImage'],
-      price: (data['price'] ?? 0.0).toDouble(),
+      price: (data['price'] as num?)?.toDouble() ?? 0.0,
       quantity: data['quantity'] ?? 0,
       createdAt: data['createdAt']?.toDate(),
       updatedAt: data['updatedAt']?.toDate(),

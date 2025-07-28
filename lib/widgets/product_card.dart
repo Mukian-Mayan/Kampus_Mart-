@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
 import '../theme/app_theme.dart';
 import '../services/cart_service.dart';
+import '../ml/services/enhanced_product_service.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -122,6 +123,22 @@ class _ProductCardState extends State<ProductCard>
         isInCart = true;
       });
 
+      // Track add to cart interaction with ML API
+      try {
+        await EnhancedProductService.recordUserInteraction(
+          productId: widget.product.id,
+          interactionType: 'add_to_cart',
+          metadata: {
+            'product_name': widget.product.name,
+            'category': widget.product.category ?? 'general',
+            'price': widget.product.price?.toString() ?? '0',
+            'quantity': '1',
+          },
+        );
+      } catch (e) {
+        print('Error recording add to cart interaction: $e');
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -218,7 +235,28 @@ class _ProductCardState extends State<ProductCard>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: () async {
+        // Track product view interaction with ML API
+        try {
+          await EnhancedProductService.recordUserInteraction(
+            productId: widget.product.id,
+            interactionType: 'view',
+            metadata: {
+              'product_name': widget.product.name,
+              'category': widget.product.category ?? 'general',
+              'price': widget.product.price?.toString() ?? '0',
+              'source': 'product_card',
+            },
+          );
+        } catch (e) {
+          print('Error recording product view interaction: $e');
+        }
+        
+        // Call the original onTap callback
+        if (widget.onTap != null) {
+          widget.onTap!();
+        }
+      },
       child: Card(
         color: AppTheme.paleWhite,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -256,10 +294,25 @@ class _ProductCardState extends State<ProductCard>
                         minHeight: 24,
                       ),
                       padding: EdgeInsets.zero,
-                      onPressed: () {
+                      onPressed: () async {
                         setState(() {
                           isFavorite = !isFavorite;
                         });
+                        
+                        // Track favorite interaction with ML API
+                        try {
+                          await EnhancedProductService.recordUserInteraction(
+                            productId: widget.product.id,
+                            interactionType: isFavorite ? 'like' : 'unlike',
+                            metadata: {
+                              'product_name': widget.product.name,
+                              'category': widget.product.category ?? 'general',
+                              'price': widget.product.price?.toString() ?? '0',
+                            },
+                          );
+                        } catch (e) {
+                          print('Error recording favorite interaction: $e');
+                        }
                       },
                     ),
                   ),
@@ -293,7 +346,7 @@ class _ProductCardState extends State<ProductCard>
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              widget.product.formattedDiscountedPrice,
+                              widget.product.finalPrice,
                               style: const TextStyle(
                                 color: Colors.green,
                                 fontSize: 14,

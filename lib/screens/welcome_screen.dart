@@ -42,7 +42,7 @@ class WelcomeScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // Custom App Bar
+                // Skip button at the top
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
@@ -71,10 +71,30 @@ class WelcomeScreen extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Image.asset(
-                      'lib/images/image4.png',
-                      fit: BoxFit.contain,
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Row(
+                      children: [
+                        // Welcome text on the left
+                        const Expanded(
+                          flex: 1,
+                          child: Text(
+                            'Welcome',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                        // Image on the right
+                        Expanded(
+                          flex: 2,
+                          child: Image.asset(
+                            'lib/images/image4.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -142,7 +162,7 @@ class WelcomeScreen extends StatelessWidget {
 
                           // Description text
                           const Text(
-                            'Buy & sell everything from your campus life — from textbooks to toasters!',
+                            'Buy & sell everything from your campus life_from textbooks to toasters!',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey,

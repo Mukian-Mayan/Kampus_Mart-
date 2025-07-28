@@ -100,9 +100,9 @@ class Order {
       items: (json['items'] as List<dynamic>)
           .map((item) => OrderItem.fromJson(item))
           .toList(),
-      subtotal: (json['subtotal'] ?? 0.0).toDouble(),
-      deliveryFee: (json['deliveryFee'] ?? 0.0).toDouble(),
-      totalAmount: (json['totalAmount'] ?? 0.0).toDouble(),
+      subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
+      deliveryFee: (json['deliveryFee'] as num?)?.toDouble() ?? 0.0,
+      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
       status: OrderStatus.values.firstWhere(
         (e) => e.name == json['status'],
         orElse: () => OrderStatus.pending,
@@ -217,9 +217,9 @@ class OrderItem {
       productId: json['productId'],
       productName: json['productName'],
       productImage: json['productImage'],
-      price: (json['price'] ?? 0.0).toDouble(),
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
       quantity: json['quantity'] ?? 0,
-      subtotal: (json['subtotal'] ?? 0.0).toDouble(),
+      subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
       notes: json['notes'],
     );
   }
@@ -266,8 +266,8 @@ class DeliveryAddress {
       state: json['state'],
       postalCode: json['postalCode'],
       country: json['country'],
-      latitude: json['latitude']?.toDouble(),
-      longitude: json['longitude']?.toDouble(),
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       landmark: json['landmark'],
     );
   }

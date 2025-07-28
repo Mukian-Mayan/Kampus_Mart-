@@ -16,6 +16,62 @@ class CarouselTileCard extends StatelessWidget {
     this.onImageTap,
   }) : super(key: key);
 
+  // Helper function to determine if image is a network URL or local asset
+  Widget _buildImage(String imagePath, BoxFit fit) {
+    // Check if the image path is a network URL (starts with http or https)
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return Image.network(
+        imagePath,
+        fit: fit,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: Colors.grey[300],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.grey),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[300],
+            child: const Center(
+              child: Icon(
+                Icons.error_outline,
+                color: Colors.grey,
+                size: 40,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      // Local asset
+      return Image.asset(
+        imagePath,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[300],
+            child: const Center(
+              child: Icon(
+                Icons.error_outline,
+                color: Colors.grey,
+                size: 40,
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -48,7 +104,7 @@ class CarouselTileCard extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(leftImage, fit: BoxFit.cover),
+                    child: _buildImage(leftImage, BoxFit.cover),
                   ),
                 ),
               ),
@@ -67,7 +123,7 @@ class CarouselTileCard extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: Image.asset(centerImage, fit: BoxFit.cover),
+                    child: _buildImage(centerImage, BoxFit.cover),
                   ),
                 ),
               ),
@@ -86,7 +142,7 @@ class CarouselTileCard extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(rightImage, fit: BoxFit.cover),
+                    child: _buildImage(rightImage, BoxFit.cover),
                   ),
                 ),
               ),

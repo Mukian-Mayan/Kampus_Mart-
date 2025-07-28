@@ -65,6 +65,10 @@ class _FancyAppBarState extends State<FancyAppBar>
             // Foreground content
             Container(
               height: widget.height,
+              constraints: BoxConstraints(
+                maxHeight: widget.height,
+                minHeight: 0,
+              ),
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(20),
@@ -73,6 +77,7 @@ class _FancyAppBarState extends State<FancyAppBar>
                 // No color here, handled by glassy background
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min, // Prevent overflow
                 children: [
                   widget.customContent ??
                       SafeArea(
@@ -128,6 +133,7 @@ class _FancyAppBarState extends State<FancyAppBar>
                             child: SizedBox(
                               height: 44,
                               child: Row(
+                                mainAxisSize: MainAxisSize.min, // Prevent overflow
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: List.generate(widget.tabs.length, (
                                   index,
