@@ -11,6 +11,7 @@ import '../services/chats_service.dart';
 import '../models/chat_models.dart';
 import '../screens/chats_screen.dart';
 import '../utils/chat_utils.dart';
+import '../ml/services/enhanced_product_service.dart';
 
 class MessageScreen extends StatefulWidget {
   final String chatRoomId;
@@ -141,6 +142,23 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
         message: message,
         receiverId: widget.otherParticipantId,
       );
+
+      // Track chat interaction with ML API
+      try {
+        await EnhancedProductService.recordUserInteraction(
+          productId: 'chat_${widget.chatRoomId}',
+          interactionType: 'chat_message',
+          metadata: {
+            'product_name': widget.productName,
+            'seller_id': widget.otherParticipantId,
+            'seller_name': widget.otherParticipantName,
+            'message_length': message.length.toString(),
+            'chat_room_id': widget.chatRoomId,
+          },
+        );
+      } catch (e) {
+        print('Error recording chat interaction: $e');
+      }
 
       // Scroll to bottom after sending message
       Future.delayed(const Duration(milliseconds: 100), () {

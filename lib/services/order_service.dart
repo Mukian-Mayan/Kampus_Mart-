@@ -234,7 +234,7 @@ class OrderService {
       for (var doc in allOrders.docs) {
         final data = doc.data() as Map<String, dynamic>;
         final status = data['status'] as String;
-        final totalAmount = (data['totalAmount'] as num).toDouble();
+        final totalAmount = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
 
         switch (status) {
           case 'pending':

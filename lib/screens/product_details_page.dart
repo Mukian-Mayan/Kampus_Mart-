@@ -20,6 +20,7 @@ import '../models/seller.dart';
 import '../services/seller_service.dart';
 import '../services/firebase_comment.dart';
 import '../services/firebase_rating.dart';
+import '../ml/services/enhanced_product_service.dart';
 import '../services/cart_service.dart';
 
 class ProductDetailsPage extends StatefulWidget {
@@ -52,6 +53,25 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     print('Product Details - Initial quantity: $quantity');
     _loadSellerInfo();
     _loadUserRating();
+    _trackProductView();
+  }
+
+  void _trackProductView() async {
+    // Track product view interaction with ML API
+    try {
+      await EnhancedProductService.recordUserInteraction(
+        productId: widget.product.id,
+        interactionType: 'view_details',
+        metadata: {
+          'product_name': widget.product.name,
+          'category': widget.product.category ?? 'general',
+          'price': widget.product.price?.toString() ?? '0',
+          'source': 'product_details_page',
+        },
+      );
+    } catch (e) {
+      print('Error recording product view details interaction: $e');
+    }
   }
 
   Future<void> _loadSellerInfo() async {
@@ -88,6 +108,23 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       rating = newRating;
     });
     await _ratingService.setRating(widget.product.id, newRating);
+    
+    // Track rating interaction with ML API
+    try {
+      await EnhancedProductService.recordUserInteraction(
+        productId: widget.product.id,
+        interactionType: 'rating',
+        metadata: {
+          'product_name': widget.product.name,
+          'category': widget.product.category ?? 'general',
+          'rating_value': newRating.toString(),
+          'previous_rating': userRating?.toString() ?? '0',
+        },
+      );
+    } catch (e) {
+      print('Error recording rating interaction: $e');
+    }
+    
     _loadUserRating();
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class SearchBar extends StatefulWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
   final TextEditingController? controller;
   final VoidCallback? onClose;
   final bool isVisible;
@@ -11,6 +12,7 @@ class SearchBar extends StatefulWidget {
     Key? key,
     this.hintText = 'Search...',
     this.onChanged,
+    this.onSubmitted,
     this.controller,
     this.onClose,
     this.isVisible = false,
@@ -69,6 +71,7 @@ class _SearchBarState extends State<SearchBar> with SingleTickerProviderStateMix
         child: TextField(
           controller: widget.controller,
           onChanged: widget.onChanged,
+          onSubmitted: widget.onSubmitted,
           style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
             hintText: widget.hintText,

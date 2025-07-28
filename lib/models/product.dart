@@ -108,6 +108,29 @@ class Product {
     return '';
   }
 
+  // Get final price (discounted price if available, otherwise original price)
+  String get finalPrice {
+    // If we have numeric price and discount, calculate the final price
+    if (price != null && discountPercentage != null && discountPercentage! > 0) {
+      final discountAmount = price! * (discountPercentage! / 100);
+      final discountedPrice = price! - discountAmount;
+      return 'UGX ${discountedPrice.toStringAsFixed(0)}';
+    }
+    
+    // If we have a numeric price but no discount, use the original price
+    if (price != null && price! > 0) {
+      return 'UGX ${price!.toStringAsFixed(0)}';
+    }
+    
+    // If we have string-based discounted price, use it
+    if (priceAndDiscount.isNotEmpty) {
+      return priceAndDiscount;
+    }
+    
+    // Fallback to original price
+    return originalPrice.isNotEmpty ? originalPrice : 'UGX 0';
+  }
+
   // Factory constructor to create Product from Firestore document
   factory Product.fromFirestore(Map<String, dynamic> data, String documentId) {
     // Try to extract numeric values from string prices

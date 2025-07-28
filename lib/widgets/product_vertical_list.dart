@@ -6,6 +6,72 @@ class ProductVerticalList extends StatelessWidget {
 
   const ProductVerticalList({Key? key, required this.products}) : super(key: key);
 
+  // Helper function to determine if image is a network URL or local asset
+  Widget _buildImage(String imagePath, double width, double height, BoxFit fit) {
+    // Check if the image path is a network URL (starts with http or https)
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return Image.network(
+        imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: width,
+            height: height,
+            color: Colors.grey[300],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.grey),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: width,
+            height: height,
+            color: Colors.grey[300],
+            child: const Center(
+              child: Icon(
+                Icons.error_outline,
+                color: Colors.grey,
+                size: 20,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      // Local asset
+      return Image.asset(
+        imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: width,
+            height: height,
+            color: Colors.grey[300],
+            child: const Center(
+              child: Icon(
+                Icons.error_outline,
+                color: Colors.grey,
+                size: 20,
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
@@ -30,11 +96,11 @@ class ProductVerticalList extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.asset(
+                  child: _buildImage(
                     product.imageUrl,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
+                    60,
+                    60,
+                    BoxFit.cover,
                   ),
                 ),
                 const SizedBox(width: 10),
