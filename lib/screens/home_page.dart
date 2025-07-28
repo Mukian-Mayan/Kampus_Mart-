@@ -21,6 +21,10 @@ import './_fancy_app_bar_sliver_delegate.dart';
 import 'dart:ui';
 import '../services/product_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../ml/services/enhanced_product_service.dart';
+import '../ml/widgets/ml_search_suggestions.dart';
+import '../ml/screens/enhanced_search_screen.dart';
+import '../widgets/more_products_bottom_sheet.dart';
 
 class HomePage extends StatefulWidget {
   final UserRole userRole;
@@ -43,6 +47,19 @@ class _HomePageState extends State<HomePage> {
 
   late Future<List<Product>> _productsFuture;
 
+  // ML Search states
+  List<Product> _searchResults = [];
+  List<String> _searchSuggestions = [];
+  bool _isSearching = false;
+  bool _showSuggestions = false;
+  String _currentQuery = '';
+
+  // ML Carousel states
+  List<Product> _suggestedProducts = [];
+  List<Product> _trendingProducts = [];
+  bool _isLoadingSuggested = false;
+  bool _isLoadingTrending = false;
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +70,9 @@ class _HomePageState extends State<HomePage> {
       });
     });
     _productsFuture = ProductService.getAllProducts();
+
+    // Load suggested products on app start (since it's the default tab)
+    _loadSuggestedProducts();
   }
 
   Future<void> _loadUserRole() async {
@@ -65,8 +85,239 @@ class _HomePageState extends State<HomePage> {
   void _toggleSearch() {
     setState(() {
       _showSearch = !_showSearch;
+      if (!_showSearch) {
+        _showSuggestions = false;
+        _searchController.clear();
+      }
     });
   }
+
+  void _onSearchChanged(String value) {
+    final query = value.trim();
+    setState(() {
+      _currentQuery = query;
+      _showSuggestions = query.isNotEmpty;
+    });
+
+    if (query.isNotEmpty) {
+      _loadSearchSuggestions(query);
+    } else {
+      setState(() {
+        _searchSuggestions.clear();
+        _showSuggestions = false;
+      });
+    }
+  }
+
+  Future<void> _loadSearchSuggestions(String query) async {
+    try {
+      final suggestions = await EnhancedProductService.getSearchSuggestions(
+        partialQuery: query,
+        limit: 5,
+      );
+      setState(() {
+        _searchSuggestions = suggestions;
+      });
+    } catch (e) {
+      print('Error loading search suggestions: $e');
+    }
+  }
+
+  Future<void> _performMLSearch(String query) async {
+    if (query.trim().isEmpty) return;
+
+    setState(() {
+      _isSearching = true;
+      _showSuggestions = false;
+    });
+
+    try {
+      // Record search interaction for ML
+      await EnhancedProductService.recordUserInteraction(
+        productId: 'search',
+        interactionType: 'search',
+        metadata: {'query': query},
+      );
+
+      // Perform enhanced search
+      final results = await EnhancedProductService.enhancedSearch(
+        query: query,
+        limit: 50,
+      );
+
+      setState(() {
+        _searchResults = results;
+        _isSearching = false;
+      });
+
+      // Navigate to search results
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EnhancedSearchScreen(
+              initialQuery: query,
+              initialResults: results,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isSearching = false;
+      });
+      print('Error performing ML search: $e');
+
+      // Fallback to regular search
+      try {
+        final fallbackResults = await ProductService.searchProducts(query);
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EnhancedSearchScreen(
+                initialQuery: query,
+                initialResults: fallbackResults,
+              ),
+            ),
+          );
+        }
+      } catch (fallbackError) {
+        print('Fallback search also failed: $fallbackError');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Search failed: $fallbackError'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _onSuggestionSelected(String suggestion) {
+    _searchController.text = suggestion;
+    _performMLSearch(suggestion);
+  }
+
+  // Load suggested products from ML API
+  Future<void> _loadSuggestedProducts() async {
+    if (_suggestedProducts.isNotEmpty) return; // Already loaded
+
+    setState(() {
+      _isLoadingSuggested = true;
+    });
+
+    try {
+      print('🔄 Loading suggested products from ML API...');
+      final products =
+          await EnhancedProductService.getPersonalizedRecommendations(limit: 6);
+
+      // Filter out of stock products
+      final inStockProducts = products.where((product) {
+        return product.stock == null || product.stock! > 0;
+      }).toList();
+
+      print(
+        '✅ Loaded ${inStockProducts.length} in-stock suggested products from ML API',
+      );
+      setState(() {
+        _suggestedProducts = inStockProducts;
+        _isLoadingSuggested = false;
+      });
+    } catch (e) {
+      print('❌ Error loading suggested products: $e');
+      setState(() {
+        _isLoadingSuggested = false;
+      });
+      // Fallback to regular products
+      print('🔄 Falling back to regular products...');
+      final fallbackProducts = await ProductService.getAllProducts();
+      final inStockFallbackProducts = fallbackProducts
+          .where((product) {
+            return product.stock == null || product.stock! > 0;
+          })
+          .take(6)
+          .toList();
+      setState(() {
+        _suggestedProducts = inStockFallbackProducts;
+      });
+      print('✅ Loaded ${_suggestedProducts.length} in-stock fallback products');
+    }
+  }
+
+  // Load trending products from ML API
+  Future<void> _loadTrendingProducts() async {
+    if (_trendingProducts.isNotEmpty) return; // Already loaded
+
+    setState(() {
+      _isLoadingTrending = true;
+    });
+
+    try {
+      print('Loading trending products from ML API...');
+      final products = await EnhancedProductService.getTrendingProducts(
+        limit: 10,
+      );
+
+      // Filter out of stock products
+      final inStockProducts = products.where((product) {
+        return product.stock == null || product.stock! > 0;
+      }).toList();
+
+      print(
+        'Loaded ${inStockProducts.length} in-stock trending products from ML API',
+      );
+      setState(() {
+        _trendingProducts = inStockProducts;
+        _isLoadingTrending = false;
+      });
+    } catch (e) {
+      print('Error loading trending products: $e');
+      setState(() {
+        _isLoadingTrending = false;
+      });
+      // Fallback to regular products
+      print('Falling back to regular products...');
+      final fallbackProducts = await ProductService.getAllProducts();
+      final inStockFallbackProducts = fallbackProducts
+          .where((product) {
+            return product.stock == null || product.stock! > 0;
+          })
+          .take(6)
+          .toList();
+      setState(() {
+        _trendingProducts = inStockFallbackProducts;
+      });
+      print('Loaded ${_trendingProducts.length} in-stock fallback products');
+    }
+  }
+
+  // Show more products in a bottom sheet that covers half the screen
+  void _showMoreProducts(BuildContext context, List<Product> currentProducts) {
+    final title = isSuggestedSelected
+        ? 'More Suggested Products'
+        : 'More Trending Products';
+
+    MoreProductsBottomSheetHelper.show(
+      context: context,
+      title: title,
+      isSuggestedSelected: isSuggestedSelected,
+      onProductTap: (product) {
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductDetailsPage(product: product),
+            ),
+          );
+        }
+      },
+    );
+  }
+
+
 
   void _navigateToNotifications() {
     Navigator.push(
@@ -114,12 +365,11 @@ class _HomePageState extends State<HomePage> {
           SliverPersistentHeader(
             pinned: true,
             delegate: FancyAppBarSliverDelegate(
-              minExtent: 140, // Increased to prevent overflow
+              minExtent: 130, 
               maxExtent: 170,
               builder: (context, shrinkOffset, overlapsContent) {
-                // Hide tabs and reduce height when scrolled past threshold (e.g. 60px)
                 final bool showTabs = shrinkOffset < 60;
-                final double appBarHeight = showTabs ? 170 : 140;
+                final double appBarHeight = showTabs ? 170 : 130;
                 return FancyAppBar(
                   tabs: const ['Suggested for you', 'Trending'],
                   selectedIndex: isSuggestedSelected ? 0 : 1,
@@ -127,6 +377,15 @@ class _HomePageState extends State<HomePage> {
                     setState(() {
                       isSuggestedSelected = index == 0;
                     });
+
+                    // Load appropriate products based on selected tab
+                    if (index == 0) {
+                      // Suggested for you tab
+                      _loadSuggestedProducts();
+                    } else {
+                      // Trending tab
+                      _loadTrendingProducts();
+                    }
                   },
                   title: '',
                   height: appBarHeight,
@@ -135,27 +394,75 @@ class _HomePageState extends State<HomePage> {
                     bottom: false,
                     child: Padding(
                       padding: const EdgeInsets.only(
-                        top: 8,
+                        top: 4,
                         left: 16,
                         right: 8,
-                        bottom: 16,
+                        bottom: 8,
                       ),
                       child: Row(
                         children: [
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.only(right: 8),
-                              child: custom.SearchBar(
-                                controller: _searchController,
-                                hintText: 'Search products...',
-                                isVisible: _showSearch,
-                                onClose: _toggleSearch,
-                                onChanged: (value) {
-                                  // Implement search functionality
-                                  setState(() {
-                                    // Update search results
-                                  });
-                                },
+                              child: Stack(
+                                children: [
+                                  custom.SearchBar(
+                                    controller: _searchController,
+                                    hintText: 'Search products...',
+                                    isVisible: _showSearch,
+                                    onClose: _toggleSearch,
+                                    onChanged: _onSearchChanged,
+                                    onSubmitted: _performMLSearch,
+                                  ),
+                                  if (_showSuggestions &&
+                                      _searchSuggestions.isNotEmpty)
+                                    Positioned(
+                                      top: 45,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.1,
+                                              ),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: _searchSuggestions.map((
+                                            suggestion,
+                                          ) {
+                                            return ListTile(
+                                              leading: const Icon(
+                                                Icons.search,
+                                                size: 16,
+                                              ),
+                                              title: Text(
+                                                suggestion,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              onTap: () =>
+                                                  _onSuggestionSelected(
+                                                    suggestion,
+                                                  ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           ),
@@ -166,11 +473,19 @@ class _HomePageState extends State<HomePage> {
                                 color: Colors.black87,
                                 size: 24,
                               ),
-                              onPressed: _toggleSearch,
-                              padding: const EdgeInsets.all(8),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const EnhancedSearchScreen(),
+                                  ),
+                                );
+                              },
+                              padding: const EdgeInsets.all(4),
                               constraints: const BoxConstraints(
-                                minWidth: 40,
-                                minHeight: 40,
+                                minWidth: 36,
+                                minHeight: 36,
                               ),
                             ),
                           IconButton(
@@ -180,10 +495,10 @@ class _HomePageState extends State<HomePage> {
                               size: 24,
                             ),
                             onPressed: _navigateToNotifications,
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(4),
                             constraints: const BoxConstraints(
-                              minWidth: 40,
-                              minHeight: 40,
+                              minWidth: 36,
+                              minHeight: 36,
                             ),
                           ),
                         ],
@@ -195,46 +510,35 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           SliverToBoxAdapter(
-            child: FutureBuilder<List<Product>>(
-              future: _productsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+            child: Builder(
+              builder: (context) {
+                // Determine which products to show based on selected tab
+                List<Product> displayProducts = [];
+                bool isLoading = false;
+
+                if (isSuggestedSelected) {
+                  // Show suggested products
+                  if (_suggestedProducts.isEmpty && !_isLoadingSuggested) {
+                    // Load suggested products on first tab selection
+                    _loadSuggestedProducts();
+                  }
+                  displayProducts = _suggestedProducts;
+                  isLoading = _isLoadingSuggested;
+                } else {
+                  // Show trending products
+                  if (_trendingProducts.isEmpty && !_isLoadingTrending) {
+                    // Load trending products on first tab selection
+                    _loadTrendingProducts();
+                  }
+                  displayProducts = _trendingProducts;
+                  isLoading = _isLoadingTrending;
+                }
+
+                if (isLoading) {
                   return const CarouselLoading();
-                } else if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: Colors.red[300],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error loading products',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[800],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            snapshot.error.toString(),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                }
+
+                if (displayProducts.isEmpty) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -248,7 +552,9 @@ class _HomePageState extends State<HomePage> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No products available',
+                            isSuggestedSelected
+                                ? 'No suggested products'
+                                : 'No trending products',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[800],
@@ -260,40 +566,87 @@ class _HomePageState extends State<HomePage> {
                     ),
                   );
                 }
-                final products = snapshot.data!;
-                if (products.length < 3) {
+
+                if (displayProducts.length < 3) {
                   return const SizedBox();
                 }
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
-                  child: Carousel(
-                    items: [products.sublist(0, 3)].map((group) {
-                      return CarouselTileCard(
-                        leftImage: group[0].imageUrl,
-                        centerImage: group[1].imageUrl,
-                        rightImage: group[2].imageUrl,
-                        onImageTap: (imagePath) {
-                          final product = group.firstWhere(
-                            (p) => p.imageUrl == imagePath,
-                            orElse: () => group[0],
+                  child: Stack(
+                    children: [
+                      Carousel(
+                        items: [displayProducts.sublist(0, 3)].map((group) {
+                          return CarouselTileCard(
+                            leftImage: group[0].imageUrl,
+                            centerImage: group[1].imageUrl,
+                            rightImage: group[2].imageUrl,
+                            onImageTap: (imagePath) {
+                              final product = group.firstWhere(
+                                (p) => p.imageUrl == imagePath,
+                                orElse: () => group[0],
+                              );
+                              if (mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ProductDetailsPage(product: product),
+                                  ),
+                                );
+                              }
+                            },
                           );
-                          if (mounted) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ProductDetailsPage(product: product),
+                        }).toList(),
+                        height: 180,
+                        borderRadius: 20,
+                      ),
+                      // View More button positioned at bottom right
+                      Positioned(
+                        bottom:
+                            12, // Increased spacing between carousel and button
+                        right: 12,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.suggestedTabBrown,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
                               ),
-                            );
-                          }
-                        },
-                      );
-                    }).toList(),
-                    height: 180,
-                    borderRadius: 20,
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                _showMoreProducts(context, displayProducts);
+                              },
+                              borderRadius: BorderRadius.circular(15),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                child: Text(
+                                  'View More',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -329,6 +682,41 @@ class _HomePageState extends State<HomePage> {
                   );
                 }
                 final products = snapshot.data!;
+                // Filter out products that are out of stock
+                final inStockProducts = products.where((product) {
+                  // Show product if stock is null (not specified) or greater than 0
+                  return product.stock == null || product.stock! > 0;
+                }).toList();
+
+                if (inStockProducts.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.inventory_2_outlined,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No products in stock',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[800],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
                 return SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -338,11 +726,25 @@ class _HomePageState extends State<HomePage> {
                     mainAxisExtent: 260,
                   ),
                   delegate: SliverChildBuilderDelegate((context, index) {
-                    if (index >= products.length) return null;
-                    final product = products[index];
+                    if (index >= inStockProducts.length) return null;
+                    final product = inStockProducts[index];
                     return ProductCard(
                       product: product,
-                      onTap: () {
+                      onTap: () async {
+                        // Record product view interaction for ML
+                        try {
+                          await EnhancedProductService.recordUserInteraction(
+                            productId: product.id,
+                            interactionType: 'view',
+                            metadata: {
+                              'product_name': product.name,
+                              'category': product.category ?? 'general',
+                            },
+                          );
+                        } catch (e) {
+                          print('Error recording product view: $e');
+                        }
+
                         if (mounted) {
                           Navigator.push(
                             context,
@@ -354,7 +756,7 @@ class _HomePageState extends State<HomePage> {
                         }
                       },
                     );
-                  }, childCount: products.length),
+                  }, childCount: inStockProducts.length),
                 );
               },
             ),

@@ -1028,7 +1028,7 @@ class CartService {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
         int quantity = data['quantity'] ?? 0;
-        double price = (data['price'] ?? 0.0).toDouble();
+        double price = (data['price'] as num?)?.toDouble() ?? 0.0;
         bool isAvailable = data['isAvailable'] ?? true;
         String sellerId = data['sellerId'] ?? '';
 

@@ -13,7 +13,6 @@ import 'package:kampusmart2/services/sales_service.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/profile_pic_widget.dart';
-import '../widgets/logo_widget.dart';
 import '../models/seller.dart';
 import 'seller_add_product.dart';
 import 'seller_sales_tracking.dart';
@@ -528,7 +527,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
     final totalProducts = orderStats['totalProducts'] as int? ?? 0;
     final totalOrders = sellerStats['totalOrders'] as int? ?? 0;
-    final totalRevenue = sellerStats['totalRevenue'] as num? ?? 0.0;
+    final totalRevenue = (sellerStats['totalRevenue'] as num?)?.toDouble() ?? 0.0;
     final totalReviews = sellerStats['totalReviews'] as int? ?? 0;
 
     return Container(
@@ -562,7 +561,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               Expanded(
                 child: _buildStatCard(
                   'Revenue',
-                  'UGX ${_formatCurrency(totalRevenue.toDouble())}',
+                  'UGX ${_formatCurrency(totalRevenue)}',
                   Icons.attach_money,
                   AppTheme.primaryOrange,
                 ),
@@ -700,7 +699,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   Widget _buildOrderItem(Map<String, dynamic> order) {
     final status = order['status'] as String? ?? 'unknown';
     final orderId = order['id'] as String? ?? 'N/A';
-    final amount = order['totalAmount'] as double? ?? 0.0;
+    final amount = (order['totalAmount'] as num?)?.toDouble() ?? 0.0;
 
     Color statusColor;
     IconData statusIcon;

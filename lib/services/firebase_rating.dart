@@ -31,7 +31,7 @@ class Rating {
       id: map['id'] ?? '',
       productId: map['productId'] ?? '',
       userId: map['userId'] ?? '',
-      value: (map['value'] as num).toDouble(),
+      value: (map['value'] as num?)?.toDouble() ?? 0.0,
       timestamp: (map['timestamp'] as Timestamp).toDate(),
     );
   }
@@ -97,7 +97,7 @@ class RatingService {
         .where('userId', isEqualTo: user.uid)
         .get();
     if (query.docs.isNotEmpty) {
-      return (query.docs.first.data()['value'] as num).toDouble();
+      return (query.docs.first.data()['value'] as num?)?.toDouble() ?? 0.0;
     }
     return null;
   }

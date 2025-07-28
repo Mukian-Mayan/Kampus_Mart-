@@ -73,7 +73,7 @@ class _CarouselState extends State<Carousel> {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 16), // Increased spacing
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(widget.items.length, (index) {

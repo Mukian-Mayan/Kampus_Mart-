@@ -34,7 +34,7 @@ class OrderModel {
       items: (data['items'] as List<dynamic>?)
           ?.map((item) => OrderItem.fromMap(item))
           .toList() ?? [],
-      totalAmount: (data['totalAmount'] ?? 0.0).toDouble(),
+      totalAmount: (data['totalAmount'] as num?)?.toDouble() ?? 0.0,
       status: data['status'] ?? 'pending',
       shippingAddress: data['shippingAddress'],
       paymentMethod: data['paymentMethod'],
@@ -109,7 +109,7 @@ class OrderItem {
       productId: map['productId'] ?? '',
       productName: map['productName'] ?? '',
       productImage: map['productImage'] ?? '',
-      price: (map['price'] ?? 0.0).toDouble(),
+      price: (map['price'] as num?)?.toDouble() ?? 0.0,
       quantity: map['quantity'] ?? 0,
     );
   }
