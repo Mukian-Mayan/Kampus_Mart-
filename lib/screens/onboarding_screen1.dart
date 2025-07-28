@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/screens/login_or_register_page.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/onboarding_content.dart';
 import '../widgets/continue_button.dart';
@@ -16,8 +17,11 @@ class FourthOnboardingScreen extends StatelessWidget {
       appBar: CustomAppBar(
         onBackPressed: () =>
             Navigator.pushReplacementNamed(context, '/OnboardingScreen'),
-        onSkipPressed: () =>
-            Navigator.pushReplacementNamed(context, '/InterestsScreen'),
+        onSkipPressed: () => Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginOrRegisterPage()),
+        ),
+
         appBarColor: AppTheme.primaryOrange,
       ),
       body: SafeArea(
@@ -36,7 +40,12 @@ class FourthOnboardingScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 40),
                 child: GenericContinueButton(
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/InterestsScreen');
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginOrRegisterPage(),
+                      ),
+                    );
                   },
                 ),
               ),

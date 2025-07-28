@@ -68,7 +68,7 @@ class MyApp extends StatelessWidget {
         '/WelcomeScreen': (context) => const WelcomeScreen(),
         '/OnboardingScreen': (context) => const OnboardingScreen(),
         '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(),
-        '/InterestsScreen': (context) => const InterestsScreen(),
+        //'/InterestsScreen': (context) =>  InterestsScreen(userRole: widget.userRole),
         '/Signup': (context) => const LoginOrRegisterPage(),
         '/SellerDashboard': (context) => const SellerDashboardScreen(),
         '/AddProduct': (context) => const SellerAddProductScreen(),

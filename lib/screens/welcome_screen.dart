@@ -3,6 +3,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/screens/login_or_register_page.dart';
 import '../Theme/app_theme.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -19,20 +20,24 @@ class WelcomeScreen extends StatelessWidget {
           Positioned(
             top: 150,
             right: 30,
-            child: _buildFloatingCircle(12, Colors.white.withOpacity(0.4))),
+            child: _buildFloatingCircle(12, Colors.white.withOpacity(0.4)),
+          ),
           Positioned(
             top: 200,
             left: 100,
-            child: _buildFloatingCircle(8, Colors.white.withOpacity(0.5))),
+            child: _buildFloatingCircle(8, Colors.white.withOpacity(0.5)),
+          ),
           Positioned(
             top: 300,
             right: 80,
-            child: _buildFloatingCircle(15, Colors.white.withOpacity(0.3))),
+            child: _buildFloatingCircle(15, Colors.white.withOpacity(0.3)),
+          ),
           Positioned(
             top: 400,
             left: 50,
-            child: _buildFloatingCircle(10, Colors.white.withOpacity(0.4))),
-          
+            child: _buildFloatingCircle(10, Colors.white.withOpacity(0.4)),
+          ),
+
           // Main content
           SafeArea(
             child: Column(
@@ -43,30 +48,25 @@ class WelcomeScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Welcome',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
+                      
                       TextButton(
                         onPressed: () {
-                          Navigator.pushReplacementNamed(context, '/InterestsScreen');
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LoginOrRegisterPage(),
+                            ),
+                          );
                         },
                         child: const Text(
                           'skip',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black,
-                          ),
+                          style: TextStyle(fontSize: 16, color: Colors.black),
                         ),
                       ),
                     ],
                   ),
                 ),
-                
+
                 // Main illustration area
                 Expanded(
                   flex: 3,
@@ -78,7 +78,17 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
+
+                Text(
+                        'Welcome',
+                        style: TextStyle(
+                          fontSize: 32,
+                          color: Colors.black,
+                          fontFamily: 'DreamOrphans-Bold'
+                        ),
+                      ),
+
                 // Bottom content
                 Expanded(
                   flex: 2,
@@ -129,7 +139,7 @@ class WelcomeScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 20),
-                          
+
                           // Description text
                           const Text(
                             'Buy & sell everything from your campus life — from textbooks to toasters!',
@@ -141,7 +151,7 @@ class WelcomeScreen extends StatelessWidget {
                             textAlign: TextAlign.center,
                           ),
                           const Spacer(),
-                          
+
                           // Bottom buttons
                           Row(
                             children: [
@@ -149,11 +159,16 @@ class WelcomeScreen extends StatelessWidget {
                               Expanded(
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    Navigator.pushNamed(context, '/OnboardingScreen');
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/OnboardingScreen',
+                                    );
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.primaryOrange,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(25),
                                     ),
@@ -179,7 +194,10 @@ class WelcomeScreen extends StatelessWidget {
                                 ),
                                 child: IconButton(
                                   onPressed: () {
-                                    Navigator.pushNamed(context, '/OnboardingScreen');
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/OnboardingScreen',
+                                    );
                                   },
                                   icon: const Icon(
                                     Icons.arrow_forward,
@@ -207,10 +225,7 @@ class WelcomeScreen extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
-import 'package:kampusmart2/screens/home_page.dart';
+import 'package:kampusmart2/screens/Interest_screen.dart';
 import 'package:kampusmart2/screens/login_page.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
@@ -23,7 +23,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   // All controllers declared at the top
-  final  pwController = TextEditingController();
+  final pwController = TextEditingController();
   final TextEditingController confirmPwController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController firstNameController = TextEditingController();
@@ -75,8 +75,9 @@ class _RegisterPageState extends State<RegisterPage> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString(
-        'user_role', widget.userRole == UserRole.seller ? 'seller' : 'buyer');
-
+        'user_role',
+        widget.userRole == UserRole.seller ? 'seller' : 'buyer',
+      );
 
       // IMPORTANT: Add a small delay to ensure Firestore consistency
       await Future.delayed(const Duration(milliseconds: 500));
@@ -91,24 +92,19 @@ class _RegisterPageState extends State<RegisterPage> {
 
       // Navigate based on user role with data ready
       // In the signUpUser method, after successful registration:
-if (widget.userRole == UserRole.seller) {
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(
-      builder: (context) => HomePage(userRole: UserRole.seller),
-    ),
-    (route) => false,
-  );
-} else {
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(
-      builder: (context) => HomePage(userRole: UserRole.buyer),
-    ),
-    (route) => false,
-  );
-}
-      
+      if (widget.userRole == UserRole.seller) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => InterestsScreen(userRole: widget.userRole)),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => InterestsScreen(userRole: widget.userRole)),
+          (route) => false,
+        );
+      }
     } on FirebaseAuthException catch (e) {
       if (Navigator.canPop(context)) {
         Navigator.of(context).pop();
@@ -205,22 +201,18 @@ if (widget.userRole == UserRole.seller) {
 
       // Navigate based on role
       if (widget.userRole == UserRole.seller) {
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(
-      builder: (context) => HomePage(userRole: UserRole.seller),
-    ),
-    (route) => false,
-  );
-} else {
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(
-      builder: (context) => HomePage(userRole: UserRole.buyer),
-    ),
-    (route) => false,
-  );
-}
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => InterestsScreen(userRole: widget.userRole)),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => InterestsScreen(userRole: widget.userRole)),
+          (route) => false,
+        );
+      }
     } on FirebaseAuthException catch (e) {
       // Close the loading indicator FIRST
       if (Navigator.canPop(context)) {
@@ -654,7 +646,7 @@ if (widget.userRole == UserRole.seller) {
                       },
                       icon: Icon(
                         obscureText ? Icons.visibility : Icons.visibility_off,
-                        color:  AppTheme.borderGrey,
+                        color: AppTheme.borderGrey,
                       ),
                     ),
                   ),
@@ -704,10 +696,7 @@ if (widget.userRole == UserRole.seller) {
                       GestureDetector(
                         onTap: () => Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                LoginPage(),
-                          ),
+                          MaterialPageRoute(builder: (context) => LoginPage()),
                         ),
                         child: const Text(
                           'Login',
