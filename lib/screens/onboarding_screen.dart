@@ -84,12 +84,46 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           opacity: _fadeAnimation,
           child: Column(
             children: [
-              // Illustration Section
+              // Illustration Section with side text
               Expanded(
                 flex: 3,
                 child: SlideTransition(
                   position: _slideAnimation,
-                  child: const IllustrationWidget(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        // Image section (moved to left)
+                        Expanded(
+                          flex: 3,
+                          child: const IllustrationWidget(),
+                        ),
+                        
+                        const SizedBox(width: 16),
+                        
+                        // Text section on the right
+                        Expanded(
+                          flex: 2,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Where the right seller meets the right buyer',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.3,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
 

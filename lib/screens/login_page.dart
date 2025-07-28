@@ -11,6 +11,7 @@ import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/my_square_tile.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_role.dart';
 
 class LoginPage extends StatefulWidget {
@@ -41,6 +42,13 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       UserRole userRole = await _getUserRole(userCredential.user!.uid);
+
+      // ✅ Save login state and role
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString(
+          'user_role', userRole == UserRole.seller ? 'seller' : 'buyer');
+
 
       Navigator.of(context).pop();
 
