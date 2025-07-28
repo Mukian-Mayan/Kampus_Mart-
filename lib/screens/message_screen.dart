@@ -476,8 +476,8 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
 
     return Scaffold(
       bottomNavigationBar: const BottomNavBar(
-        selectedIndex: 3,
-        navBarColor: Colors.transparent,
+        selectedIndex: 2,
+        navBarColor: AppTheme.tertiaryOrange,
       ),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
@@ -648,7 +648,7 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.photo_camera,
-                    color: AppTheme.tertiaryOrange,
+                    color: AppTheme.deepBlue,
                   ),
                   onPressed: _isLoading ? null : _sendImage,
                 ),
@@ -679,7 +679,7 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppTheme.tertiaryOrange,
+                      color: AppTheme.deepBlue,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
