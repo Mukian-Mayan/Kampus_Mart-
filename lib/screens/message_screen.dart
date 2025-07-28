@@ -445,7 +445,7 @@ class _EnhancedMessageScreenState extends State<MessageScreen> {
                 Text(
                   _formatTimestamp(message.timestamp),
                   style: TextStyle(
-                    color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                    color: isCurrentUser ? Colors.black87 : Colors.grey[600],
                     fontSize: 12,
                   ),
                 ),

@@ -1,6 +1,8 @@
 // ignore_for_file: file_names
 
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/models/user_role.dart';
+import 'package:kampusmart2/screens/home_page.dart';
 import '../models/interest_model.dart';
 import '../data/interests_data.dart';
 import '../widgets/interest_chip.dart';
@@ -10,10 +12,11 @@ import '../Theme/app_theme.dart';
 
 class InterestsScreen extends StatefulWidget {
   static const String routeName = '/InterestsScreen';
-  const InterestsScreen({super.key});
+  final UserRole userRole;
+  const InterestsScreen({super.key, required this.userRole});
 
   @override
-  State<InterestsScreen> createState() => _InterestsScreenState();
+   State<InterestsScreen> createState() => _InterestsScreenState();
 }
 
 class _InterestsScreenState extends State<InterestsScreen>
@@ -57,6 +60,7 @@ class _InterestsScreenState extends State<InterestsScreen>
       }
     });
   }
+  //UserRole userRole = await _getUserRole(userCredential.user!.uid);
 
   void _onContinuePressed() {
     final selectedInterests = _interests
@@ -66,29 +70,16 @@ class _InterestsScreenState extends State<InterestsScreen>
 
     debugPrint('Selected interests: $selectedInterests');
     // Navigate to home/dashboard screen
-    Navigator.pushReplacementNamed(
+    Navigator.pushReplacement(
       context,
-      '/Signup',
+      MaterialPageRoute(builder: (context) => HomePage(userRole: widget.userRole)),
     );
-  }
-
-  void _onSkipPressed() {
-    Navigator.pushReplacementNamed(context, '/Signup');
-  }
-
-  void _onBackPressed() {
-    Navigator.pushReplacementNamed(context, '/FourthOnboardingScreen');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.primaryOrange,
-      appBar: CustomAppBar(
-        onBackPressed: _onBackPressed,
-        onSkipPressed: _onSkipPressed,
-        appBarColor: AppTheme.primaryOrange,
-      ),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,

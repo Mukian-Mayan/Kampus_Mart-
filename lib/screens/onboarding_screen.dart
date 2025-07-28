@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/screens/login_or_register_page.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/Illustration_widget.dart';
@@ -63,7 +64,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _onSkipPressed() {
-    Navigator.pushReplacementNamed(context, '/InterestsScreen');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginOrRegisterPage()),
+    );
   }
 
   void _onBackPressed() {
