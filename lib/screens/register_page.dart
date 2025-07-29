@@ -1,11 +1,14 @@
 // ignore_for_file: deprecated_member_use, unused_element, use_build_context_synchronously, avoid_print
 
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
 import 'package:kampusmart2/screens/Interest_screen.dart';
 import 'package:kampusmart2/screens/login_page.dart';
+import 'package:kampusmart2/services/auth_services.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
@@ -95,13 +98,17 @@ class _RegisterPageState extends State<RegisterPage> {
       if (widget.userRole == UserRole.seller) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => InterestsScreen(userRole: widget.userRole)),
+          MaterialPageRoute(
+            builder: (context) => InterestsScreen(userRole: widget.userRole),
+          ),
           (route) => false,
         );
       } else {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => InterestsScreen(userRole: widget.userRole)),
+          MaterialPageRoute(
+            builder: (context) => InterestsScreen(userRole: widget.userRole),
+          ),
           (route) => false,
         );
       }
@@ -203,13 +210,17 @@ class _RegisterPageState extends State<RegisterPage> {
       if (widget.userRole == UserRole.seller) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => InterestsScreen(userRole: widget.userRole)),
+          MaterialPageRoute(
+            builder: (context) => InterestsScreen(userRole: widget.userRole),
+          ),
           (route) => false,
         );
       } else {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => InterestsScreen(userRole: widget.userRole)),
+          MaterialPageRoute(
+            builder: (context) => InterestsScreen(userRole: widget.userRole),
+          ),
           (route) => false,
         );
       }
@@ -709,6 +720,109 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ],
                   ),
+                  GestureDetector(
+                    onTap: () async {
+                      try {
+                        final credential = await AuthService()
+                            .signInWithGoogle();
+                        if (credential != null) {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null) {
+                            // Fetch user role from Firestore
+                            final roleDoc = await FirebaseFirestore.instance
+                                .collection('user_roles')
+                                .doc(user.uid)
+                                .get();
+
+                            if (!roleDoc.exists) {
+                              throw Exception(
+                                'User role document does not exist.',
+                              );
+                            }
+
+                            final roleString = roleDoc.data()?['role'];
+                            UserRole userRole;
+
+                            switch (roleString) {
+                              case 'seller':
+                                userRole = UserRole.seller;
+                                break;
+                              case 'buyer':
+                                userRole = UserRole.buyer;
+                                break;
+                              default:
+                                userRole = UserRole.none;
+                            }
+
+                            // Save role in shared preferences
+                            SharedPreferences prefs =
+                                await SharedPreferences.getInstance();
+                            await prefs.setBool('isLoggedIn', true);
+                            await prefs.setString(
+                              'user_role',
+                              roleString ?? 'none',
+                            );
+
+                            // Navigate to HomePage with role
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    InterestsScreen(userRole: userRole),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Google sign-in failed: $e'),
+                            backgroundColor: Colors.red.shade400,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 11.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.borderGrey.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(15),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 150.0,
+                              vertical: 6.0,
+                            ),
+                            child: Image.asset(
+                              'lib/images/Icon-google.png',
+                              height: 25,
+                              width: 90,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 70),
                 ],
               ),
             ),

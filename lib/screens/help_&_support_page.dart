@@ -287,8 +287,7 @@ class _HelpAndSupportPageState extends State<HelpAndSupportPage> {
         fontColor: AppTheme.paleWhite,
         fontSize: screenWidth * 0.04,
         text: text,
-        containerHeight: screenHeight * 0.06,
-        containerWidth: double.infinity,
+        
       ),
     );
   }

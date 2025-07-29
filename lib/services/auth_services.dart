@@ -1,24 +1,32 @@
-// ignore_for_file: strict_top_level_inference
-
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
-  //google signin
-  signInWithGoogle() async {
-    //start signin popup
-    final GoogleSignInAccount? gUser = await GoogleSignIn().signIn();
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = kIsWeb
+          ? GoogleSignIn(
+              clientId:
+                  '260066278496-196412lo8apouv51cdshajdl847oj1o2.apps.googleusercontent.com',
+            )
+          : GoogleSignIn(); // Default config for Android/iOS
 
-    //obtain auth details
-    final GoogleSignInAuthentication gAuth = await gUser!.authentication;
+      final GoogleSignInAccount? gUser = await googleSignIn.signIn();
+      if (gUser == null) return null;
 
-    //create new credential from user
-    final credential = GoogleAuthProvider.credential(
-      accessToken: gAuth.accessToken,
-      idToken: gAuth.idToken,
-    );
+      final GoogleSignInAuthentication gAuth = await gUser.authentication;
 
-    // Use credential to sign in
-    return FirebaseAuth.instance.signInWithCredential(credential);
+      final credential = GoogleAuthProvider.credential(
+        accessToken: gAuth.accessToken,
+        idToken: gAuth.idToken,
+      );
+
+      return await FirebaseAuth.instance.signInWithCredential(credential);
+    } catch (e) {
+      print("Google Sign-In Error: $e");
+      rethrow;
+    }
   }
 }

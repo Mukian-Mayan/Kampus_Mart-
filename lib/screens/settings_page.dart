@@ -14,8 +14,12 @@ import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/mode_page.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
+import 'package:kampusmart2/widgets/circle_design.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
+import 'package:kampusmart2/widgets/glass_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
+import 'package:kampusmart2/widgets/layout2.dart';
+import 'package:kampusmart2/widgets/layout3.dart';
 //import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -107,11 +111,11 @@ class _SettingsPageState extends State<SettingsPage> {
       bottomNavigationBar: widget.userRole == UserRole.seller
           ? BottomNavBar2(
               selectedIndex: selectedIndex,
-              navBarColor: AppTheme.deepBlue,
+              navBarColor: AppTheme.tertiaryOrange,
             )
           : BottomNavBar(
               selectedIndex: selectedIndex,
-              navBarColor: AppTheme.deepBlue,
+              navBarColor: AppTheme.tertiaryOrange,
             ),
       appBar: AppBar(
         backgroundColor: AppTheme.tertiaryOrange,
@@ -143,9 +147,215 @@ class _SettingsPageState extends State<SettingsPage> {
                       isEditable: true,
                     ),
                   ),*/
+
+                  //CircleDesign(baseSize: 100,),
                   const SizedBox(height: 40),
-                  Layout1(
-                    child: Center(
+                  Stack(
+                    children: [
+                      //Layout2(),
+                      Layout3(),
+                      GlassContainer(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              DetailContainer(
+                                onTap: () async {
+                                  // Navigate to appropriate profile edit page based on user role
+                                  Widget profileScreen;
+                                  if (widget.userRole == UserRole.seller) {
+                                    profileScreen =
+                                        const SellerProfileEditScreen();
+                                  } else {
+                                    profileScreen = const EditProfileScreen();
+                                  }
+                  
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => profileScreen,
+                                    ),
+                                  );
+                  
+                                  // Refresh the screen if profile was updated
+                                  if (result == true) {
+                                    setState(() {});
+                                  }
+                                },
+                                iconData: Icons.person,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: ' Profile ',
+                                
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PaymentTransactions(),
+                                    ),
+                                  );
+                                },
+                                iconData: Icons.credit_card_rounded,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'Payment Method',
+                                
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ModeSettingsPage(),
+                                    ),
+                                  );
+                                },
+                                iconData: Icons.settings_applications,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'App Settings',
+                                
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AboutUsPage(),
+                                    ),
+                                  );
+                                },
+                                iconData: Icons.info_outline,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'About Us',
+                                
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const HelpAndSupportPage(),
+                                    ),
+                                  );
+                                },
+                                iconData: Icons.support_agent,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'Help And Support',
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  _showLogoutDialog(context);
+                                },
+                                iconData: Icons.logout_rounded,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'Logout',
+                                
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Logout',
+            style: TextStyle(
+              color: AppTheme.deepBlue,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(color: AppTheme.textPrimary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                logoutUser();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.deepBlue,
+                foregroundColor: AppTheme.paleWhite,
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /*void _performLogout(BuildContext context) {
+    // Add your logout logic here
+    // For example:
+    // - Clear user session/tokens
+    // - Clear shared preferences
+    // - Navigate to login screen
+    
+    // Example logout implementation:
+    // SharedPreferences.getInstance().then((prefs) {
+    //   prefs.clear();
+    // });
+    
+    // Navigate to login screen and clear navigation stack
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/login', // Replace with your login route
+      (Route<dynamic> route) => false,
+    );
+  }*/
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/*                    child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -276,75 +486,4 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Logout',
-            style: TextStyle(
-              color: AppTheme.deepBlue,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(color: AppTheme.textPrimary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: AppTheme.textSecondary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                logoutUser();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.deepBlue,
-                foregroundColor: AppTheme.paleWhite,
-              ),
-              child: const Text('Logout'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /*void _performLogout(BuildContext context) {
-    // Add your logout logic here
-    // For example:
-    // - Clear user session/tokens
-    // - Clear shared preferences
-    // - Navigate to login screen
-    
-    // Example logout implementation:
-    // SharedPreferences.getInstance().then((prefs) {
-    //   prefs.clear();
-    // });
-    
-    // Navigate to login screen and clear navigation stack
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      '/login', // Replace with your login route
-      (Route<dynamic> route) => false,
-    );
-  }*/
-}
+*/

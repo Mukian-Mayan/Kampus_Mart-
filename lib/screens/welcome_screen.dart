@@ -75,6 +75,19 @@ class WelcomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Column(
                       children: [
+                        // Welcome text on the left
+                        /*const Expanded(
+                          flex: 1,
+                          child: Text(
+                            'Welcome',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),*/
+                        // Image on the right
                         // Image on top (increased size)
                         Expanded(
                           flex: 3,
