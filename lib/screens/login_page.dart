@@ -1,5 +1,5 @@
 // ignore_for_file: avoid_print, use_key_in_widget_constructors, deprecated_member_use
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,7 +9,6 @@ import 'package:kampusmart2/screens/register_page.dart';
 import 'package:kampusmart2/services/auth_services.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
 import 'package:kampusmart2/widgets/my_button1.dart';
-import 'package:kampusmart2/widgets/my_square_tile.dart';
 import 'package:kampusmart2/widgets/my_textfield.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_role.dart';
@@ -284,75 +283,95 @@ class _LoginPageState extends State<LoginPage> {
                                 ],
                               ),
                             ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                MySquareTile(
-                                  onTap: () async {
-                                    try {
-                                      final credential = await AuthService()
-                                          .signInWithGoogle();
-                                      if (credential != null) {
-                                        final user =
-                                            FirebaseAuth.instance.currentUser;
-                                        if (user != null) {
-                                          // Optional: Determine user role
-                                          final userRole = await _getUserRole(
-                                            user.uid,
-                                          );
+                            GestureDetector(
+                              onTap: () async {
+                                try {
+                                  final credential = await AuthService()
+                                      .signInWithGoogle();
+                                  if (credential != null) {
+                                    final user =
+                                        FirebaseAuth.instance.currentUser;
+                                    if (user != null) {
+                                      // Optional: Determine user role
+                                      final userRole = await _getUserRole(
+                                        user.uid,
+                                      );
 
-                                          SharedPreferences prefs =
-                                              await SharedPreferences.getInstance();
-                                          await prefs.setBool(
-                                            'isLoggedIn',
-                                            true,
-                                          );
-                                          await prefs.setString(
-                                            'user_role',
-                                            userRole == UserRole.seller
-                                                ? 'seller'
-                                                : 'buyer',
-                                          );
+                                      SharedPreferences prefs =
+                                          await SharedPreferences.getInstance();
+                                      await prefs.setBool('isLoggedIn', true);
+                                      await prefs.setString(
+                                        'user_role',
+                                        userRole == UserRole.seller
+                                            ? 'seller'
+                                            : 'buyer',
+                                      );
 
-                                          Navigator.pushAndRemoveUntil(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  HomePage(userRole: userRole),
-                                            ),
-                                            (route) => false,
-                                          );
-                                        }
-                                      }
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(
+                                      Navigator.pushAndRemoveUntil(
                                         context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Google sign-in failed: $e',
-                                          ),
-                                          backgroundColor: Colors.red.shade400,
-                                          behavior: SnackBarBehavior.floating,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              HomePage(userRole: userRole),
                                         ),
+                                        (route) => false,
                                       );
                                     }
-                                  },
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Google sign-in failed: $e',
+                                      ),
+                                      backgroundColor: Colors.red.shade400,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              },
 
-                                  //onTap: () =>
-                                  //AuthService().signInWithGoogle(),
-                                  imagePath: 'lib/images/Icon-google.png',
+                              //onTap: () =>
+                              //AuthService().signInWithGoogle(),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(15),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 10.0,
+                                    sigmaY: 10.0,
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.borderGrey.withOpacity(
+                                        0.2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(15),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.3),
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.white.withOpacity(0.05),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 150.0,
+                                      vertical: 6.0,
+                                    ),
+                                    child: Image.asset(
+                                      'lib/images/Icon-google.png',
+                                      height: 25,
+                                      width: 90,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
                                 ),
-                                SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.1,
-                                ),
-                                MySquareTile(
-                                  onTap: () {},
-                                  imagePath: 'lib/images/apple_icon.png',
-                                ),
-                              ],
+                              ),
                             ),
+                            const SizedBox(height: 50),
                           ],
                         ),
                       ),
