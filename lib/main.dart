@@ -2,6 +2,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kampusmart2/screens/settings_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -63,8 +64,9 @@ class MyApp extends StatelessWidget {
       title: 'Kampus mart',
       theme: themeProvider.currentTheme,
       debugShowCheckedModeBanner: false,
-      home: isLoggedIn ? HomePage(userRole: userRole) : const SplashScreen(),
-      routes: {
+      home: SettingsPage(userRole: UserRole.buyer),
+      //home: isLoggedIn ? HomePage(userRole: userRole) : const SplashScreen(),
+      /*routes: {
         '/WelcomeScreen': (context) => const WelcomeScreen(),
         '/OnboardingScreen': (context) => const OnboardingScreen(),
         '/FourthOnboardingScreen': (context) => const FourthOnboardingScreen(),
@@ -73,7 +75,7 @@ class MyApp extends StatelessWidget {
         '/SellerDashboard': (context) => const SellerDashboardScreen(),
         '/AddProduct': (context) => const SellerAddProductScreen(),
         '/SalesTracking': (context) => const SellerSalesTrackingScreen(),
-      },
+      },*/
     );
   }
 }

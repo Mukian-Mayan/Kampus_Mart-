@@ -37,9 +37,9 @@ class _LoginPageState extends State<LoginPage> {
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: pwController.text,
-      );
+            email: emailController.text.trim(),
+            password: pwController.text,
+          );
 
       UserRole userRole = await _getUserRole(userCredential.user!.uid);
 
@@ -47,16 +47,15 @@ class _LoginPageState extends State<LoginPage> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString(
-          'user_role', userRole == UserRole.seller ? 'seller' : 'buyer');
-
+        'user_role',
+        userRole == UserRole.seller ? 'seller' : 'buyer',
+      );
 
       Navigator.of(context).pop();
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(userRole: userRole),
-        ),
+        MaterialPageRoute(builder: (context) => HomePage(userRole: userRole)),
         (route) => false,
       );
     } on FirebaseAuthException catch (e) {
@@ -153,9 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                 bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
                   child: Stack(
                     children: [
@@ -185,8 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                                   Shadow(
                                     offset: const Offset(2, 2),
                                     blurRadius: 4.0,
-                                    color:
-                                        AppTheme.taleBlack.withOpacity(0.7),
+                                    color: AppTheme.taleBlack.withOpacity(0.7),
                                   ),
                                 ],
                               ),
@@ -292,13 +288,65 @@ class _LoginPageState extends State<LoginPage> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 MySquareTile(
-                                  onTap: () =>
-                                      AuthService().signInWithGoogle(),
+                                  onTap: () async {
+                                    try {
+                                      final credential = await AuthService()
+                                          .signInWithGoogle();
+                                      if (credential != null) {
+                                        final user =
+                                            FirebaseAuth.instance.currentUser;
+                                        if (user != null) {
+                                          // Optional: Determine user role
+                                          final userRole = await _getUserRole(
+                                            user.uid,
+                                          );
+
+                                          SharedPreferences prefs =
+                                              await SharedPreferences.getInstance();
+                                          await prefs.setBool(
+                                            'isLoggedIn',
+                                            true,
+                                          );
+                                          await prefs.setString(
+                                            'user_role',
+                                            userRole == UserRole.seller
+                                                ? 'seller'
+                                                : 'buyer',
+                                          );
+
+                                          Navigator.pushAndRemoveUntil(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  HomePage(userRole: userRole),
+                                            ),
+                                            (route) => false,
+                                          );
+                                        }
+                                      }
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Google sign-in failed: $e',
+                                          ),
+                                          backgroundColor: Colors.red.shade400,
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    }
+                                  },
+
+                                  //onTap: () =>
+                                  //AuthService().signInWithGoogle(),
                                   imagePath: 'lib/images/Icon-google.png',
                                 ),
                                 SizedBox(
                                   width:
-                                      MediaQuery.of(context).size.width * 0.1),
+                                      MediaQuery.of(context).size.width * 0.1,
+                                ),
                                 MySquareTile(
                                   onTap: () {},
                                   imagePath: 'lib/images/apple_icon.png',

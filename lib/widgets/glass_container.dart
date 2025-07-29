@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:kampusmart2/Theme/app_theme.dart';
 
 class GlassContainer extends StatelessWidget {
   final double width;
@@ -17,7 +18,7 @@ class GlassContainer extends StatelessWidget {
     this.child,
     this.borderRadius = 20.0,
     this.blur = 10.0,
-    this.color = const Color(0xFFFFFFFF),
+    this.color = AppTheme.selectedBlue,
     this.padding = const EdgeInsets.all(16),
   });
 

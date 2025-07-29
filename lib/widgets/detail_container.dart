@@ -7,8 +7,8 @@ class DetailContainer extends StatelessWidget {
   final Color fontColor;
   final double fontSize;
   final String text;
-  final double containerWidth;
-  final double containerHeight;
+  //final double containerWidth;
+  //final double containerHeight;
   final IconData? iconData;
   final VoidCallback? onTap;
 
@@ -17,8 +17,8 @@ class DetailContainer extends StatelessWidget {
     required this.fontColor,
     required this.fontSize,
     required this.text,
-    required this.containerHeight,
-    required this.containerWidth,
+    //required this.containerHeight,
+    //required this.containerWidth,
     required this.iconData,
     required this.onTap,
   });
@@ -34,8 +34,8 @@ class DetailContainer extends StatelessWidget {
           height: 40,
           width: MediaQuery.of(context).size.width*0.8,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: AppTheme.deepBlue.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(15),
+            color: AppTheme.suggestedTabBrown.withOpacity(0.8),
           ),
           child: Row(
             //mainAxisAlignment: MainAxisAlignment.center,
@@ -49,7 +49,7 @@ class DetailContainer extends StatelessWidget {
                     color: fontColor,
                     fontSize: fontSize,
                     fontWeight: FontWeight.w900,
-                    fontFamily: 'DreamOrphans-Bold',
+                    fontFamily: 'KG Penmanship',
                   ),
                 ),
               ),

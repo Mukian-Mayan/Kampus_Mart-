@@ -14,9 +14,11 @@ import 'package:kampusmart2/screens/about_us.dart';
 import 'package:kampusmart2/screens/mode_page.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar.dart';
 import 'package:kampusmart2/widgets/bottom_nav_bar2.dart';
+import 'package:kampusmart2/widgets/circle_design.dart';
 import 'package:kampusmart2/widgets/detail_container.dart';
 import 'package:kampusmart2/widgets/glass_container.dart';
 import 'package:kampusmart2/widgets/layout1.dart';
+import 'package:kampusmart2/widgets/layout2.dart';
 import 'package:kampusmart2/widgets/layout3.dart';
 //import 'package:kampusmart2/widgets/profile_pic_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -145,166 +147,130 @@ class _SettingsPageState extends State<SettingsPage> {
                       isEditable: true,
                     ),
                   ),*/
+
+                  //CircleDesign(baseSize: 100,),
                   const SizedBox(height: 40),
-                  Container(
-                    width: double.infinity,
-                    height: MediaQuery.of(context).size.height * 0.8,
-
-                    decoration: BoxDecoration(
-                      color: AppTheme.tertiaryOrange,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(100),
-                        topRight: Radius.circular(100),
-                        bottomLeft: Radius.circular(0),
-                        bottomRight: Radius.circular(0),
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        Layout3(),
-                        GlassContainer(
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                DetailContainer(
-                                  onTap: () async {
-                                    // Navigate to appropriate profile edit page based on user role
-                                    Widget profileScreen;
-                                    if (widget.userRole == UserRole.seller) {
-                                      profileScreen =
-                                          const SellerProfileEditScreen();
-                                    } else {
-                                      profileScreen = const EditProfileScreen();
-                                    }
-
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => profileScreen,
-                                      ),
-                                    );
-
-                                    // Refresh the screen if profile was updated
-                                    if (result == true) {
-                                      setState(() {});
-                                    }
-                                  },
-                                  iconData: Icons.person,
-                                  fontColor: AppTheme.paleWhite,
-                                  fontSize: 23,
-                                  text: ' Profile ',
-                                  containerHeight:
-                                      MediaQuery.of(context).size.height *
-                                      0.065,
-                                  containerWidth:
-                                      MediaQuery.of(context).size.width * 0.7,
-                                ),
-
-                                DetailContainer(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const PaymentTransactions(),
-                                      ),
-                                    );
-                                  },
-                                  iconData: Icons.credit_card_rounded,
-                                  fontColor: AppTheme.paleWhite,
-                                  fontSize: 23,
-                                  text: 'Payment Method',
-                                  containerHeight:
-                                      MediaQuery.of(context).size.height *
-                                      0.065,
-                                  containerWidth:
-                                      MediaQuery.of(context).size.width * 0.7,
-                                ),
-
-                                DetailContainer(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ModeSettingsPage(),
-                                      ),
-                                    );
-                                  },
-                                  iconData: Icons.settings_applications,
-                                  fontColor: AppTheme.paleWhite,
-                                  fontSize: 23,
-                                  text: 'App Settings',
-                                  containerHeight:
-                                      MediaQuery.of(context).size.height *
-                                      0.065,
-                                  containerWidth:
-                                      MediaQuery.of(context).size.width * 0.7,
-                                ),
-
-                                DetailContainer(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AboutUsPage(),
-                                      ),
-                                    );
-                                  },
-                                  iconData: Icons.info_outline,
-                                  fontColor: AppTheme.paleWhite,
-                                  fontSize: 23,
-                                  text: 'About Us',
-                                  containerHeight:
-                                      MediaQuery.of(context).size.height *
-                                      0.065,
-                                  containerWidth:
-                                      MediaQuery.of(context).size.width * 0.7,
-                                ),
-
-                                DetailContainer(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const HelpAndSupportPage(),
-                                      ),
-                                    );
-                                  },
-                                  iconData: Icons.support_agent,
-                                  fontColor: AppTheme.selectedBlue,
-                                  fontSize: 23,
-                                  text: 'Help And Support',
-                                  containerHeight:
-                                      MediaQuery.of(context).size.height *
-                                      0.065,
-                                  containerWidth:
-                                      MediaQuery.of(context).size.width * 0.7,
-                                ),
-
-                                DetailContainer(
-                                  onTap: () {
-                                    _showLogoutDialog(context);
-                                  },
-                                  iconData: Icons.logout_rounded,
-                                  fontColor: AppTheme.paleWhite,
-                                  fontSize: 23,
-                                  text: 'Logout',
-                                  containerHeight:
-                                      MediaQuery.of(context).size.height *
-                                      0.065,
-                                  containerWidth:
-                                      MediaQuery.of(context).size.width * 0.7,
-                                ),
-                              ],
-                            ),
+                  Stack(
+                    children: [
+                      //Layout2(),
+                      Layout3(),
+                      GlassContainer(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              DetailContainer(
+                                onTap: () async {
+                                  // Navigate to appropriate profile edit page based on user role
+                                  Widget profileScreen;
+                                  if (widget.userRole == UserRole.seller) {
+                                    profileScreen =
+                                        const SellerProfileEditScreen();
+                                  } else {
+                                    profileScreen = const EditProfileScreen();
+                                  }
+                  
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => profileScreen,
+                                    ),
+                                  );
+                  
+                                  // Refresh the screen if profile was updated
+                                  if (result == true) {
+                                    setState(() {});
+                                  }
+                                },
+                                iconData: Icons.person,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: ' Profile ',
+                                
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PaymentTransactions(),
+                                    ),
+                                  );
+                                },
+                                iconData: Icons.credit_card_rounded,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'Payment Method',
+                                
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ModeSettingsPage(),
+                                    ),
+                                  );
+                                },
+                                iconData: Icons.settings_applications,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'App Settings',
+                                
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AboutUsPage(),
+                                    ),
+                                  );
+                                },
+                                iconData: Icons.info_outline,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'About Us',
+                                
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const HelpAndSupportPage(),
+                                    ),
+                                  );
+                                },
+                                iconData: Icons.support_agent,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'Help And Support',
+                              ),
+                  
+                              DetailContainer(
+                                onTap: () {
+                                  _showLogoutDialog(context);
+                                },
+                                iconData: Icons.logout_rounded,
+                                fontColor: AppTheme.paleWhite,
+                                fontSize: 20,
+                                text: 'Logout',
+                                
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -417,7 +383,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             },
                             iconData: Icons.person,
                             fontColor: AppTheme.paleWhite,
-                            fontSize: 23,
+                            fontSize: 20,
                             text: ' Profile ',
                             containerHeight:
                                 MediaQuery.of(context).size.height * 0.065,
@@ -437,7 +403,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             },
                             iconData: Icons.credit_card_rounded,
                             fontColor: AppTheme.paleWhite,
-                            fontSize: 23,
+                            fontSize: 20,
                             text: 'Payment Method',
                             containerHeight:
                                 MediaQuery.of(context).size.height * 0.065,
@@ -457,7 +423,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             },
                             iconData: Icons.settings_applications,
                             fontColor: AppTheme.paleWhite,
-                            fontSize: 23,
+                            fontSize: 20,
                             text: 'App Settings',
                             containerHeight:
                                 MediaQuery.of(context).size.height * 0.065,
@@ -476,7 +442,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             },
                             iconData: Icons.info_outline,
                             fontColor: AppTheme.paleWhite,
-                            fontSize: 23,
+                            fontSize: 20,
                             text: 'About Us',
                             containerHeight:
                                 MediaQuery.of(context).size.height * 0.065,
@@ -496,7 +462,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             },
                             iconData: Icons.support_agent,
                             fontColor: AppTheme.paleWhite,
-                            fontSize: 23,
+                            fontSize: 20,
                             text: 'Help And Support',
                             containerHeight:
                                 MediaQuery.of(context).size.height * 0.065,
@@ -510,7 +476,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             },
                             iconData: Icons.logout_rounded,
                             fontColor: AppTheme.paleWhite,
-                            fontSize: 23,
+                            fontSize: 20,
                             text: 'Logout',
                             containerHeight:
                                 MediaQuery.of(context).size.height * 0.065,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kampusmart2/Theme/app_theme.dart';
+import 'package:kampusmart2/widgets/circle_design.dart';
 
 class Layout3 extends StatelessWidget {
   const Layout3({super.key});
@@ -12,86 +13,52 @@ class Layout3 extends StatelessWidget {
       alignment: Alignment.bottomCenter,
       child: SizedBox(
         width: screenWidth,
-        height: 450, // increased height to fit larger circles
+        height: 450,
         child: Stack(
           children: [
             // Grey Circles
             Positioned(
-              top: 20,
-              left: 30,
-              child: Container(
-                height: 120, // was 60
-                width: 120,
-                decoration: const BoxDecoration(
-                  color: AppTheme.lightGrey,
-                  shape: BoxShape.circle,
-                ),
-              ),
+              top: 30,
+              left: 20,
+              child: CircleDesign(baseSize: 60),
             ),
             Positioned(
-              top: 120,
-              left: 100,
-              child: Container(
-                height: 45, // was 30
-                width: 45,
-                decoration: const BoxDecoration(
-                  color: AppTheme.lightGrey,
-                  shape: BoxShape.circle,
-                ),
-              ),
+              top: 100,
+              left: 140,
+              child: CircleDesign(baseSize: 40),
+            ),
+
+            // 🔵 NEW: Left-side additional circle for balance
+            Positioned(
+              top: 220,
+              left: 1,
+              child: CircleDesign(baseSize: 30),
             ),
 
             // Orange Circles
             Positioned(
-              top: 60,
-              right: 50,
-              child: Container(
-                height: 100, // was 80
-                width: 100,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryOrange,
-                  shape: BoxShape.circle,
-                ),
-              ),
+              top: 50,
+              right: 20,
+              child: CircleDesign(baseSize: 60),
             ),
             Positioned(
-              top: 200,
-              right: 100,
-              child: Container(
-                height: 55, // was 40
-                width: 55,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryOrange,
-                  shape: BoxShape.circle,
-                ),
-              ),
+              top: 230,
+              right: 140,
+              child: CircleDesign(baseSize: 10),
             ),
 
-            // Blue Circles
+            // Blue/Extra Circles
             Positioned(
-              bottom: 30,
-              left: screenWidth * 0.2,
-              child: Container(
-                height: 170, // was 100
-                width: 170,
-                decoration: const BoxDecoration(
-                  color: AppTheme.deepBlue,
-                  shape: BoxShape.circle,
-                ),
-              ),
+              bottom: 0,
+              left: screenWidth * 0.1,
+              child: CircleDesign(baseSize: 20),
             ),
             Positioned(
-              bottom: 60,
-              left: screenWidth * 0.7,
-              child: Container(
-                height: 90, // was 50
-                width: 90,
-                decoration: const BoxDecoration(
-                  color: AppTheme.deepBlue,
-                  shape: BoxShape.circle,
-                ),
-              ),
+              bottom: 150,
+              left: screenWidth * 0.5,
+              child: CircleDesign(baseSize: 50),
             ),
+          
           ],
         ),
       ),

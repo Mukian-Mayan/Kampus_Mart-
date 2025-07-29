@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "260066278496",
+    "firebase_url": "https://kampus-mart-ae6e6-default-rtdb.firebaseio.com",
     "project_id": "kampus-mart-ae6e6",
     "storage_bucket": "kampus-mart-ae6e6.firebasestorage.app"
   },
@@ -13,6 +14,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "260066278496-ap24p34ja6a9ultq45pglpu8f8cfem7r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.kampus",
+            "certificate_hash": "e323e17d898756973992f464d53cd4627bc992fd"
+          }
+        },
         {
           "client_id": "260066278496-h2soeooke6itaqfiflltukveomnvqhg9.apps.googleusercontent.com",
           "client_type": 3
@@ -49,6 +58,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "260066278496-4enqt5gr55jblu8rjpa9gnmrbcnjps67.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.kampusmart2",
+            "certificate_hash": "e323e17d898756973992f464d53cd4627bc992fd"
+          }
+        },
         {
           "client_id": "260066278496-h2soeooke6itaqfiflltukveomnvqhg9.apps.googleusercontent.com",
           "client_type": 3
