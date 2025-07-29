@@ -14,7 +14,7 @@ class MLApiService {
   /// Get the current base URL for ML API requests
   /// This automatically switches between Render and localhost based on availability
   static String get baseUrl => MLConfig.apiBaseUrl;
-
+  
   /// API endpoints for different ML features
   static String get searchEndpoint => '/search';
   static String get recommendEndpoint => '/recommendations';
@@ -25,7 +25,7 @@ class MLApiService {
   /// HTTP client for making requests to the ML API
   /// Configured with connection pooling for better performance
   static final http.Client _client = http.Client();
-
+  
   /// Request timeout - reduced for faster fallback detection
   static const Duration _timeout = Duration(seconds: 5);
 
@@ -57,9 +57,7 @@ class MLApiService {
 
         print('ML API: Making $method request to $endpoint');
         print('   URL: $uri');
-        print(
-          '   Using: ${MLConfig.isUsingFallback ? 'Fallback' : 'Primary'} service',
-        );
+        print('   Using: ${MLConfig.isUsingFallback ? 'Fallback' : 'Primary'} service');
 
         http.Response response;
 
@@ -83,15 +81,13 @@ class MLApiService {
         }
 
         print('ML API: Request successful (Status: ${response.statusCode})');
-
+        
         // If we're using fallback and got a successful response, try switching back to primary
         if (MLConfig.isUsingFallback && response.statusCode == 200) {
-          print(
-            'ML API: Fallback successful, attempting to switch back to primary service',
-          );
+          print('ML API: Fallback successful, attempting to switch back to primary service');
           MLConfig.switchToPrimary();
         }
-
+        
         return response;
       } catch (e) {
         attempt++;
@@ -100,9 +96,7 @@ class MLApiService {
         print('   Endpoint: $endpoint');
 
         // Only switch to fallback if we've exhausted all retries and we're not already using fallback
-        if (!triedFallback &&
-            !MLConfig.isUsingFallback &&
-            attempt >= maxRetries) {
+        if (!triedFallback && !MLConfig.isUsingFallback && attempt >= maxRetries) {
           print('ML API: Primary service failed, switching to fallback');
           MLConfig.switchToFallback();
           triedFallback = true;
@@ -131,24 +125,23 @@ class MLApiService {
     Map<String, dynamic>? filters,
   }) async {
     print('ML API: Starting semantic search for "$query"');
-
+    
     try {
       final response = await _makeRequest(
         'POST',
         '/search',
-        body: {'query': query, 'num_results': limit},
+        body: {
+          'query': query,
+          'num_results': limit,
+        },
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(
-          'ML API: Semantic search successful, found ${data['products']?.length ?? 0} results',
-        );
+        print('ML API: Semantic search successful, found ${data['products']?.length ?? 0} results');
         return _parseProductList(data['products']);
       } else {
-        print(
-          'ML API: Semantic search failed with status ${response.statusCode}',
-        );
+        print('ML API: Semantic search failed with status ${response.statusCode}');
         throw Exception('Search failed: ${response.statusCode}');
       }
     } catch (e) {
@@ -166,7 +159,7 @@ class MLApiService {
     Map<String, dynamic>? userPreferences,
   }) async {
     print('ML API: Getting personalized recommendations');
-
+    
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
@@ -174,7 +167,10 @@ class MLApiService {
         return _getPopularProducts(limit: limit, category: category);
       }
 
-      final requestBody = {'user_id': user.uid, 'num_recommendations': limit};
+      final requestBody = {
+        'user_id': user.uid,
+        'num_recommendations': limit,
+      };
 
       print('ML API: Requesting recommendations for user ${user.uid}');
 
@@ -199,14 +195,10 @@ class MLApiService {
           return _getPopularProducts(limit: limit, category: category);
         }
 
-        print(
-          'ML API: Recommendations successful, found ${productsData.length} products',
-        );
+        print('ML API: Recommendations successful, found ${productsData.length} products');
         return await _parseProductList(productsData);
       } else {
-        print(
-          'ML API: Recommendations failed with status ${response.statusCode}',
-        );
+        print('ML API: Recommendations failed with status ${response.statusCode}');
         throw Exception('Recommendations failed: ${response.statusCode}');
       }
     } catch (e) {
@@ -224,12 +216,9 @@ class MLApiService {
     String timeFrame = 'week',
   }) async {
     print('ML API: Getting trending products (timeframe: $timeFrame)');
-
+    
     try {
-      final response = await _makeRequest(
-        'GET',
-        '$trendingEndpoint?days=7&limit=$limit',
-      );
+      final response = await _makeRequest('GET', '$trendingEndpoint?days=7&limit=$limit');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -242,15 +231,11 @@ class MLApiService {
         } else if (data['products'] != null) {
           productsData = data['products'];
         } else {
-          print(
-            'ML API: Unexpected trending response format, using popular products',
-          );
+          print('ML API: Unexpected trending response format, using popular products');
           return _getPopularProducts(limit: limit, category: category);
         }
 
-        print(
-          'ML API: Trending products successful, found ${productsData.length} products',
-        );
+        print('ML API: Trending products successful, found ${productsData.length} products');
         return await _parseProductList(productsData);
       } else {
         print('ML API: Trending failed with status ${response.statusCode}');
@@ -270,7 +255,7 @@ class MLApiService {
     int limit = 8,
   }) async {
     print(' ML API: Getting similar products for product $productId');
-
+    
     try {
       final isReachable = await isApiReachable();
       if (!isReachable) {
@@ -285,14 +270,10 @@ class MLApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(
-          'ML API: Similar products successful, found ${data['similar_products']?.length ?? 0} products',
-        );
+        print('ML API: Similar products successful, found ${data['similar_products']?.length ?? 0} products');
         return _parseProductList(data['similar_products']);
       } else {
-        print(
-          'ML API: Similar products failed with status ${response.statusCode}',
-        );
+        print('ML API: Similar products failed with status ${response.statusCode}');
         return [];
       }
     } catch (e) {
@@ -309,10 +290,8 @@ class MLApiService {
     required String interactionType,
     Map<String, dynamic>? metadata,
   }) async {
-    print(
-      'ML API: Recording interaction - $interactionType for product $productId',
-    );
-
+    print('ML API: Recording interaction - $interactionType for product $productId');
+    
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
@@ -337,7 +316,7 @@ class MLApiService {
           'metadata': metadata ?? {},
         },
       );
-
+      
       print('ML API: Interaction recorded successfully');
     } catch (e) {
       print('ML API: Failed to record interaction (non-critical)');
@@ -353,42 +332,35 @@ class MLApiService {
     int limit = 5,
   }) async {
     print(' ML API: Getting search suggestions for "$partialQuery"');
-
+    
     try {
       // Since your API doesn't have search suggestions, we'll create them from existing products
       final products = await ProductService.getAllProducts();
       final suggestions = <String>[];
       final partialLower = partialQuery.toLowerCase();
-
+      
       // Get product names and categories that match the partial query
       for (final product in products) {
         if (suggestions.length >= limit) break;
-
+        
         if (product.name.toLowerCase().contains(partialLower)) {
           suggestions.add(product.name);
-        } else if (product.category != null &&
-            product.category!.toLowerCase().contains(partialLower) &&
-            !suggestions.contains(product.category!)) {
+        } else if (product.category != null && 
+                 product.category!.toLowerCase().contains(partialLower) &&
+                 !suggestions.contains(product.category!)) {
           suggestions.add(product.category!);
         }
       }
-
+      
       // Add common search terms if we don't have enough suggestions
-      final commonTerms = [
-        'laptop',
-        'phone',
-        'books',
-        'furniture',
-        'electronics',
-      ];
+      final commonTerms = ['laptop', 'phone', 'books', 'furniture', 'electronics'];
       for (final term in commonTerms) {
         if (suggestions.length >= limit) break;
-        if (term.toLowerCase().contains(partialLower) &&
-            !suggestions.contains(term)) {
+        if (term.toLowerCase().contains(partialLower) && !suggestions.contains(term)) {
           suggestions.add(term);
         }
       }
-
+      
       print('ML API: Generated ${suggestions.length} search suggestions');
       return suggestions;
     } catch (e) {
@@ -404,13 +376,11 @@ class MLApiService {
     required String category,
     int limit = 10,
   }) async {
-    print(' ML API: Getting category recommendations for "$category"');
-
+    print( ML API: Getting category recommendations for "$category"');
+    
     try {
       final products = await ProductService.getProductsByCategory(category);
-      print(
-        'ML API: Found ${products.length} products in category "$category"',
-      );
+      print('ML API: Found ${products.length} products in category "$category"');
       return products.take(limit).toList();
     } catch (e) {
       print('ML API: Category recommendations failed');
@@ -436,10 +406,8 @@ class MLApiService {
           .timeout(const Duration(seconds: 3));
 
       final isReachable = response.statusCode == 200;
-      print(
-        '${isReachable ? '✅' : '❌'} ML API: Service ${isReachable ? 'is' : 'is not'} reachable',
-      );
-
+      print('${isReachable ? '✅' : '❌'} ML API: Service ${isReachable ? 'is' : 'is not'} reachable');
+      
       if (isReachable) {
         final data = jsonDecode(response.body);
         print('   Response: ${data['message'] ?? 'OK'}');
@@ -447,7 +415,7 @@ class MLApiService {
 
       return isReachable;
     } catch (e) {
-      print('ML API: Service health check failed');
+      print('❌ ML API: Service health check failed');
       print('   Error: $e');
       return false;
     }
@@ -456,12 +424,12 @@ class MLApiService {
   /// Test the ML API connection and functionality
   /// Performs a comprehensive health check
   static Future<bool> testConnection() async {
-    print('ML API: Testing connection and functionality');
-
+    print('🧪 ML API: Testing connection and functionality');
+    
     try {
       final isReachable = await isApiReachable();
       if (!isReachable) {
-        print('ML API: Service is not reachable');
+        print('❌ ML API: Service is not reachable');
         return false;
       }
 
@@ -469,17 +437,15 @@ class MLApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('ML API: Connection test successful');
+        print('✅ ML API: Connection test successful');
         print('   Service: ${data['message'] ?? 'OK'}');
         return true;
       } else {
-        print(
-          'ML API: Connection test failed with status ${response.statusCode}',
-        );
+        print('❌ ML API: Connection test failed with status ${response.statusCode}');
         return false;
       }
     } catch (e) {
-      print('ML API: Connection test failed');
+      print('❌ ML API: Connection test failed');
       print('   Error: $e');
       return false;
     }
@@ -488,8 +454,8 @@ class MLApiService {
   /// Get comprehensive API status and configuration
   /// Returns detailed information about the ML service
   static Future<Map<String, dynamic>> getApiStatus() async {
-    print('ML API: Getting service status and configuration');
-
+    print('📊 ML API: Getting service status and configuration');
+    
     try {
       final isConnected = await testConnection();
       final status = {
@@ -504,14 +470,14 @@ class MLApiService {
         },
         'config': {'timeout': _timeout.inSeconds, 'headers': _headers},
       };
-
-      print('ML API: Status retrieved successfully');
+      
+      print('✅ ML API: Status retrieved successfully');
       print('   Connected: $isConnected');
       print('   Base URL: $baseUrl');
-
+      
       return status;
     } catch (e) {
-      print('ML API: Failed to get status');
+      print('❌ ML API: Failed to get status');
       print('   Error: $e');
       return {'connected': false, 'error': e.toString(), 'baseUrl': baseUrl};
     }
@@ -519,11 +485,9 @@ class MLApiService {
 
   /// Parse product list from API response with real image URLs
   /// Converts API data to our Product model format
-  static Future<List<Product>> _parseProductList(
-    List<dynamic> productsData,
-  ) async {
-    print('ML API: Parsing ${productsData.length} products from response');
-
+  static Future<List<Product>> _parseProductList(List<dynamic> productsData) async {
+    print('🔧 ML API: Parsing ${productsData.length} products from response');
+    
     final products = <Product>[];
 
     for (final productData in productsData) {
@@ -543,8 +507,7 @@ class MLApiService {
       }
 
       if (imageUrl.isEmpty) {
-        imageUrl =
-            'https://via.placeholder.com/300x300/cccccc/ffffff?text=Product';
+        imageUrl = 'https://via.placeholder.com/300x300/cccccc/ffffff?text=Product';
       }
 
       final product = Product(
@@ -558,14 +521,11 @@ class MLApiService {
         location: data['location'] ?? 'Kampala',
         rating: (data['rating'] ?? data['score'] as num?)?.toDouble() ?? 0.0,
         imageUrl: imageUrl,
-        imageUrls: data['imageUrls'] != null
-            ? List<String>.from(data['imageUrls'])
-            : [],
+        imageUrls: data['imageUrls'] != null ? List<String>.from(data['imageUrls']) : [],
         bestOffer: data['bestOffer'] ?? false,
         category: data['category'] ?? '',
         price: (data['price'] as num?)?.toDouble() ?? 0.0,
-        discountPercentage:
-            (data['discountPercentage'] as num?)?.toDouble() ?? 0.0,
+        discountPercentage: (data['discountPercentage'] as num?)?.toDouble() ?? 0.0,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         stock: data['stock'] ?? 10,
@@ -574,23 +534,21 @@ class MLApiService {
       products.add(product);
     }
 
-    print('ML API: Successfully parsed ${products.length} products');
+    print('✅ ML API: Successfully parsed ${products.length} products');
     return products;
   }
 
   /// Fallback search when ML API is unavailable
   /// Uses basic Firebase search as backup
   static Future<List<Product>> _fallbackSearch(String query, int limit) async {
-    print('ML API: Using fallback search for "$query"');
-
+    print('🔄 ML API: Using fallback search for "$query"');
+    
     try {
       final results = await ProductService.searchProducts(query);
-      print(
-        'ML API: Fallback search successful, found ${results.length} results',
-      );
+      print('✅ ML API: Fallback search successful, found ${results.length} results');
       return results;
     } catch (e) {
-      print('ML API: Fallback search failed');
+      print('❌ ML API: Fallback search failed');
       print('   Error: $e');
       return [];
     }
@@ -602,13 +560,13 @@ class MLApiService {
     int limit = 10,
     String? category,
   }) async {
-    print('ML API: Getting popular products from Firebase');
-
+    print('🔄 ML API: Getting popular products from Firebase');
+    
     try {
       final products = await ProductService.getAllProducts();
 
       if (products.isEmpty) {
-        print('ML API: No products available for fallback');
+        print('⚠️ ML API: No products available for fallback');
         return [];
       }
 
@@ -616,19 +574,18 @@ class MLApiService {
       if (category != null && category.isNotEmpty) {
         filteredProducts = products
             .where(
-              (product) =>
-                  product.category?.toLowerCase() == category.toLowerCase(),
+              (product) => product.category?.toLowerCase() == category.toLowerCase(),
             )
             .toList();
       }
 
       filteredProducts.sort((a, b) => b.rating.compareTo(a.rating));
       final result = filteredProducts.take(limit).toList();
-
-      print('ML API: Found ${result.length} popular products from Firebase');
+      
+      print('✅ ML API: Found ${result.length} popular products from Firebase');
       return result;
     } catch (e) {
-      print('ML API: Fallback popular products failed');
+      print('❌ ML API: Fallback popular products failed');
       print('   Error: $e');
       return [];
     }
@@ -638,24 +595,22 @@ class MLApiService {
   /// Used to determine if we should switch to fallback mode
   static Future<bool> isLocalhostRunning() async {
     try {
-      final localhostUrl = Platform.isAndroid
-          ? MLConfig.androidLocalhostUrl
+      final localhostUrl = Platform.isAndroid 
+          ? MLConfig.androidLocalhostUrl 
           : MLConfig.localhostBaseUrl;
-
-      print('ML API: Checking if localhost is running at $localhostUrl');
-
+      
+      print('🔍 ML API: Checking if localhost is running at $localhostUrl');
+      
       final response = await _client
           .get(Uri.parse('$localhostUrl/'))
           .timeout(const Duration(seconds: 2));
-
+      
       final isRunning = response.statusCode == 200;
-      print(
-        '${isRunning ? '✅' : '❌'} ML API: Localhost ${isRunning ? 'is' : 'is not'} running',
-      );
-
+      print('${isRunning ? '✅' : '❌'} ML API: Localhost ${isRunning ? 'is' : 'is not'} running');
+      
       return isRunning;
     } catch (e) {
-      print(' ML API: Localhost not running');
+      print('ML API: Localhost not running');
       print('   Error: $e');
       return false;
     }
@@ -665,20 +620,18 @@ class MLApiService {
   /// Automatically restores primary service when it becomes available
   static Future<void> checkAndSwitchToPrimary() async {
     if (MLConfig.isUsingFallback) {
-      print(' ML API: Checking if primary service is back online');
-
+      print('ML API: Checking if primary service is back online');
+      
       try {
         MLConfig.switchToPrimary();
         final response = await _client
             .get(Uri.parse('${MLConfig.renderBaseUrl}/'))
             .timeout(const Duration(seconds: 3));
-
+        
         if (response.statusCode == 200) {
           print('ML API: Primary service is back online, staying with primary');
         } else {
-          print(
-            'ML API: Primary service still down, switching back to fallback',
-          );
+          print('ML API: Primary service still down, switching back to fallback');
           MLConfig.switchToFallback();
         }
       } catch (e) {
@@ -694,12 +647,10 @@ class MLApiService {
   static Future<void> smartFallbackCheck() async {
     if (MLConfig.isUsingFallback) {
       print('ML API: Performing smart fallback check');
-
+      
       final localhostRunning = await isLocalhostRunning();
       if (!localhostRunning) {
-        print(
-          'ML API: Localhost fallback not running, switching back to Render service',
-        );
+        print('ML API: Localhost fallback not running, switching back to Render service');
         MLConfig.switchToPrimary();
       } else {
         print('ML API: Localhost fallback is running, staying with fallback');
