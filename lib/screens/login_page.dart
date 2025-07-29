@@ -332,40 +332,43 @@ class _LoginPageState extends State<LoginPage> {
 
                               //onTap: () =>
                               //AuthService().signInWithGoogle(),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(15),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                    sigmaX: 10.0,
-                                    sigmaY: 10.0,
-                                  ),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.borderGrey.withOpacity(
-                                        0.2,
-                                      ),
-                                      borderRadius: BorderRadius.circular(15),
-                                      border: Border.all(
-                                        color: Colors.white.withOpacity(0.3),
-                                        width: 1.5,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.white.withOpacity(0.05),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
+                              child: Padding(
+                                padding:EdgeInsets.symmetric(horizontal:12.0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 10.0,
+                                      sigmaY: 10.0,
+                                    ),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.borderGrey.withOpacity(
+                                          0.2,
                                         ),
-                                      ],
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 150.0,
-                                      vertical: 6.0,
-                                    ),
-                                    child: Image.asset(
-                                      'lib/images/Icon-google.png',
-                                      height: 25,
-                                      width: 90,
-                                      fit: BoxFit.contain,
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.3),
+                                          width: 1.5,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.white.withOpacity(0.05),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 150.0,
+                                        vertical: 6.0,
+                                      ),
+                                      child: Image.asset(
+                                        'lib/images/Icon-google.png',
+                                        height: 25,
+                                        width: 90,
+                                        fit: BoxFit.contain,
+                                      ),
                                     ),
                                   ),
                                 ),

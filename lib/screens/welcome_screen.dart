@@ -75,7 +75,7 @@ class WelcomeScreen extends StatelessWidget {
                     child: Row(
                       children: [
                         // Welcome text on the left
-                        const Expanded(
+                        /*const Expanded(
                           flex: 1,
                           child: Text(
                             'Welcome',
@@ -85,7 +85,7 @@ class WelcomeScreen extends StatelessWidget {
                               color: Colors.black,
                             ),
                           ),
-                        ),
+                        ),*/
                         // Image on the right
                         Expanded(
                           flex: 2,
