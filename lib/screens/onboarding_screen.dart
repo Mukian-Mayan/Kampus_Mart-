@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:kampusmart2/screens/login_or_register_page.dart';
 import '../Theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
@@ -95,32 +96,29 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   position: _slideAnimation,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
+                    child: Column(
                       children: [
-                        // Image section (moved to left)
+                        // Image section (full width)
+                        Expanded(flex: 3, child: const IllustrationWidget()),
+
+                        const SizedBox(height: 2),
+
+                        // Text section below image
                         Expanded(
-                          flex: 3,
-                          child: const IllustrationWidget(),
-                        ),
-                        
-                        const SizedBox(width: 16),
-                        
-                        // Text section on the right
-                        Expanded(
-                          flex: 2,
+                          flex: 1,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'Where the right seller meets the right buyer',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
+                                'Connecting The Right Seller To The Right Buyer',
+                                style: GoogleFonts.dancingScript(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w100,
+                                  color: Colors.black,
                                   height: 1.3,
                                 ),
-                                textAlign: TextAlign.left,
+                                textAlign: TextAlign.center,
                               ),
                             ],
                           ),

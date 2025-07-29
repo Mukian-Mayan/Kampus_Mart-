@@ -188,7 +188,7 @@ class _ProductRecommendationsState extends State<ProductRecommendations> {
               product: product,
               onTap: () {
                 // Record interaction for ML
-                EnhancedProductService.clickProduct(product.id);
+                EnhancedProductService.clickProduct(productId: product.id);
                 // Navigate to product details
                 Navigator.pushNamed(
                   context,
@@ -388,7 +388,7 @@ class _TrendingProductsState extends State<TrendingProducts> {
               product: product,
               onTap: () {
                 // Record interaction for ML
-                EnhancedProductService.clickProduct(product.id);
+                EnhancedProductService.clickProduct(productId: product.id);
                 // Navigate to product details
                 Navigator.pushNamed(
                   context,

@@ -53,20 +53,7 @@ class IllustrationWidget extends StatelessWidget {
           ),
         ),
         
-        // "the Right" text positioned at bottom left
-        Positioned(
-          left: 20,
-          bottom: 20,
-          child: const Text(
-            'the Right'
-                'seller',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+        // "the Rightseller" text removed as requested
       ],
     );
   }

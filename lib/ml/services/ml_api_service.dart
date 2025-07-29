@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../models/product.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,34 +7,40 @@ import '../config/ml_config.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/product_service.dart';
 
+/// ML API Service - Handles all communication with our deployed ML service
+/// This service provides intelligent search, recommendations, and trending analysis
+/// It automatically handles fallback to localhost when the deployed service is unavailable
 class MLApiService {
-  // Base URL for your ML API
+  /// Get the current base URL for ML API requests
+  /// This automatically switches between Render and localhost based on availability
   static String get baseUrl => MLConfig.apiBaseUrl;
 
-  // API endpoints - Updated to match your real API
+  /// API endpoints for different ML features
   static String get searchEndpoint => '/search';
   static String get recommendEndpoint => '/recommendations';
   static String get trendingEndpoint => '/trending';
   static String get similarProductsEndpoint => '/similar-products';
   static String get productDetailsEndpoint => '/products';
 
-  //static String get apiKey => MLConfig.apiKeyValue;
-
-  // HTTP client with better connection management
+  /// HTTP client for making requests to the ML API
+  /// Configured with connection pooling for better performance
   static final http.Client _client = http.Client();
 
-  // Connection timeout
-  static const Duration _timeout = Duration(seconds: 10);
+  /// Request timeout - reduced for faster fallback detection
+  static const Duration _timeout = Duration(seconds: 5);
 
-  // Headers for API requests (no Authorization needed)
+  /// HTTP headers for API requests
+  /// Includes proper content type and host headers for routing
   static Map<String, String> get _headers => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Connection': 'keep-alive',
-    'Host': 'localhost:8000',
+    'Host': MLConfig.hostHeader,
   };
 
-  /// Make HTTP request with retry mechanism
+  /// Make HTTP request with intelligent retry and fallback logic
+  /// This method handles automatic switching between Render and localhost
+  /// when the primary service becomes unavailable
   static Future<http.Response> _makeRequest(
     String method,
     String endpoint, {
@@ -41,18 +48,18 @@ class MLApiService {
     int maxRetries = 2,
   }) async {
     int attempt = 0;
+    bool triedFallback = false;
 
     while (attempt <= maxRetries) {
       try {
-        // Ensure we're using the correct base URL
         final baseUrl = MLConfig.apiBaseUrl;
         final uri = Uri.parse('$baseUrl$endpoint');
 
+        print('ML API: Making $method request to $endpoint');
+        print('   URL: $uri');
         print(
-          'Making $method request to: $uri (attempt ${attempt + 1}/${maxRetries + 1})',
+          '   Using: ${MLConfig.isUsingFallback ? 'Fallback' : 'Primary'} service',
         );
-        print('Base URL: $baseUrl');
-        print('Full URL: $uri');
 
         http.Response response;
 
@@ -75,21 +82,40 @@ class MLApiService {
             throw Exception('Unsupported HTTP method: $method');
         }
 
-        print('Response status: ${response.statusCode}');
+        print('ML API: Request successful (Status: ${response.statusCode})');
+
+        // If we're using fallback and got a successful response, try switching back to primary
+        if (MLConfig.isUsingFallback && response.statusCode == 200) {
+          print(
+            'ML API: Fallback successful, attempting to switch back to primary service',
+          );
+          MLConfig.switchToPrimary();
+        }
+
         return response;
       } catch (e) {
         attempt++;
-        print('HTTP request failed (attempt $attempt/${maxRetries + 1}): $e');
-        print(
-          'Request details - Method: $method, Endpoint: $endpoint, Base URL: ${MLConfig.apiBaseUrl}',
-        );
+        print(' ML API: Request failed (attempt $attempt/${maxRetries + 1})');
+        print('   Error: $e');
+        print('   Endpoint: $endpoint');
+
+        // Only switch to fallback if we've exhausted all retries and we're not already using fallback
+        if (!triedFallback &&
+            !MLConfig.isUsingFallback &&
+            attempt >= maxRetries) {
+          print('ML API: Primary service failed, switching to fallback');
+          MLConfig.switchToFallback();
+          triedFallback = true;
+          attempt = 0; // Reset attempt counter for fallback
+          continue;
+        }
 
         if (attempt > maxRetries) {
-          print('Max retries reached, giving up');
+          print('ML API: Max retries reached, giving up');
           rethrow;
         }
 
-        // Wait before retrying
+        // Wait before retrying with exponential backoff
         await Future.delayed(Duration(seconds: attempt));
       }
     }
@@ -97,56 +123,60 @@ class MLApiService {
     throw Exception('Unexpected error in _makeRequest');
   }
 
-  /// Enhanced semantic search using ML model
+  /// Enhanced semantic search using our ML model
+  /// Provides intelligent search results based on meaning, not just keywords
   static Future<List<Product>> semanticSearch({
     required String query,
     int limit = 20,
     Map<String, dynamic>? filters,
   }) async {
+    print('ML API: Starting semantic search for "$query"');
+
     try {
       final response = await _makeRequest(
         'POST',
         '/search',
-        body: {
-          'query': query,
-          'num_results': limit,
-        },
+        body: {'query': query, 'num_results': limit},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print(
+          'ML API: Semantic search successful, found ${data['products']?.length ?? 0} results',
+        );
         return _parseProductList(data['products']);
       } else {
+        print(
+          'ML API: Semantic search failed with status ${response.statusCode}',
+        );
         throw Exception('Search failed: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error in semantic search: $e');
-      // Fallback to basic search if ML API fails
+      print('ML API: Semantic search failed, falling back to basic search');
+      print('   Error: $e');
       return _fallbackSearch(query, limit);
     }
   }
 
-  /// Get personalized product recommendations
+  /// Get personalized product recommendations based on user behavior
+  /// Uses collaborative filtering to suggest products the user might like
   static Future<List<Product>> getRecommendations({
     int limit = 10,
     String? category,
     Map<String, dynamic>? userPreferences,
   }) async {
+    print('ML API: Getting personalized recommendations');
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        print('No user logged in, using fallback products');
+        print('ML API: No user logged in, using popular products');
         return _getPopularProducts(limit: limit, category: category);
       }
 
-      final requestBody = {
-        'user_id': user.uid,
-        'num_recommendations': limit,
-      };
+      final requestBody = {'user_id': user.uid, 'num_recommendations': limit};
 
-      print(
-        'Calling recommendations API with body: ${jsonEncode(requestBody)}',
-      );
+      print('ML API: Requesting recommendations for user ${user.uid}');
 
       final response = await _makeRequest(
         'POST',
@@ -154,14 +184,9 @@ class MLApiService {
         body: requestBody,
       );
 
-      print('Recommendations API response status: ${response.statusCode}');
-      print('Recommendations API response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('Parsed response data: $data');
 
-        // Handle direct array response from API
         List<dynamic> productsData = [];
         if (data is List) {
           productsData = data;
@@ -170,75 +195,86 @@ class MLApiService {
         } else if (data['products'] != null) {
           productsData = data['products'];
         } else {
-          print('Unexpected response format: $data');
+          print('ML API: Unexpected response format, using popular products');
           return _getPopularProducts(limit: limit, category: category);
         }
 
-        print('Products data to parse: $productsData');
+        print(
+          'ML API: Recommendations successful, found ${productsData.length} products',
+        );
         return await _parseProductList(productsData);
       } else {
+        print(
+          'ML API: Recommendations failed with status ${response.statusCode}',
+        );
         throw Exception('Recommendations failed: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getting recommendations: $e');
-      // Fallback to popular products
+      print('ML API: Recommendations failed, falling back to popular products');
+      print('   Error: $e');
       return _getPopularProducts(limit: limit, category: category);
     }
   }
 
-  /// Get trending products using ML analysis
+  /// Get trending products based on recent user interactions
+  /// Analyzes user behavior to identify what's currently popular
   static Future<List<Product>> getTrendingProducts({
     int limit = 10,
     String? category,
-    String timeFrame = 'week', // 'day', 'week', 'month'
+    String timeFrame = 'week',
   }) async {
+    print('ML API: Getting trending products (timeframe: $timeFrame)');
+
     try {
-      print('Calling trending API...');
-
-      final response = await _makeRequest('GET', '$trendingEndpoint?days=7&limit=$limit');
-
-      print('Trending API response status: ${response.statusCode}');
-      print('Trending API response body: ${response.body}');
+      final response = await _makeRequest(
+        'GET',
+        '$trendingEndpoint?days=7&limit=$limit',
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('Parsed trending response data: $data');
 
-        // Handle direct array response from API
         List<dynamic> productsData = [];
         if (data is List) {
           productsData = data;
-        } else if (data['trending_products'] != null) {
-          productsData = data['trending_products'];
+        } else if (data['trending'] != null) {
+          productsData = data['trending'];
         } else if (data['products'] != null) {
           productsData = data['products'];
         } else {
-          print('Unexpected trending response format: $data');
+          print(
+            'ML API: Unexpected trending response format, using popular products',
+          );
           return _getPopularProducts(limit: limit, category: category);
         }
 
-        print('Trending products data to parse: $productsData');
+        print(
+          'ML API: Trending products successful, found ${productsData.length} products',
+        );
         return await _parseProductList(productsData);
       } else {
-        throw Exception('Trending products failed: ${response.statusCode}');
+        print('ML API: Trending failed with status ${response.statusCode}');
+        throw Exception('Trending failed: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getting trending products: $e');
-      // Fallback to popular products
+      print('ML API: Trending failed, falling back to popular products');
+      print('   Error: $e');
       return _getPopularProducts(limit: limit, category: category);
     }
   }
 
-  /// Get similar products based on a product
+  /// Get similar products based on a given product
+  /// Uses ML to find products that are similar in features or user preferences
   static Future<List<Product>> getSimilarProducts({
     required String productId,
     int limit = 8,
   }) async {
+    print(' ML API: Getting similar products for product $productId');
+
     try {
-      // First check if API is reachable
       final isReachable = await isApiReachable();
       if (!isReachable) {
-        print('ML API not reachable');
+        print('ML API: Service not reachable for similar products');
         return [];
       }
 
@@ -249,27 +285,46 @@ class MLApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print(
+          'ML API: Similar products successful, found ${data['similar_products']?.length ?? 0} products',
+        );
         return _parseProductList(data['similar_products']);
       } else {
-        print('Similar products API returned status: ${response.statusCode}');
+        print(
+          'ML API: Similar products failed with status ${response.statusCode}',
+        );
         return [];
       }
     } catch (e) {
-      print('Error getting similar products from ML API: $e');
-      print('This is expected behavior - the app will use fallback methods');
+      print('ML API: Similar products failed');
+      print('   Error: $e');
       return [];
     }
   }
 
-  /// Record user interaction for ML training
+  /// Record user interaction for ML training and personalization
+  /// This helps improve recommendations and trending analysis
   static Future<void> recordInteraction({
     required String productId,
-    required String interactionType, // 'view', 'click', 'purchase', 'favorite'
+    required String interactionType,
     Map<String, dynamic>? metadata,
   }) async {
+    print(
+      'ML API: Recording interaction - $interactionType for product $productId',
+    );
+
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        print('ML API: No user logged in, skipping interaction recording');
+        return;
+      }
+
+      final isReachable = await isApiReachable();
+      if (!isReachable) {
+        print('ML API: Service not reachable, skipping interaction recording');
+        return;
+      }
 
       await _makeRequest(
         'POST',
@@ -282,332 +337,131 @@ class MLApiService {
           'metadata': metadata ?? {},
         },
       );
+
+      print('ML API: Interaction recorded successfully');
     } catch (e) {
-      print('Error recording interaction: $e');
+      print('ML API: Failed to record interaction (non-critical)');
+      print('   Error: $e');
+      // Non-critical functionality, don't throw
     }
   }
 
-  /// Get search suggestions based on user behavior
+  /// Get search suggestions based on user behavior and product data
+  /// Provides intelligent autocomplete suggestions
   static Future<List<String>> getSearchSuggestions({
     required String partialQuery,
     int limit = 5,
   }) async {
+    print(' ML API: Getting search suggestions for "$partialQuery"');
+
     try {
       // Since your API doesn't have search suggestions, we'll create them from existing products
       final products = await ProductService.getAllProducts();
       final suggestions = <String>[];
       final partialLower = partialQuery.toLowerCase();
-      
+
       // Get product names and categories that match the partial query
       for (final product in products) {
         if (suggestions.length >= limit) break;
-        
-        // Check product name
+
         if (product.name.toLowerCase().contains(partialLower)) {
           suggestions.add(product.name);
-        }
-        // Check category
-        else if (product.category != null && 
-                 product.category!.toLowerCase().contains(partialLower) &&
-                 !suggestions.contains(product.category!)) {
+        } else if (product.category != null &&
+            product.category!.toLowerCase().contains(partialLower) &&
+            !suggestions.contains(product.category!)) {
           suggestions.add(product.category!);
         }
       }
-      
+
       // Add common search terms if we don't have enough suggestions
-      final commonTerms = ['laptop', 'phone', 'books', 'furniture', 'electronics'];
+      final commonTerms = [
+        'laptop',
+        'phone',
+        'books',
+        'furniture',
+        'electronics',
+      ];
       for (final term in commonTerms) {
         if (suggestions.length >= limit) break;
-        if (term.toLowerCase().contains(partialLower) && !suggestions.contains(term)) {
+        if (term.toLowerCase().contains(partialLower) &&
+            !suggestions.contains(term)) {
           suggestions.add(term);
         }
       }
-      
+
+      print('ML API: Generated ${suggestions.length} search suggestions');
       return suggestions;
     } catch (e) {
-      print('Error getting search suggestions: $e');
+      print('ML API: Failed to generate search suggestions');
+      print('   Error: $e');
       return [];
     }
   }
 
   /// Get category-based recommendations
+  /// Suggests products within a specific category
   static Future<List<Product>> getCategoryRecommendations({
     required String category,
     int limit = 10,
   }) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
+    print(' ML API: Getting category recommendations for "$category"');
 
-      final response = await _client.post(
-        Uri.parse('$baseUrl/category-recommendations'),
-        headers: _headers,
-        body: jsonEncode({
-          'category': category,
-          'user_id': user?.uid,
-          'limit': limit,
-        }),
+    try {
+      final products = await ProductService.getProductsByCategory(category);
+      print(
+        'ML API: Found ${products.length} products in category "$category"',
       );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return _parseProductList(data['recommendations']);
-      } else {
-        throw Exception(
-          'Category recommendations failed: ${response.statusCode}',
-        );
-      }
+      return products.take(limit).toList();
     } catch (e) {
-      print('Error getting category recommendations: $e');
-      return _getPopularProducts(limit: limit, category: category);
-    }
-  }
-
-  /// Sync app's products with ML API
-  static Future<bool> syncProductsWithML() async {
-    try {
-      print('Syncing products with ML API...');
-
-      // Get all products from Firestore
-      final products = await ProductService.getAllProducts();
-      print('Found ${products.length} products to sync');
-
-      if (products.isEmpty) {
-        print('No products to sync');
-        return false;
-      }
-
-      // Convert products to ML API format
-      final productsData = products
-          .map(
-            (product) => {
-              'product_id': product.id,
-              'name': product.name,
-              'description': product.description,
-              'price': product.price ?? 0.0,
-              'category': product.category ?? '',
-              'image_url': product.imageUrl,
-              'seller_id': product.ownerId,
-              'condition': product.condition,
-              'location': product.location,
-              'rating': product.rating,
-              'stock': product.stock ?? 0,
-              'created_at': product.createdAt?.toIso8601String(),
-              'updated_at': product.updatedAt?.toIso8601String(),
-            },
-          )
-          .toList();
-
-      final url = '$baseUrl/sync-products';
-      print('Calling sync products API: $url');
-      print('Syncing ${productsData.length} products');
-
-      final response = await _client.post(
-        Uri.parse(url),
-        headers: _headers,
-        body: jsonEncode({'products': productsData}),
-      );
-
-      print('Sync products API response status: ${response.statusCode}');
-      print('Sync products API response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        print('Products synced successfully with ML API');
-        return true;
-      } else {
-        print('Failed to sync products: ${response.statusCode}');
-        return false;
-      }
-    } catch (e) {
-      print('Error syncing products with ML API: $e');
-      return false;
-    }
-  }
-
-  /// Sync user interactions with ML API
-  static Future<bool> syncUserInteractions() async {
-    try {
-      print('Syncing user interactions with ML API...');
-
-      // Get user interactions from your app's data
-      // This would typically come from your analytics or interaction tracking
-      final interactions = await _getUserInteractions();
-      print('Found ${interactions.length} interactions to sync');
-
-      if (interactions.isEmpty) {
-        print('No interactions to sync');
-        return false;
-      }
-
-      final url = '$baseUrl/sync-interactions';
-      print('Calling sync interactions API: $url');
-
-      final response = await _client.post(
-        Uri.parse(url),
-        headers: _headers,
-        body: jsonEncode({'interactions': interactions}),
-      );
-
-      print('Sync interactions API response status: ${response.statusCode}');
-      print('Sync interactions API response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        print('User interactions synced successfully with ML API');
-        return true;
-      } else {
-        print('Failed to sync interactions: ${response.statusCode}');
-        return false;
-      }
-    } catch (e) {
-      print('Error syncing user interactions with ML API: $e');
-      return false;
-    }
-  }
-
-  /// Get user interactions from your app's data sources
-  static Future<List<Map<String, dynamic>>> _getUserInteractions() async {
-    try {
-      final interactions = <Map<String, dynamic>>[];
-
-      // Get current user
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        print('No user logged in, cannot get interactions');
-        return interactions;
-      }
-
-      // Get user's cart items (view interactions)
-      final cartItems = await FirebaseFirestore.instance
-          .collection('carts')
-          .doc(user.uid)
-          .collection('products')
-          .get();
-
-      for (var doc in cartItems.docs) {
-        final data = doc.data();
-        interactions.add({
-          'user_id': user.uid,
-          'product_id': data['productId'] ?? '',
-          'interaction_type': 'view',
-          'timestamp': DateTime.now().toIso8601String(),
-          'metadata': {'source': 'cart', 'quantity': data['quantity'] ?? 1},
-        });
-      }
-
-      // Get user's orders (purchase interactions)
-      final orders = await FirebaseFirestore.instance
-          .collection('orders')
-          .where('userId', isEqualTo: user.uid)
-          .get();
-
-      for (var doc in orders.docs) {
-        final data = doc.data();
-        final orderItems = data['items'] as List<dynamic>? ?? [];
-
-        for (var item in orderItems) {
-          interactions.add({
-            'user_id': user.uid,
-            'product_id': item['productId'] ?? '',
-            'interaction_type': 'purchase',
-            'timestamp':
-                (data['createdAt'] as Timestamp?)?.toDate().toIso8601String() ??
-                DateTime.now().toIso8601String(),
-            'metadata': {
-              'source': 'order',
-              'order_id': doc.id,
-              'quantity': item['quantity'] ?? 1,
-              'price': item['price'] ?? 0.0,
-            },
-          });
-        }
-      }
-
-      // Get user's favorites (like interactions)
-      final favorites = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('favorites')
-          .get();
-
-      for (var doc in favorites.docs) {
-        interactions.add({
-          'user_id': user.uid,
-          'product_id': doc.id,
-          'interaction_type': 'like',
-          'timestamp': DateTime.now().toIso8601String(),
-          'metadata': {'source': 'favorites'},
-        });
-      }
-
-      print('Collected ${interactions.length} user interactions');
-      return interactions;
-    } catch (e) {
-      print('Error getting user interactions: $e');
+      print('ML API: Category recommendations failed');
+      print('   Error: $e');
       return [];
     }
   }
 
-  /// Initialize ML integration with real data
-  static Future<bool> initializeMLWithRealData() async {
-    try {
-      print('Initializing ML integration with real data...');
-
-      // Sync products first
-      final productsSynced = await syncProductsWithML();
-      if (!productsSynced) {
-        print('Failed to sync products, but continuing...');
-      }
-
-      // Sync user interactions
-      final interactionsSynced = await syncUserInteractions();
-      if (!interactionsSynced) {
-        print('Failed to sync interactions, but continuing...');
-      }
-
-      print('ML integration initialization completed');
-      return productsSynced || interactionsSynced;
-    } catch (e) {
-      print('Error initializing ML integration: $e');
-      return false;
-    }
-  }
-
-  /// Check if ML API is reachable
+  /// Check if the ML API is reachable and responding
+  /// Used for health checks and fallback decisions
   static Future<bool> isApiReachable() async {
     try {
-      print('Checking if ML API is reachable...');
-
-      // Try a simple ping to the base URL
       final baseUrl = MLConfig.apiBaseUrl;
       final uri = Uri.parse('$baseUrl/');
 
-      print('Pinging: $uri');
+      print('ML API: Checking service health at $uri');
 
       final response = await _client
           .get(
             uri,
             headers: {'Accept': 'application/json', 'Connection': 'keep-alive'},
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 3));
 
       final isReachable = response.statusCode == 200;
-      print('ML API reachable: $isReachable (Status: ${response.statusCode})');
+      print(
+        '${isReachable ? '✅' : '❌'} ML API: Service ${isReachable ? 'is' : 'is not'} reachable',
+      );
+
+      if (isReachable) {
+        final data = jsonDecode(response.body);
+        print('   Response: ${data['message'] ?? 'OK'}');
+      }
 
       return isReachable;
     } catch (e) {
-      print('ML API not reachable: $e');
+      print('ML API: Service health check failed');
+      print('   Error: $e');
       return false;
     }
   }
 
-  /// Test ML API connection
+  /// Test the ML API connection and functionality
+  /// Performs a comprehensive health check
   static Future<bool> testConnection() async {
-    try {
-      print('Testing ML API connection...');
+    print('ML API: Testing connection and functionality');
 
-      // First check if API is reachable
+    try {
       final isReachable = await isApiReachable();
       if (!isReachable) {
-        print('❌ ML API is not reachable');
+        print('ML API: Service is not reachable');
         return false;
       }
 
@@ -615,23 +469,30 @@ class MLApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('✅ ML API connection successful: ${data['message']}');
+        print('ML API: Connection test successful');
+        print('   Service: ${data['message'] ?? 'OK'}');
         return true;
       } else {
-        print('❌ ML API connection failed: Status ${response.statusCode}');
+        print(
+          'ML API: Connection test failed with status ${response.statusCode}',
+        );
         return false;
       }
     } catch (e) {
-      print('❌ ML API connection failed: $e');
+      print('ML API: Connection test failed');
+      print('   Error: $e');
       return false;
     }
   }
 
-  /// Get ML API status and configuration
+  /// Get comprehensive API status and configuration
+  /// Returns detailed information about the ML service
   static Future<Map<String, dynamic>> getApiStatus() async {
+    print('ML API: Getting service status and configuration');
+
     try {
       final isConnected = await testConnection();
-      return {
+      final status = {
         'connected': isConnected,
         'baseUrl': baseUrl,
         'endpoints': {
@@ -643,45 +504,44 @@ class MLApiService {
         },
         'config': {'timeout': _timeout.inSeconds, 'headers': _headers},
       };
+
+      print('ML API: Status retrieved successfully');
+      print('   Connected: $isConnected');
+      print('   Base URL: $baseUrl');
+
+      return status;
     } catch (e) {
+      print('ML API: Failed to get status');
+      print('   Error: $e');
       return {'connected': false, 'error': e.toString(), 'baseUrl': baseUrl};
     }
   }
 
-  // Helper methods
-
   /// Parse product list from API response with real image URLs
+  /// Converts API data to our Product model format
   static Future<List<Product>> _parseProductList(
     List<dynamic> productsData,
   ) async {
+    print('ML API: Parsing ${productsData.length} products from response');
+
     final products = <Product>[];
 
     for (final productData in productsData) {
       final data = Map<String, dynamic>.from(productData);
       final productId = data['product_id'] ?? data['id'] ?? '';
 
-      // Try to get real product image from Firestore
       String imageUrl = data['imageUrl'] ?? data['image_url'] ?? '';
       if (imageUrl.isEmpty && productId.isNotEmpty) {
         try {
-          print('Fetching real image for product: $productId');
           final realProduct = await ProductService.getProductById(productId);
           if (realProduct != null && realProduct.imageUrl.isNotEmpty) {
             imageUrl = realProduct.imageUrl;
-            print('✅ Found real image for product $productId: $imageUrl');
-          } else {
-            print(
-              '⚠️ No real image found for product $productId, using placeholder',
-            );
           }
         } catch (e) {
-          print('❌ Error fetching real image for product $productId: $e');
+          // Continue with placeholder
         }
-      } else if (imageUrl.isNotEmpty) {
-        print('✅ Using image from ML API for product $productId: $imageUrl');
       }
 
-      // Use placeholder if no real image found
       if (imageUrl.isEmpty) {
         imageUrl =
             'https://via.placeholder.com/300x300/cccccc/ffffff?text=Product';
@@ -714,34 +574,44 @@ class MLApiService {
       products.add(product);
     }
 
+    print('ML API: Successfully parsed ${products.length} products');
     return products;
   }
 
   /// Fallback search when ML API is unavailable
+  /// Uses basic Firebase search as backup
   static Future<List<Product>> _fallbackSearch(String query, int limit) async {
+    print('ML API: Using fallback search for "$query"');
+
     try {
-      return await ProductService.searchProducts(query);
+      final results = await ProductService.searchProducts(query);
+      print(
+        'ML API: Fallback search successful, found ${results.length} results',
+      );
+      return results;
     } catch (e) {
-      print('Fallback search failed: $e');
+      print('ML API: Fallback search failed');
+      print('   Error: $e');
       return [];
     }
   }
 
   /// Fallback to popular products when ML API is unavailable
+  /// Returns top-rated products from Firebase
   static Future<List<Product>> _getPopularProducts({
     int limit = 10,
     String? category,
   }) async {
+    print('ML API: Getting popular products from Firebase');
+
     try {
-      print('Getting popular products from Firebase...');
       final products = await ProductService.getAllProducts();
 
       if (products.isEmpty) {
-        print('No products available for fallback');
+        print('ML API: No products available for fallback');
         return [];
       }
 
-      // Filter by category if specified
       List<Product> filteredProducts = products;
       if (category != null && category.isNotEmpty) {
         filteredProducts = products
@@ -752,20 +622,95 @@ class MLApiService {
             .toList();
       }
 
-      // Sort by rating and take top products
       filteredProducts.sort((a, b) => b.rating.compareTo(a.rating));
-
       final result = filteredProducts.take(limit).toList();
-      print('✅ Found ${result.length} popular products from Firebase');
+
+      print('ML API: Found ${result.length} popular products from Firebase');
       return result;
     } catch (e) {
-      print('Fallback popular products failed: $e');
+      print('ML API: Fallback popular products failed');
+      print('   Error: $e');
       return [];
     }
   }
 
-  /// Close the HTTP client
+  /// Check if localhost fallback is actually running
+  /// Used to determine if we should switch to fallback mode
+  static Future<bool> isLocalhostRunning() async {
+    try {
+      final localhostUrl = Platform.isAndroid
+          ? MLConfig.androidLocalhostUrl
+          : MLConfig.localhostBaseUrl;
+
+      print('ML API: Checking if localhost is running at $localhostUrl');
+
+      final response = await _client
+          .get(Uri.parse('$localhostUrl/'))
+          .timeout(const Duration(seconds: 2));
+
+      final isRunning = response.statusCode == 200;
+      print(
+        '${isRunning ? '✅' : '❌'} ML API: Localhost ${isRunning ? 'is' : 'is not'} running',
+      );
+
+      return isRunning;
+    } catch (e) {
+      print(' ML API: Localhost not running');
+      print('   Error: $e');
+      return false;
+    }
+  }
+
+  /// Check if Render service is available and switch back if it is
+  /// Automatically restores primary service when it becomes available
+  static Future<void> checkAndSwitchToPrimary() async {
+    if (MLConfig.isUsingFallback) {
+      print(' ML API: Checking if primary service is back online');
+
+      try {
+        MLConfig.switchToPrimary();
+        final response = await _client
+            .get(Uri.parse('${MLConfig.renderBaseUrl}/'))
+            .timeout(const Duration(seconds: 3));
+
+        if (response.statusCode == 200) {
+          print('ML API: Primary service is back online, staying with primary');
+        } else {
+          print(
+            'ML API: Primary service still down, switching back to fallback',
+          );
+          MLConfig.switchToFallback();
+        }
+      } catch (e) {
+        print('ML API: Primary service still down, staying with fallback');
+        print('   Error: $e');
+        MLConfig.switchToFallback();
+      }
+    }
+  }
+
+  /// Smart fallback strategy - only use localhost if it's actually running
+  /// Prevents switching to a non-functioning fallback service
+  static Future<void> smartFallbackCheck() async {
+    if (MLConfig.isUsingFallback) {
+      print('ML API: Performing smart fallback check');
+
+      final localhostRunning = await isLocalhostRunning();
+      if (!localhostRunning) {
+        print(
+          'ML API: Localhost fallback not running, switching back to Render service',
+        );
+        MLConfig.switchToPrimary();
+      } else {
+        print('ML API: Localhost fallback is running, staying with fallback');
+      }
+    }
+  }
+
+  /// Close the HTTP client to free up resources
+  /// Should be called when the app is shutting down
   static void dispose() {
+    print('ML API: Disposing HTTP client');
     _client.close();
   }
 }

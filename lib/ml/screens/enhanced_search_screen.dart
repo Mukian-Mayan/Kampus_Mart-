@@ -69,7 +69,6 @@ class _EnhancedSearchScreenState extends State<EnhancedSearchScreen> {
     setState(() {
       _recentSearches.remove(search);
     });
-    // TODO: Save to SharedPreferences
   }
 
   void _onSearchChanged() {
@@ -125,9 +124,11 @@ class _EnhancedSearchScreenState extends State<EnhancedSearchScreen> {
       setState(() {
         _isSearching = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Search failed: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Search failed: $e')),
+        );
+      }
     }
   }
 
@@ -305,7 +306,6 @@ class _EnhancedSearchScreenState extends State<EnhancedSearchScreen> {
         ),
         const SizedBox(height: 8),
         ...sortOptions.map((option) {
-          final isSelected = _sortBy == option['value'];
           return RadioListTile<String>(
             title: Text(option['label']!),
             value: option['value']!,
@@ -471,7 +471,7 @@ class _EnhancedSearchScreenState extends State<EnhancedSearchScreen> {
             product: product,
             onTap: () {
               // Record interaction for ML
-              EnhancedProductService.clickProduct(product.id);
+              EnhancedProductService.clickProduct(productId: product.id);
               // Navigate to product details
               Navigator.pushNamed(
                 context,

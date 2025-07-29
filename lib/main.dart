@@ -18,6 +18,10 @@ import 'screens/login_or_register_page.dart';
 import 'screens/home_page.dart';
 import 'package:kampusmart2/widgets/theme_provider.dart';
 import 'models/user_role.dart';
+import 'ml/test_ml_config.dart';
+import 'ml/ml_status_checker.dart';
+import 'ml/test_render_connection.dart';
+import 'ml/config/ml_config.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +38,14 @@ Future<void> main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
+
+  // Test ML configuration (only in debug mode)
+  if (const bool.fromEnvironment('dart.vm.product') == false) {
+    MLConfig.forcePrimaryMode();
+    MLConfigTest.testConfiguration();
+    await RenderConnectionTest.quickRenderCheck();
+    await MLStatusChecker.quickCheck();
+  }
 
   // Check login state from SharedPreferences
   final prefs = await SharedPreferences.getInstance();

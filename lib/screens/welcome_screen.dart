@@ -3,6 +3,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:kampusmart2/screens/login_or_register_page.dart';
 import '../Theme/app_theme.dart';
 
@@ -72,42 +73,45 @@ class WelcomeScreen extends StatelessWidget {
                   flex: 3,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Row(
+                    child: Column(
                       children: [
-                        // Welcome text on the left
-                        const Expanded(
-                          flex: 1,
-                          child: Text(
-                            'Welcome',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                        // Image on the right
+                        // Image on top (increased size)
                         Expanded(
-                          flex: 2,
+                          flex: 3,
                           child: Image.asset(
                             'lib/images/image4.png',
                             fit: BoxFit.contain,
                           ),
+                        ),
+                        // Spacing to move text down
+                        const SizedBox(height: 20),
+                        // Welcome text below
+                        Column(
+                          children: [
+                            Text(
+                              'Welcome',
+                              style: GoogleFonts.dancingScript(
+                                fontSize: 60,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            // Text(
+                            //   'To',
+                            //   style: GoogleFonts.pacifico(
+                            //     fontSize: 30,
+                            //     fontWeight: FontWeight.w500,
+                            //     color: Colors.white,
+                            //   ),
+                            // ),
+                          ],
                         ),
                       ],
                     ),
                   ),
                 ),
 
-
-                Text(
-                        'Welcome',
-                        style: TextStyle(
-                          fontSize: 32,
-                          color: Colors.black,
-                          fontFamily: 'DreamOrphans-Bold'
-                        ),
-                      ),
 
                 // Bottom content
                 Expanded(
@@ -140,9 +144,9 @@ class WelcomeScreen extends StatelessWidget {
                               const SizedBox(width: 15),
                               const Expanded(
                                 child: Text(
-                                  'To Kampus Mart',
+                                  'Kampus Mart',
                                   style: TextStyle(
-                                    fontSize: 24,
+                                    fontSize: 30,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black,
                                   ),
@@ -162,7 +166,7 @@ class WelcomeScreen extends StatelessWidget {
 
                           // Description text
                           const Text(
-                            'Buy & sell everything from your campus life_from textbooks to toasters!',
+                            'Buy & sell everything from your campus life from textbooks to toasters!',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey,
